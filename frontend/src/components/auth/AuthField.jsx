@@ -10,13 +10,14 @@ export default function AuthField({ id, label, icon, error, trailingControl, cla
         <span className="ml-4 grid size-5 shrink-0 place-items-center text-muted"><Icon name={icon} size={20} /></span>
         <input
           aria-describedby={errorId}
+          aria-invalid={Boolean(error)}
           className="min-h-11 min-w-0 flex-1 bg-transparent px-4 text-base text-heading outline-none placeholder:text-muted"
           id={id}
           {...inputProps}
         />
         {trailingControl}
       </div>
-      {error && <p className="mt-1.5 text-sm text-red-300" id={errorId}>{error}</p>}
+      {error && <p className="mt-1.5 text-sm text-red-300" id={errorId} role="alert">{error}</p>}
     </div>
   )
 }

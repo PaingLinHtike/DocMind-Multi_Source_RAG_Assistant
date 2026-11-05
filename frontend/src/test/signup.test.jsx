@@ -22,6 +22,12 @@ describe('Sign Up', () => {
     expect(screen.getByText('Enter a password.')).toBeInTheDocument()
     expect(screen.getByText('Confirm your password.')).toBeInTheDocument()
     expect(screen.getByText('Accept the Terms and Privacy Policy.')).toBeInTheDocument()
+    expect(screen.getAllByRole('alert')).toHaveLength(5)
+    expect(screen.getByLabelText('Full Name')).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByLabelText('Email')).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByLabelText('Password')).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByLabelText('Confirm Password')).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByRole('checkbox', { name: /I agree to the Terms and Privacy Policy/i })).toHaveAttribute('aria-invalid', 'true')
 
     const name = screen.getByLabelText('Full Name')
     const email = screen.getByLabelText('Email')
@@ -85,6 +91,6 @@ describe('Sign Up', () => {
     await user.click(screen.getByRole('button', { name: 'Create Account' }))
 
     expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
-    expect(screen.getByRole('status')).toHaveTextContent('Account created. Sign in with your credentials.')
+    expect(screen.getByRole('status')).toHaveTextContent('Sign-up complete. This demo does not create accounts; use the demo credentials to sign in.')
   })
 })

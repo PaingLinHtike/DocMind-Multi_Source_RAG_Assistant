@@ -57,6 +57,6 @@ describe('Sign In', () => {
   it('announces successful account creation passed through route state', () => {
     renderApp({ route: { pathname: '/signin', state: { signupComplete: true } } })
 
-    expect(screen.getByRole('status')).toHaveTextContent('Account created. Sign in with your credentials.')
+    expect(screen.getByRole('status')).toHaveTextContent('Sign-up complete. This demo does not create accounts; use the demo credentials to sign in.')
   })
 })

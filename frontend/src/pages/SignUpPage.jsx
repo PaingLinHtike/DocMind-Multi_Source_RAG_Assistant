@@ -65,10 +65,10 @@ export default function SignUpPage() {
         <AuthField autoComplete="new-password" error={errors.confirmation} id="signup-confirm-password" icon="lock" label="Confirm Password" onChange={(event) => updateField('confirmation', event.target.value)} placeholder="Confirm Password" trailingControl={visibilityToggle('confirmation')} type={confirmationVisible ? 'text' : 'password'} value={form.confirmation} />
 
         <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm text-muted">
-          <input checked={form.termsAccepted} className="size-5 shrink-0 accent-[#7544f5]" onChange={(event) => updateField('termsAccepted', event.target.checked)} type="checkbox" />
+          <input aria-describedby={errors.termsAccepted ? 'signup-terms-error' : undefined} aria-invalid={Boolean(errors.termsAccepted)} checked={form.termsAccepted} className="size-5 shrink-0 accent-[#7544f5]" onChange={(event) => updateField('termsAccepted', event.target.checked)} type="checkbox" />
           <span>I agree to the <span className="font-medium text-[#c07aff]">Terms</span> and <span className="font-medium text-[#c07aff]">Privacy Policy</span></span>
         </label>
-        {errors.termsAccepted && <p className="text-sm text-red-300" role="alert">{errors.termsAccepted}</p>}
+        {errors.termsAccepted && <p className="text-sm text-red-300" id="signup-terms-error" role="alert">{errors.termsAccepted}</p>}
 
         <button className="min-h-12 w-full rounded-xl border border-[#9a62ff] bg-gradient-to-r from-[#7544f5] to-[#6831ef] text-base font-semibold text-white transition-colors hover:from-[#8153f7] hover:to-[#7544f5]" type="submit">Create Account</button>
       </form>

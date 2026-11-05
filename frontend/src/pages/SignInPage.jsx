@@ -42,7 +42,7 @@ export default function SignInPage() {
       <h1 className="text-3xl font-bold leading-tight sm:text-4xl">Welcome back</h1>
       <p className="mt-2 text-base text-muted sm:text-lg">Sign in to access your AI document workspace.</p>
 
-      {location.state?.signupComplete && <p className="mt-5 rounded-lg border border-success/50 bg-success/10 px-4 py-3 text-sm text-heading" role="status">Account created. Sign in with your credentials.</p>}
+      {location.state?.signupComplete && <p className="mt-5 rounded-lg border border-success/50 bg-success/10 px-4 py-3 text-sm text-heading" role="status">Sign-up complete. This demo does not create accounts; use the demo credentials to sign in.</p>}
 
       <form className="mt-6 space-y-4" noValidate onSubmit={handleSubmit}>
         <AuthField autoComplete="email" id="signin-email" icon="mail" label="Email" onChange={(event) => { setEmail(event.target.value); setError('') }} placeholder="you@example.com" type="email" value={email} />

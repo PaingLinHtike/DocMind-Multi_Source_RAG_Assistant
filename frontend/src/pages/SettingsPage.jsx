@@ -38,7 +38,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {feedback && <p aria-live="polite" className="ml-auto mt-4 max-w-[866px] rounded-lg border border-border bg-[#202a47] px-4 py-3 text-sm">{feedback}</p>}
+        {feedback && <p aria-live="polite" className="ml-auto mt-4 max-w-[866px] break-all rounded-lg border border-border bg-[#202a47] px-4 py-3 text-sm">{feedback}</p>}
       </div>
     </section>
   )

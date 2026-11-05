@@ -10,6 +10,7 @@
   --color-success: #13a88d;
   --color-heading: #f8fafc;
   --color-muted: #b6bed7;
+  --color-focus: #8f7cff;
 }
 
 :root {
@@ -26,7 +27,7 @@ html { min-width: 320px; background: #0c1429; }
 body { min-width: 320px; min-height: 100vh; margin: 0; overflow-x: hidden; }
 button, input { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
-:focus-visible { outline: 2px solid #8f7cff; outline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
 .table-scroll::-webkit-scrollbar { height: 8px; }
 .table-scroll::-webkit-scrollbar-track { background: transparent; }
 .table-scroll::-webkit-scrollbar-thumb { background: #4b5878; border-radius: 9999px; }

@@ -35,7 +35,7 @@ export default function DocumentDetailsPage() {
   }, [])
 
   if (deleted) {
-    return <section className="mx-auto max-w-[1290px] px-6 py-16"><h1 className="text-3xl font-bold">Document deleted</h1><Link className="mt-6 inline-block text-primary-border" to="/documents">Return to Documents</Link></section>
+    return <section className="mx-auto max-w-[1290px] px-6 py-16"><h1 className="text-3xl font-bold">Document deleted</h1><Link className="mt-6 inline-flex min-h-11 items-center text-heading underline" to="/documents">Return to Documents</Link></section>
   }
 
   if (!activeDocument) {

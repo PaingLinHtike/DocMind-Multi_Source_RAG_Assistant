@@ -66,7 +66,7 @@ export default function UploadPage() {
             <h2 className="mt-4 text-2xl font-semibold">Drag &amp; drop your document here</h2>
             <p className="mt-1 text-base text-muted">or choose a file from your computer</p>
             <p className="mt-6 text-sm text-muted">Supported: PDF • DOCX • TXT</p>
-            <label className="mt-3 grid h-11 w-full max-w-[256px] cursor-pointer place-items-center rounded-lg border border-primary-border bg-primary text-sm font-semibold transition-colors hover:bg-primary/90">
+            <label className="mt-3 grid h-11 w-full max-w-[256px] cursor-pointer place-items-center rounded-lg border border-primary-border bg-primary text-sm font-semibold transition-colors hover:bg-primary/90 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus">
               Choose File
               <input accept=".pdf,.docx,.txt" className="sr-only" onChange={(event) => processFile(event.target.files?.[0])} type="file" />
             </label>

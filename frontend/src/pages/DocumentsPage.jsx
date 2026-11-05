@@ -24,15 +24,18 @@ export default function DocumentsPage() {
         </Link>
       </div>
 
-      <div className="table-scroll mt-6 overflow-x-auto">
-        <div className="min-w-[980px]">
-          <div className="grid h-12 grid-cols-[minmax(240px,2.3fr)_0.9fr_1.2fr_0.7fr_1.25fr] items-center gap-4 border-b border-border px-3 text-xs font-medium text-muted">
-            <span className="pl-8">Name</span><span>Type</span><span>Status</span><span>Chunks</span><span>Uploaded</span>
+      {filteredDocuments.length > 0 ? (
+        <div className="table-scroll mt-6 overflow-x-auto">
+          <div className="min-w-[980px]">
+            <div className="grid h-12 grid-cols-[minmax(240px,2.3fr)_0.9fr_1.2fr_0.7fr_1.25fr] items-center gap-4 border-b border-border px-3 text-xs font-medium text-muted">
+              <span className="pl-8">Name</span><span>Type</span><span>Status</span><span>Chunks</span><span>Uploaded</span>
+            </div>
+            {filteredDocuments.map((document) => <DocumentRow document={document} key={document.id} />)}
           </div>
-          {filteredDocuments.map((document) => <DocumentRow document={document} key={document.id} />)}
-          {filteredDocuments.length === 0 && <p className="py-16 text-center text-sm text-muted">No documents match “{query.trim()}”.</p>}
         </div>
-      </div>
+      ) : (
+        <p className="py-16 text-center text-sm text-muted">No documents match “{query.trim()}”.</p>
+      )}
     </section>
   )
 }

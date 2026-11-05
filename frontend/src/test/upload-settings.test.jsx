@@ -7,6 +7,9 @@ describe('Upload Document', () => {
   it('validates missing and unsupported files without adding an upload', () => {
     renderApp({ route: '/upload' })
     const input = screen.getByLabelText('Choose File')
+    const picker = input.closest('label')
+    expect(picker).toHaveClass('focus-within:outline-2')
+    expect(picker).toHaveClass('focus-within:outline-focus')
 
     const heading = screen.getByRole('heading', { name: 'Upload Document' })
     expect(heading).toHaveClass('text-3xl')
@@ -71,5 +74,16 @@ describe('Settings', () => {
 
     await user.click(screen.getByRole('button', { name: 'Change Password' }))
     expect(screen.getByText('Password change link sent to aung@example.com.')).toBeInTheDocument()
+  })
+
+  it('wraps long account feedback values', async () => {
+    const user = userEvent.setup()
+    renderApp({ route: '/settings' })
+    const email = screen.getByLabelText('Email')
+
+    await user.clear(email)
+    await user.type(email, 'aung.min.with.an.extremely.long.account.address.for.testing@example-docmind-domain.com')
+    await user.click(screen.getByRole('button', { name: 'Change Password' }))
+    expect(screen.getByText(/^Password change link sent/)).toHaveClass('break-all')
   })
 })

@@ -41,7 +41,10 @@ describe('Documents prototype', () => {
 
     await user.clear(search)
     await user.type(search, 'missing file')
-    expect(screen.getByText('No documents match “missing file”.')).toBeInTheDocument()
+    const emptyState = screen.getByText('No documents match “missing file”.')
+    expect(emptyState).toBeInTheDocument()
+    expect(emptyState.closest('.table-scroll')).toBeNull()
+    expect(screen.queryByText('Name')).not.toBeInTheDocument()
   })
 
   it('navigates to the exact document details and metadata', async () => {
@@ -68,6 +71,9 @@ describe('Documents prototype', () => {
     const actions = screen.getByRole('button', { name: 'Actions' })
 
     await user.click(actions)
+    const menu = screen.getByRole('menu')
+    expect(menu).toHaveClass('left-0')
+    expect(menu).toHaveClass('sm:right-0')
     for (const action of ['View Original', 'Download', 'Reindex', 'Rename', 'Delete']) {
       const actionButton = screen.getByRole('button', { name: action })
       expect(actionButton).toBeInTheDocument()
@@ -100,6 +106,9 @@ describe('Documents prototype', () => {
     await user.click(screen.getByRole('button', { name: 'Actions' }))
     await user.click(screen.getByRole('button', { name: 'Delete' }))
     expect(screen.getByRole('heading', { name: 'Document deleted' })).toBeInTheDocument()
+    const returnLink = screen.getByRole('link', { name: 'Return to Documents' })
+    expect(returnLink).toHaveClass('min-h-11')
+    expect(returnLink).toHaveClass('text-heading')
     expect(fetchMock).not.toHaveBeenCalled()
   })
 })

@@ -47,26 +47,26 @@ export default function UploadPage() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-[1278px] px-6 pb-12 pt-[42px] lg:px-0">
+    <section className="mx-auto w-full max-w-[1278px] px-6 pb-12 pt-10 lg:px-0">
       <header className="text-center">
-        <h1 className="text-4xl font-bold text-heading sm:text-[46px]">Upload Document</h1>
-        <p className="mt-7 text-base text-muted sm:text-[19px]">Add knowledge files for DocMind to read, understand, and answer questions from.</p>
+        <h1 className="text-3xl font-bold text-heading sm:text-4xl">Upload Document</h1>
+        <p className="mt-3 text-base text-muted">Add knowledge files for DocMind to read, understand, and answer questions from.</p>
       </header>
 
-      <div className="mt-[78px] grid gap-[38px] xl:grid-cols-[845px_402px]">
-        <div className="min-h-[411px] rounded-[17px] border border-border bg-surface p-[34px]">
+      <div className="mt-10 grid gap-6 xl:grid-cols-[845px_402px]">
+        <div className="rounded-xl border border-border bg-surface p-6">
           <div
-            className={`flex min-h-[340px] flex-col items-center justify-center rounded-[18px] border px-6 text-center transition ${dragActive ? 'border-[#a66cff] bg-[#a66cff]/10' : 'border-[#7a68b3]'}`}
+            className={`flex min-h-[320px] flex-col items-center justify-center rounded-xl border px-6 text-center transition ${dragActive ? 'border-[#a66cff] bg-[#a66cff]/10' : 'border-[#7a68b3]'}`}
             onDragEnter={(event) => { event.preventDefault(); setDragActive(true) }}
             onDragLeave={() => setDragActive(false)}
             onDragOver={(event) => event.preventDefault()}
             onDrop={handleDrop}
           >
-            <img alt="" src={uploadArrow} />
-            <h2 className="mt-4 text-2xl font-semibold sm:text-[27px]">Drag &amp; drop your document here</h2>
-            <p className="mt-1 text-lg text-muted">or choose a file from your computer</p>
-            <p className="mt-7 text-base text-muted">Supported: PDF • DOCX • TXT</p>
-            <label className="mt-3 grid h-[49px] w-full max-w-[256px] cursor-pointer place-items-center rounded-[13px] border border-[#866aff] bg-[#5932d2] text-sm font-semibold">
+            <span className="grid size-8 place-items-center"><img alt="" className="size-full" src={uploadArrow} /></span>
+            <h2 className="mt-4 text-2xl font-semibold">Drag &amp; drop your document here</h2>
+            <p className="mt-1 text-base text-muted">or choose a file from your computer</p>
+            <p className="mt-6 text-sm text-muted">Supported: PDF • DOCX • TXT</p>
+            <label className="mt-3 grid h-11 w-full max-w-[256px] cursor-pointer place-items-center rounded-lg border border-primary-border bg-primary text-sm font-semibold transition-colors hover:bg-primary/90">
               Choose File
               <input accept=".pdf,.docx,.txt" className="sr-only" onChange={(event) => processFile(event.target.files?.[0])} type="file" />
             </label>
@@ -74,14 +74,14 @@ export default function UploadPage() {
           </div>
         </div>
 
-        <aside className="h-fit min-h-[336px] rounded-[17px] border border-border bg-surface px-5 py-4">
-          <h2 className="text-2xl font-semibold">Recent Uploads</h2>
+        <aside className="h-fit rounded-xl border border-border bg-surface px-5 py-4">
+          <h2 className="text-xl font-semibold">Recent Uploads</h2>
           <div className="mt-3 divide-y divide-border">
             {recentUploads.slice(0, 4).map((upload) => (
-              <div className="flex min-h-[77px] items-center gap-3" data-testid={`recent-upload-${upload.name}`} key={upload.name}>
-                <img alt="" src={upload.name.toLocaleLowerCase().endsWith('.docx') ? uploadFileDocx : uploadFilePdf} />
+              <div className="flex min-h-16 items-center gap-3" data-testid={`recent-upload-${upload.name}`} key={upload.name}>
+                <span className="grid size-5 shrink-0 place-items-center"><img alt="" className="size-full" src={upload.name.toLocaleLowerCase().endsWith('.docx') ? uploadFileDocx : uploadFilePdf} /></span>
                 <div className="min-w-0 flex-1"><p className="truncate text-sm text-heading">{upload.name}</p><p className="mt-1 text-xs text-muted">{upload.date}</p></div>
-                <span className={`rounded-full px-4 py-1.5 text-xs font-semibold ${upload.status === 'Ready' ? 'bg-[#13a88d]/25' : 'bg-[#6c63ff]/25'}`}>{upload.status}</span>
+                <span className={`inline-flex h-6 shrink-0 items-center rounded-md px-2 text-xs font-medium ${upload.status === 'Ready' ? 'bg-[#13a88d]/25' : 'bg-[#6c63ff]/25'}`}>{upload.status}</span>
               </div>
             ))}
           </div>

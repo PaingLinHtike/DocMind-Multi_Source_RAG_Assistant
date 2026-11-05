@@ -8,6 +8,12 @@ describe('Upload Document', () => {
     renderApp({ route: '/upload' })
     const input = screen.getByLabelText('Choose File')
 
+    const heading = screen.getByRole('heading', { name: 'Upload Document' })
+    expect(heading).toHaveClass('text-3xl')
+    expect(heading).toHaveClass('sm:text-4xl')
+    expect(screen.getByText('Choose File')).toHaveClass('h-11')
+    expect(screen.getByText('Employee Handbook.pdf')).toBeInTheDocument()
+    expect(screen.getAllByText('Ready').length).toBeGreaterThan(0)
     expect(screen.getByText('Supported: PDF • DOCX • TXT')).toBeInTheDocument()
     fireEvent.change(input, { target: { files: [] } })
     expect(screen.getByText('Choose a file first.')).toBeInTheDocument()
@@ -42,6 +48,8 @@ describe('Settings', () => {
     expect(name).toHaveValue('Aung')
     expect(email).toHaveValue('aung@example.com')
     expect(password).toHaveAttribute('type', 'password')
+    expect(screen.getByRole('heading', { name: 'Account' })).toHaveClass('text-2xl')
+    for (const field of [name, email, password]) expect(field).toHaveClass('h-11')
 
     await user.clear(name)
     await user.type(name, 'Aung Min')
@@ -50,7 +58,9 @@ describe('Settings', () => {
     expect(name).toHaveValue('Aung Min')
     expect(email).toHaveValue('aung.min@example.com')
 
-    await user.click(screen.getByRole('button', { name: 'Show password' }))
+    const showPassword = screen.getByRole('button', { name: 'Show password' })
+    expect(showPassword.querySelector('svg')).toBeInTheDocument()
+    await user.click(showPassword)
     expect(password).toHaveAttribute('type', 'text')
     expect(screen.getByRole('button', { name: 'Hide password' })).toBeInTheDocument()
   })

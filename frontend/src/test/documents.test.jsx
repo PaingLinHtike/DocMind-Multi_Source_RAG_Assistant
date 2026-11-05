@@ -52,6 +52,8 @@ describe('Documents prototype', () => {
     const detailsHeading = screen.getByRole('heading', { name: 'Employee Handbook.pdf' })
     expect(detailsHeading).toHaveClass('break-words')
     expect(detailsHeading).toHaveClass('text-3xl')
+    const breadcrumb = screen.getByRole('navigation', { name: 'Breadcrumb' })
+    expect(within(breadcrumb).getByRole('link', { name: 'Documents' })).toHaveClass('min-h-11')
     expect(screen.getByText('Uploaded Nov 5, 2026 10:24 AM')).toBeInTheDocument()
     expect(screen.getByText('Type')).toHaveClass('text-sm')
     expect(screen.getByText('2.4 MB')).toHaveClass('text-lg')

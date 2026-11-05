@@ -75,6 +75,12 @@ describe('shared visual system', () => {
     expect(row.querySelector('span.size-5')).toBeInTheDocument()
   })
 
+  it('styles the intentional documents table scroller', () => {
+    renderApp({ route: '/documents' })
+
+    expect(document.querySelector('.table-scroll')).toHaveClass('overflow-x-auto')
+  })
+
   it('pins long-value safety in settings', () => {
     renderApp({ route: '/settings' })
 

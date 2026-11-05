@@ -38,7 +38,7 @@ export default function TopNav() {
   return (
     <header className="h-20 px-5 sm:px-8 lg:px-12">
       <div className="relative mx-auto flex h-full max-w-[1344px] items-center justify-between">
-        <NavLink className="flex items-center gap-2.5 text-xl font-bold text-heading no-underline sm:text-2xl" to="/"><img alt="" src={docMindIcon} /><span>DocMind</span></NavLink>
+        <NavLink className="flex min-h-11 items-center gap-2.5 text-xl font-bold text-heading no-underline sm:text-2xl" to="/"><img alt="" src={docMindIcon} /><span>DocMind</span></NavLink>
         <nav aria-label="Primary navigation" className="hidden items-center gap-1 sm:flex">
           {navItems.map((item) => <NavLink className={desktopLink} end={item.to === '/'} key={item.to} to={item.to}>{item.label}</NavLink>)}
         </nav>

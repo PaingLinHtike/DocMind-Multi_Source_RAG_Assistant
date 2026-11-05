@@ -59,7 +59,7 @@ export default function DocumentDetailsPage() {
 
   return (
     <section className="mx-auto w-full max-w-[1290px] px-6 pb-12 pt-10 lg:px-0">
-      <nav aria-label="Breadcrumb" className="text-sm text-muted"><Link className="text-muted no-underline" to="/documents">Documents</Link><span className="mx-2">›</span><span>{activeDocument.name}</span></nav>
+      <nav aria-label="Breadcrumb" className="flex min-h-11 flex-wrap items-center gap-2 text-sm text-muted"><Link className="inline-flex min-h-11 items-center text-muted no-underline" to="/documents">Documents</Link><span aria-hidden="true">›</span><span className="min-w-0 break-all">{activeDocument.name}</span></nav>
 
       <div className="mt-10 flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
         <div className="flex min-w-0 items-center gap-5">

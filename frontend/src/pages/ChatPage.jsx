@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import actionEdit from '../assets/figma/action-edit.svg'
+import actionTrash from '../assets/figma/action-trash.svg'
 import attachIcon from '../assets/figma/attach.svg'
 import assistantBook from '../assets/figma/chat-assistant-book.svg'
 import assistantCircle from '../assets/figma/chat-assistant-circle.svg'
@@ -8,6 +10,8 @@ import sourceFile from '../assets/figma/source-file.svg'
 import sourceOpen from '../assets/figma/source-open.svg'
 import Icon from '../components/ui/Icon.jsx'
 import useChatPrototype from '../hooks/useChatPrototype.js'
+
+const menuItem = 'flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-medium transition-colors'
 
 function Citation({ citation }) {
   return (
@@ -26,13 +30,81 @@ function Citation({ citation }) {
   )
 }
 
+function ChatActions({ conversation, onDelete, onRename }) {
+  return (
+    <div aria-label={`Actions for ${conversation.title}`} className="menu-enter absolute right-1 top-12 z-40 w-44 rounded-xl border border-[#7861bf] bg-surface p-1.5 shadow-2xl" role="menu">
+      <button className={`${menuItem} text-heading hover:bg-white/5`} onClick={() => onRename(conversation)} role="menuitem" type="button">
+        <span className="grid size-5 shrink-0 place-items-center"><img alt="" className="size-full" src={actionEdit} /></span>
+        <span>Rename</span>
+      </button>
+      <button className={`${menuItem} bg-red-500/10 text-red-200 hover:bg-red-500/15`} onClick={() => onDelete(conversation.id)} role="menuitem" type="button">
+        <span className="grid size-5 shrink-0 place-items-center"><img alt="" className="size-full" src={actionTrash} /></span>
+        <span>Delete</span>
+      </button>
+    </div>
+  )
+}
+
 export default function ChatPage() {
-  const { conversations, activeConversation, selectConversation, createConversation, sendQuestion } = useChatPrototype()
+  const { conversations, activeConversation, selectConversation, createConversation, renameConversation, deleteConversation, sendQuestion } = useChatPrototype()
   const [question, setQuestion] = useState('')
+  const [openActionsId, setOpenActionsId] = useState(null)
+  const [renamingId, setRenamingId] = useState(null)
+  const [renameDraft, setRenameDraft] = useState('')
+  const renameInputRef = useRef(null)
+  const recentConversations = conversations.filter((conversation) => !conversation.id.startsWith('new-'))
+
+  useEffect(() => {
+    if (!renamingId) return
+    renameInputRef.current?.focus()
+    renameInputRef.current?.select()
+  }, [renamingId])
+
+  useEffect(() => {
+    if (!openActionsId) return
+    function handleEscape(event) {
+      if (event.key === 'Escape') setOpenActionsId(null)
+    }
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [openActionsId])
 
   function handleSubmit(event) {
     event.preventDefault()
     if (sendQuestion(question)) setQuestion('')
+  }
+
+  function toggleActions(id) {
+    setOpenActionsId((current) => current === id ? null : id)
+  }
+
+  function startRename(conversation) {
+    setOpenActionsId(null)
+    setRenamingId(conversation.id)
+    setRenameDraft(conversation.title)
+  }
+
+  function finishRename(conversationId) {
+    renameConversation(conversationId, renameDraft)
+    setRenamingId(null)
+    setRenameDraft('')
+  }
+
+  function handleRenameKeyDown(event, conversationId) {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      finishRename(conversationId)
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      setRenamingId(null)
+      setRenameDraft('')
+    }
+  }
+
+  function handleDelete(conversationId) {
+    setOpenActionsId(null)
+    deleteConversation(conversationId)
   }
 
   return (
@@ -44,11 +116,42 @@ export default function ChatPage() {
         </button>
         <h2 className="mb-2 mt-6 text-sm font-semibold text-heading">Recent Chats</h2>
         <div className="space-y-1">
-          {conversations.filter((conversation) => !conversation.id.startsWith('new-')).map((conversation) => (
-            <button className={`flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm text-heading transition-colors ${activeConversation.id === conversation.id ? 'bg-primary/50' : 'hover:bg-white/5'}`} key={conversation.id} onClick={() => selectConversation(conversation.id)} type="button">
-              <span className="grid size-5 shrink-0 place-items-center"><img alt="" className="size-full" src={conversationIcon} /></span>
-              <span className="min-w-0 flex-1 truncate">{conversation.title}</span>
-            </button>
+          {recentConversations.length === 0 && <p className="px-3 py-2 text-sm text-muted">No recent chats.</p>}
+          {recentConversations.map((conversation) => (
+            <div className={`relative flex items-center rounded-xl transition-colors ${activeConversation.id === conversation.id ? 'bg-primary/50' : 'hover:bg-white/5'}`} key={conversation.id}>
+              {renamingId === conversation.id ? (
+                <div className="flex min-h-11 w-full items-center gap-3 px-3">
+                  <span className="grid size-5 shrink-0 place-items-center"><img alt="" className="size-full" src={conversationIcon} /></span>
+                  <input
+                    aria-label={`Rename ${conversation.title}`}
+                    className="min-h-11 min-w-0 flex-1 rounded-lg border border-primary-border bg-[#202a47] px-2 text-sm text-heading outline-none"
+                    onBlur={() => finishRename(conversation.id)}
+                    onChange={(event) => setRenameDraft(event.target.value)}
+                    onKeyDown={(event) => handleRenameKeyDown(event, conversation.id)}
+                    ref={renameInputRef}
+                    value={renameDraft}
+                  />
+                </div>
+              ) : (
+                <>
+                  <button className="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-xl px-3 text-left text-sm text-heading" onClick={() => { setOpenActionsId(null); selectConversation(conversation.id) }} type="button">
+                    <span className="grid size-5 shrink-0 place-items-center"><img alt="" className="size-full" src={conversationIcon} /></span>
+                    <span className="min-w-0 flex-1 truncate">{conversation.title}</span>
+                  </button>
+                  <button
+                    aria-expanded={openActionsId === conversation.id}
+                    aria-haspopup="menu"
+                    aria-label={`Actions for ${conversation.title}`}
+                    className="mr-1 grid size-11 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-white/5 hover:text-heading"
+                    onClick={() => toggleActions(conversation.id)}
+                    type="button"
+                  >
+                    <Icon name="more" size={18} />
+                  </button>
+                  {openActionsId === conversation.id && <ChatActions conversation={conversation} onDelete={handleDelete} onRename={startRename} />}
+                </>
+              )}
+            </div>
           ))}
         </div>
       </aside>
@@ -65,7 +168,7 @@ export default function ChatPage() {
           ) : (
             <div key={message.id}>
               <div className="flex items-start gap-3">
-                <span className="relative block size-10 shrink-0" aria-hidden="true"><img alt="" className="absolute inset-0 size-full" src={assistantCircle} /><span className="absolute left-2 top-2"><img alt="" src={assistantBook} /></span></span>
+                <span className="relative grid size-10 shrink-0 place-items-center" aria-hidden="true"><img alt="" className="absolute inset-0 size-full" src={assistantCircle} /><img alt="" className="relative" src={assistantBook} /></span>
                 <div className="min-w-0 w-full max-w-[760px]">
                   <p className="break-words rounded-xl border border-border bg-[#202a47] px-4 py-3 text-base leading-relaxed text-heading">{message.text}</p>
                   <p className="mt-1 text-xs text-muted">{message.time}</p>

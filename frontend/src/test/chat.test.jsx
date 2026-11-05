@@ -34,6 +34,127 @@ describe('Chat prototype', () => {
     expect(screen.getByText('Ask your first question to begin.')).toBeInTheDocument()
   })
 
+  it('renames a recent chat from its actions menu', async () => {
+    const user = userEvent.setup()
+    renderApp({ route: '/chat' })
+
+    const actions = screen.getByRole('button', { name: 'Actions for Annual leave policy' })
+    expect(actions).toHaveAttribute('aria-expanded', 'false')
+
+    await user.click(actions)
+    expect(actions).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('menu')).toHaveClass('menu-enter')
+    await user.click(screen.getByRole('menuitem', { name: 'Rename' }))
+
+    const input = screen.getByRole('textbox', { name: 'Rename Annual leave policy' })
+    expect(input).toHaveValue('Annual leave policy')
+    await user.clear(input)
+    await user.type(input, 'Vacation policy{Enter}')
+
+    expect(screen.getByRole('heading', { name: 'Vacation policy' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Vacation policy' })).toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: /Rename/ })).not.toBeInTheDocument()
+  })
+
+  it('saves an inline rename when the field loses focus', async () => {
+    const user = userEvent.setup()
+    renderApp({ route: '/chat' })
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Working hours' }))
+    await user.click(screen.getByRole('menuitem', { name: 'Rename' }))
+    const input = screen.getByRole('textbox', { name: 'Rename Working hours' })
+    await user.clear(input)
+    await user.type(input, 'Office hours')
+    await user.tab()
+
+    expect(screen.getByRole('button', { name: 'Office hours' })).toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: /Rename/ })).not.toBeInTheDocument()
+  })
+
+  it('cancels an inline rename with Escape and ignores blank titles', async () => {
+    const user = userEvent.setup()
+    renderApp({ route: '/chat' })
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Working hours' }))
+    await user.click(screen.getByRole('menuitem', { name: 'Rename' }))
+    let input = screen.getByRole('textbox', { name: 'Rename Working hours' })
+    await user.clear(input)
+    await user.type(input, 'Temporary title')
+    await user.keyboard('{Escape}')
+
+    expect(screen.getByRole('heading', { name: 'Annual leave policy' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Working hours' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Working hours' }))
+    await user.click(screen.getByRole('menuitem', { name: 'Rename' }))
+    input = screen.getByRole('textbox', { name: 'Rename Working hours' })
+    await user.clear(input)
+    await user.type(input, '{Enter}')
+
+    expect(screen.getByRole('button', { name: 'Working hours' })).toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: /Rename/ })).not.toBeInTheDocument()
+  })
+
+  it('deletes the active chat and falls back to the next conversation', async () => {
+    const user = userEvent.setup()
+    renderApp({ route: '/chat' })
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Annual leave policy' }))
+    await user.click(screen.getByRole('menuitem', { name: 'Delete' }))
+
+    expect(screen.queryByRole('button', { name: 'Annual leave policy' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Working hours' })).toBeInTheDocument()
+  })
+
+  it('selects the next conversation when an active middle chat is deleted', async () => {
+    const user = userEvent.setup()
+    renderApp({ route: '/chat' })
+
+    await user.click(screen.getByRole('button', { name: 'Company benefits' }))
+    expect(screen.getByRole('heading', { name: 'Company benefits' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Company benefits' }))
+    await user.click(screen.getByRole('menuitem', { name: 'Delete' }))
+
+    expect(screen.getByRole('heading', { name: 'IT policy' })).toBeInTheDocument()
+  })
+
+  it('deletes an inactive chat without changing the active conversation', async () => {
+    const user = userEvent.setup()
+    renderApp({ route: '/chat' })
+
+    await user.click(screen.getByRole('button', { name: 'Actions for IT policy' }))
+    await user.click(screen.getByRole('menuitem', { name: 'Delete' }))
+
+    expect(screen.queryByRole('button', { name: 'IT policy' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Annual leave policy' })).toBeInTheDocument()
+  })
+
+  it('keeps a blank chat when the last conversation is deleted', async () => {
+    const user = userEvent.setup()
+    renderApp({ route: '/chat' })
+
+    for (const title of ['Annual leave policy', 'Working hours', 'Company benefits', 'IT policy', 'Employee handbook']) {
+      await user.click(screen.getByRole('button', { name: `Actions for ${title}` }))
+      await user.click(screen.getByRole('menuitem', { name: 'Delete' }))
+    }
+
+    expect(screen.getByRole('heading', { name: 'New Chat' })).toBeInTheDocument()
+    expect(screen.getByText('Ask your first question to begin.')).toBeInTheDocument()
+    expect(screen.getByText('No recent chats.')).toBeInTheDocument()
+  })
+
+  it('closes the chat actions menu with Escape', async () => {
+    const user = userEvent.setup()
+    renderApp({ route: '/chat' })
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Working hours' }))
+    expect(screen.getByRole('menu')).toBeInTheDocument()
+
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+  })
+
   it('ignores whitespace and appends a cited simulated response to valid questions', async () => {
     const user = userEvent.setup()
     renderApp({ route: '/chat' })

@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { chatConversations } from '../data/mockData.js'
 
+function createBlankConversation() {
+  return { id: `new-${Date.now()}`, title: 'New Chat', messages: [] }
+}
+
 export default function useChatPrototype() {
   const [conversations, setConversations] = useState(chatConversations)
   const [activeId, setActiveId] = useState(chatConversations[0].id)
@@ -11,9 +15,33 @@ export default function useChatPrototype() {
   }
 
   function createConversation() {
-    const conversation = { id: `new-${Date.now()}`, title: 'New Chat', messages: [] }
+    const conversation = createBlankConversation()
     setConversations((current) => [conversation, ...current])
     setActiveId(conversation.id)
+  }
+
+  function renameConversation(id, title) {
+    const nextTitle = title.trim()
+    if (!nextTitle) return false
+    setConversations((current) => current.map((conversation) => conversation.id === id ? { ...conversation, title: nextTitle } : conversation))
+    return true
+  }
+
+  function deleteConversation(id) {
+    const index = conversations.findIndex((conversation) => conversation.id === id)
+    if (index === -1) return
+    const remaining = conversations.filter((conversation) => conversation.id !== id)
+    if (remaining.length === 0) {
+      const conversation = createBlankConversation()
+      setConversations([conversation])
+      setActiveId(conversation.id)
+      return
+    }
+    setConversations(remaining)
+    if (activeId === id) {
+      const nextConversation = remaining[index] ?? remaining[index - 1]
+      setActiveId(nextConversation.id)
+    }
   }
 
   function sendQuestion(text) {
@@ -30,5 +58,5 @@ export default function useChatPrototype() {
     return true
   }
 
-  return { conversations, activeConversation, selectConversation, createConversation, sendQuestion }
+  return { conversations, activeConversation, selectConversation, createConversation, renameConversation, deleteConversation, sendQuestion }
 }

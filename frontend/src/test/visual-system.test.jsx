@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
+import assistantBook from '../assets/figma/chat-assistant-book.svg'
 import Icon from '../components/ui/Icon.jsx'
 import PageHeading from '../components/ui/PageHeading.jsx'
 import StatusBadge from '../components/ui/StatusBadge.jsx'
@@ -7,7 +8,7 @@ import DashboardPage from '../pages/DashboardPage.jsx'
 import ChatPage from '../pages/ChatPage.jsx'
 import { renderApp } from './renderApp.jsx'
 
-const iconNames = ['menu', 'plus', 'send', 'chevronDown', 'eye', 'eyeOff', 'logout']
+const iconNames = ['menu', 'plus', 'send', 'chevronDown', 'eye', 'eyeOff', 'logout', 'more']
 
 describe('shared visual system', () => {
   it.each(iconNames)('renders the %s icon as a decorative 20px SVG', (name) => {
@@ -66,6 +67,16 @@ describe('shared visual system', () => {
     expect(screen.getByRole('button', { name: 'New Chat' }).querySelector('svg')).toHaveAttribute('width', '18')
     expect(screen.getByRole('button', { name: 'Send question' }).querySelector('svg')).toHaveAttribute('width', '20')
     expect(screen.getByText('Sources (1)').querySelector('svg')).toHaveAttribute('width', '16')
+  })
+
+  it('centers the assistant book inside its circular badge', () => {
+    const { container } = render(<ChatPage />)
+    const book = [...container.querySelectorAll('img')].find((image) => image.getAttribute('src') === assistantBook)
+
+    expect(book).toBeInTheDocument()
+    expect(book.parentElement).toHaveClass('grid')
+    expect(book.parentElement).toHaveClass('place-items-center')
+    expect(book.parentElement).not.toHaveClass('absolute')
   })
 
   it('wraps document row icons at 20px', () => {

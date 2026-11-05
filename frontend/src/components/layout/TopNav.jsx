@@ -59,10 +59,14 @@ export default function TopNav() {
           )}
         </div>
         <div className="relative" ref={profileRef}>
-          <button aria-expanded={profileOpen} aria-haspopup="menu" aria-label="Open profile menu" className="relative h-11 w-[62px] rounded-full text-heading" onClick={() => { setProfileOpen((open) => !open); setNavigationOpen(false) }} type="button">
-            <span className="absolute -left-[15px] -top-2"><img alt="" src={avatarBackground} /></span>
-            <span className="absolute left-0 top-1.5 w-8 text-center text-xl font-semibold">A</span>
-            <span className="absolute left-[42px] top-0.5"><img alt="" src={avatarChevron} /></span>
+          <button aria-expanded={profileOpen} aria-haspopup="menu" aria-label="Open profile menu" className="flex h-11 items-center gap-1 rounded-full text-heading" onClick={() => { setProfileOpen((open) => !open); setNavigationOpen(false) }} type="button">
+            <span className="relative grid size-9 shrink-0 place-items-center text-base font-semibold">
+              <img alt="" className="absolute inset-0 size-full" src={avatarBackground} />
+              <span className="relative">A</span>
+            </span>
+            <span className={`grid size-6 shrink-0 place-items-center transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''}`}>
+              <img alt="" className="size-full" src={avatarChevron} />
+            </span>
           </button>
           {profileOpen && <ProfileMenu onClose={() => setProfileOpen(false)} />}
         </div>

@@ -29,6 +29,24 @@ describe('DocMind application shell', () => {
     expect(screen.queryByText('aung@example.com')).not.toBeInTheDocument()
   })
 
+  it('uses a compact profile avatar and animates the menu open', async () => {
+    const user = userEvent.setup()
+    renderApp()
+
+    const trigger = screen.getByRole('button', { name: 'Open profile menu' })
+    const avatar = trigger.querySelector('span.size-9')
+    expect(avatar).toBeInTheDocument()
+    expect(avatar).toHaveTextContent('A')
+
+    const chevron = trigger.querySelector('.transition-transform')
+    expect(chevron).toBeInTheDocument()
+    expect(chevron).not.toHaveClass('rotate-180')
+
+    await user.click(trigger)
+    expect(chevron).toHaveClass('rotate-180')
+    expect(screen.getByRole('menu')).toHaveClass('menu-enter')
+  })
+
   it('navigates between primary screens', async () => {
     const user = userEvent.setup()
     renderApp()

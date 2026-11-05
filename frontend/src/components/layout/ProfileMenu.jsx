@@ -8,9 +8,9 @@ const menuRow = 'flex min-h-11 items-center gap-3 rounded-lg px-2.5 text-sm font
 
 export default function ProfileMenu({ onClose }) {
   return (
-    <div className="absolute right-0 top-16 z-50 flex w-72 flex-col rounded-xl border border-[#806ac9] bg-surface p-3 shadow-2xl" role="menu">
+    <div className="menu-enter absolute right-0 top-14 z-50 flex w-72 flex-col rounded-xl border border-[#806ac9] bg-surface p-3 shadow-2xl" role="menu">
       <div className="flex items-center gap-3 border-b border-border px-1 pb-3">
-        <span className="relative grid size-12 shrink-0 place-items-center text-lg font-semibold">
+        <span className="relative grid size-10 shrink-0 place-items-center text-base font-semibold">
           <img alt="" className="absolute inset-0 size-full" src={profileAvatar} />
           <span className="relative">A</span>
         </span>

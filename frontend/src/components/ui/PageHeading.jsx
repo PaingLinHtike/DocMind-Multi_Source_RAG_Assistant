@@ -1,3 +1,8 @@
 export default function PageHeading({ title, subtitle }) {
-  return <header><h1 className="text-3xl font-bold tracking-tight text-heading sm:text-[42px]">{title}</h1>{subtitle && <p className="mt-2 text-sm text-muted sm:text-[17px]">{subtitle}</p>}</header>
+  return (
+    <header>
+      <h1 className="text-3xl font-bold leading-tight tracking-tight text-heading max-sm:text-2xl">{title}</h1>
+      {subtitle && <p className="mt-2 text-base leading-relaxed text-muted">{subtitle}</p>}
+    </header>
+  )
 }

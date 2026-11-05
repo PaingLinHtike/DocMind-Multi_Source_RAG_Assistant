@@ -11,13 +11,13 @@ export default function DocumentsPage() {
     <section className="mx-auto w-full max-w-[1296px] px-6 pb-12 pt-[41px] lg:px-0">
       <PageHeading title="Documents" subtitle="Manage your uploaded files and knowledge sources." />
 
-      <div className="mt-[33px] flex flex-col gap-5 sm:flex-row">
+      <div className="mt-[49px] flex flex-col gap-5 sm:flex-row">
         <label className="flex h-[61px] min-w-0 flex-1 items-center rounded-[11px] border border-border bg-[#202a47] px-4">
           <span className="mr-3"><img alt="" src={searchIcon} /></span>
           <span className="sr-only">Search documents</span>
           <input className="min-w-0 flex-1 bg-transparent text-heading outline-none placeholder:text-muted" onChange={(event) => setQuery(event.target.value)} placeholder="Search documents..." value={query} />
         </label>
-        <Link className="grid h-[61px] shrink-0 place-items-center rounded-[13px] border border-[#866aff] bg-[#5932d2] px-8 text-lg font-semibold text-heading no-underline sm:w-[223px]" to="/upload">+ Upload Document</Link>
+        <Link className="grid h-[61px] shrink-0 place-items-center whitespace-nowrap rounded-[13px] border border-[#866aff] bg-[#5932d2] px-4 text-lg font-semibold text-heading no-underline sm:w-[223px]" to="/upload">+ Upload Document</Link>
       </div>
 
       <div className="mt-8 overflow-x-auto">

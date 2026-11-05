@@ -14,7 +14,7 @@ export default function SettingsPage() {
     <section className="mx-auto w-full max-w-[1290px] px-6 pb-12 pt-[41px] lg:px-0">
       <PageHeading title="Settings" subtitle="Manage your account information and security settings." />
 
-      <div className="mt-[66px] min-h-[397px] rounded-[17px] border border-border bg-surface px-6 py-7 sm:px-8 lg:px-11">
+      <div className="mt-[87px] min-h-[397px] rounded-[17px] border border-border bg-surface px-6 py-7 sm:px-8 lg:px-11">
         <h2 className="text-3xl font-semibold">Account</h2>
         <p className="mt-2 text-[17px] text-muted">Update your account information and security settings.</p>
 

@@ -21,7 +21,7 @@ export default function DocumentActions({ document, onClose, onView, onDownload,
   }
 
   return (
-    <div className="absolute right-0 top-[58px] z-40 w-[238px] rounded-[15px] border border-[#7861bf] bg-surface p-2 shadow-2xl" role="menu">
+    <div className="absolute right-0 top-[61px] z-40 w-[238px] rounded-[15px] border border-[#7861bf] bg-surface p-2 shadow-2xl" role="menu">
       {actions.map((action) => (
         <button
           className={`flex h-[57px] w-full items-center gap-4 border-b border-border px-3 text-left text-[17px] last:border-0 ${action.danger ? 'rounded-[10px] bg-[#482c43] text-[#f26a7c]' : 'text-heading hover:bg-white/5'}`}

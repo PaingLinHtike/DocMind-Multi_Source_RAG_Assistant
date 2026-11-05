@@ -50,10 +50,10 @@ export default function UploadPage() {
     <section className="mx-auto w-full max-w-[1278px] px-6 pb-12 pt-[42px] lg:px-0">
       <header className="text-center">
         <h1 className="text-4xl font-bold text-heading sm:text-[46px]">Upload Document</h1>
-        <p className="mt-3 text-base text-muted sm:text-[19px]">Add knowledge files for DocMind to read, understand, and answer questions from.</p>
+        <p className="mt-7 text-base text-muted sm:text-[19px]">Add knowledge files for DocMind to read, understand, and answer questions from.</p>
       </header>
 
-      <div className="mt-[58px] grid gap-[38px] xl:grid-cols-[845px_402px]">
+      <div className="mt-[78px] grid gap-[38px] xl:grid-cols-[845px_402px]">
         <div className="min-h-[411px] rounded-[17px] border border-border bg-surface p-[34px]">
           <div
             className={`flex min-h-[340px] flex-col items-center justify-center rounded-[18px] border px-6 text-center transition ${dragActive ? 'border-[#a66cff] bg-[#a66cff]/10' : 'border-[#7a68b3]'}`}

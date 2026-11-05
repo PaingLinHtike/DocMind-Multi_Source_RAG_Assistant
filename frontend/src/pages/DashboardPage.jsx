@@ -11,7 +11,7 @@ export default function DashboardPage() {
     <section className="mx-auto w-full max-w-[1290px] px-6 pb-10 pt-[41px] lg:px-0">
       <PageHeading title="Good morning, Aung 👋" subtitle="Your AI document assistant for asking questions and finding answers from your knowledge." />
 
-      <div className="mt-[47px] grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-[63px] grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {dashboardMetrics.map((metric) => (
           <article className="flex h-[124px] flex-col justify-between rounded-[17px] border border-border bg-surface px-7 py-5" key={metric.label}>
             <p className="text-lg font-medium text-muted">{metric.label}</p>

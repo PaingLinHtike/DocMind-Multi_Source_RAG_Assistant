@@ -61,7 +61,7 @@ export default function DocumentDetailsPage() {
     <section className="mx-auto w-full max-w-[1290px] px-6 pb-12 pt-[47px] lg:px-0">
       <nav aria-label="Breadcrumb" className="text-[17px] text-muted"><Link className="text-muted no-underline" to="/documents">Documents</Link><span className="mx-3">›</span><span>{activeDocument.name}</span></nav>
 
-      <div className="mt-[35px] flex flex-col justify-between gap-7 sm:flex-row sm:items-center">
+      <div className="mt-[58px] flex flex-col justify-between gap-7 sm:flex-row sm:items-center">
         <div className="flex items-center gap-6">
           <div className="grid h-[100px] w-[95px] shrink-0 place-items-center rounded-2xl bg-surface"><img alt="" src={pdfIcon} /></div>
           <div>
@@ -91,9 +91,9 @@ export default function DocumentDetailsPage() {
 
       {feedback && <p aria-live="polite" className="mt-4 rounded-lg border border-border bg-surface px-4 py-3 text-sm text-heading">{feedback}</p>}
 
-      <div className="mt-[59px]"><h2 className="text-[23px] font-semibold">Overview</h2><div className="mt-3 h-1 w-[171px] bg-[#a66cff]" /></div>
+      <div className="mt-[55px]"><h2 className="text-[23px] font-semibold">Overview</h2><div className="mt-3 h-1 w-[171px] bg-[#a66cff]" /></div>
 
-      <dl className="mt-[52px] grid min-h-[114px] gap-7 rounded-[17px] border border-border bg-surface px-5 py-6 sm:grid-cols-2 lg:grid-cols-[0.8fr_0.8fr_0.75fr_0.7fr_1.4fr] lg:px-[30px]">
+      <dl className="mt-[58px] grid min-h-[160px] gap-7 rounded-[17px] border border-border bg-surface px-5 py-6 sm:grid-cols-2 lg:grid-cols-[0.8fr_0.8fr_0.75fr_0.7fr_1.4fr] lg:px-[30px]">
         {[
           ['Type', activeDocument.type],
           ['Chunks', activeDocument.chunks],

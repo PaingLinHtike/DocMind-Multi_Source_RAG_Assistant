@@ -29,12 +29,12 @@ describe('DocMind application shell', () => {
     expect(screen.queryByText('aung@example.com')).not.toBeInTheDocument()
   })
 
-  it('navigates between primary placeholder screens', async () => {
+  it('navigates between primary screens', async () => {
     const user = userEvent.setup()
     renderApp()
 
     await user.click(screen.getByRole('link', { name: 'Chat' }))
-    expect(screen.getByRole('heading', { name: 'Chat' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Annual leave policy' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('link', { name: 'Documents' }))
     expect(screen.getByRole('heading', { name: 'Documents' })).toBeInTheDocument()

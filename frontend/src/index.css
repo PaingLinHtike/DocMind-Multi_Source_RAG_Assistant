@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+  --color-canvas: #0c1429;
+  --color-surface: #19223a;
+  --color-border: #384565;
+  --color-primary: #4931a6;
+  --color-primary-border: #765cf1;
+  --color-success: #13a88d;
+  --color-heading: #f8fafc;
+  --color-muted: #b6bed7;
+}
+
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #f8fafc;
+  background: #0c1429;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* { box-sizing: border-box; }
+html { min-width: 320px; background: #0c1429; }
+body { min-width: 320px; min-height: 100vh; margin: 0; overflow-x: hidden; }
+button, input { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid #8f7cff; outline-offset: 3px; }
+
+.ambient-canvas::before,
+.ambient-canvas::after {
+  position: fixed;
+  z-index: 0;
+  border-radius: 9999px;
+  content: "";
+  pointer-events: none;
+  filter: blur(90px);
+}
+.ambient-canvas::before { width: 360px; height: 330px; right: -80px; top: -95px; background: rgb(14 171 164 / 22%); }
+.ambient-canvas::after { width: 350px; height: 280px; left: -180px; bottom: -150px; background: rgb(111 72 205 / 24%); }

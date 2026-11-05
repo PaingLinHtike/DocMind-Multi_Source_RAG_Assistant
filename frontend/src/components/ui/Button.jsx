@@ -1,0 +1,2 @@
+const variants = { primary: 'border-primary-border bg-primary text-heading hover:bg-[#5a43be]', secondary: 'border-border bg-surface text-heading hover:bg-white/5', ghost: 'border-transparent bg-transparent text-heading hover:bg-white/5' }
+export default function Button({ className = '', variant = 'primary', ...props }) { return <button className={`rounded-full border px-6 py-3 font-semibold transition ${variants[variant]} ${className}`} {...props} /> }

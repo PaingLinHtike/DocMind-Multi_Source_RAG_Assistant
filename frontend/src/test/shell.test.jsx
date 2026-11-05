@@ -9,6 +9,8 @@ describe('DocMind application shell', () => {
 
     expect(screen.getByText('DocMind')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/dashboard')
+    expect(screen.getByRole('link', { name: 'DocMind' })).toHaveAttribute('href', '/dashboard')
     expect(screen.getByRole('link', { name: 'Chat' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Documents' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Open profile menu' })).toBeInTheDocument()

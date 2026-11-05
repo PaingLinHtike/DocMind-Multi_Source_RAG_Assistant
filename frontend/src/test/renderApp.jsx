@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import App from '../App.jsx'
-import { AUTH_SESSION_KEY } from '../auth/AuthSession.jsx'
+import { AUTH_SESSION_KEY } from '../auth/authSessionStore.js'
 
 export function renderApp({ route = '/dashboard', authenticated = true, preserveSession = false } = {}) {
   if (!preserveSession) {

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { validateCredentials } from '../auth/auth.js'
-import { useAuth } from '../auth/AuthSession.jsx'
+import { useAuth } from '../auth/authSessionStore.js'
 import AuthField from '../components/auth/AuthField.jsx'
 import AuthLayout from '../components/auth/AuthLayout.jsx'
 import Icon from '../components/ui/Icon.jsx'

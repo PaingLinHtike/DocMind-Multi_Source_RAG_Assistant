@@ -6,7 +6,7 @@ import docMindIcon from '../../assets/figma/docmind-icon.svg'
 import Icon from '../ui/Icon.jsx'
 import ProfileMenu from './ProfileMenu.jsx'
 
-const navItems = [{ label: 'Dashboard', to: '/' }, { label: 'Chat', to: '/chat' }, { label: 'Documents', to: '/documents' }]
+const navItems = [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Chat', to: '/chat' }, { label: 'Documents', to: '/documents' }]
 
 const desktopLink = ({ isActive }) => `inline-flex h-11 items-center rounded-lg px-4 text-sm font-medium no-underline transition-colors ${isActive ? 'bg-primary text-heading' : 'text-muted hover:bg-white/5 hover:text-heading'}`
 
@@ -38,9 +38,9 @@ export default function TopNav() {
   return (
     <header className="h-20 px-5 sm:px-8 lg:px-12">
       <div className="relative mx-auto flex h-full max-w-[1344px] items-center justify-between">
-        <NavLink className="flex min-h-11 items-center gap-2.5 text-xl font-bold text-heading no-underline sm:text-2xl" to="/"><img alt="" src={docMindIcon} /><span>DocMind</span></NavLink>
+        <NavLink className="flex min-h-11 items-center gap-2.5 text-xl font-bold text-heading no-underline sm:text-2xl" to="/dashboard"><img alt="" src={docMindIcon} /><span>DocMind</span></NavLink>
         <nav aria-label="Primary navigation" className="hidden items-center gap-1 sm:flex">
-          {navItems.map((item) => <NavLink className={desktopLink} end={item.to === '/'} key={item.to} to={item.to}>{item.label}</NavLink>)}
+          {navItems.map((item) => <NavLink className={desktopLink} end={item.to === '/dashboard'} key={item.to} to={item.to}>{item.label}</NavLink>)}
         </nav>
         <div className="relative ml-auto mr-3 sm:hidden" ref={navigationRef}>
           <button
@@ -54,7 +54,7 @@ export default function TopNav() {
           </button>
           {navigationOpen && (
             <nav aria-label="Mobile navigation" className="absolute right-0 top-14 z-50 w-52 rounded-xl border border-border bg-surface p-1.5 shadow-2xl">
-              {navItems.map((item) => <NavLink className={mobileLink} end={item.to === '/'} key={item.to} onClick={() => setNavigationOpen(false)} to={item.to}>{item.label}</NavLink>)}
+              {navItems.map((item) => <NavLink className={mobileLink} end={item.to === '/dashboard'} key={item.to} onClick={() => setNavigationOpen(false)} to={item.to}>{item.label}</NavLink>)}
             </nav>
           )}
         </div>

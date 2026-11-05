@@ -55,4 +55,19 @@ describe('authentication session routing', () => {
 
     expect(screen.getByRole('heading', { name: 'Good morning, Aung' })).toBeInTheDocument()
   })
+
+  it('logs out from a protected route and keeps that route inaccessible', async () => {
+    const user = userEvent.setup()
+    const authenticatedRender = renderApp({ route: '/documents', authenticated: true })
+    await user.click(screen.getByRole('button', { name: 'Open profile menu' }))
+    await user.click(screen.getByRole('button', { name: 'Log Out' }))
+
+    expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
+    expect(window.sessionStorage.getItem(sessionKey)).toBeNull()
+    authenticatedRender.unmount()
+
+    renderApp({ route: '/documents', preserveSession: true })
+
+    expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
+  })
 })

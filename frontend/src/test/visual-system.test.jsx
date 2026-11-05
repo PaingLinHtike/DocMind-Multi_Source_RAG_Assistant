@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import Icon from '../components/ui/Icon.jsx'
 import PageHeading from '../components/ui/PageHeading.jsx'
 import StatusBadge from '../components/ui/StatusBadge.jsx'
+import DashboardPage from '../pages/DashboardPage.jsx'
 
 const iconNames = ['menu', 'plus', 'send', 'chevronDown', 'eye', 'eyeOff', 'logout']
 
@@ -45,5 +46,14 @@ describe('shared visual system', () => {
     expect(badge).toHaveClass('font-medium')
     expect(badge).toHaveClass('min-h-6')
     expect(badge).toHaveClass('rounded-md')
+  })
+
+  it('uses the dashboard typographic hierarchy', () => {
+    render(<DashboardPage />)
+
+    expect(screen.getByText('Documents')).toHaveClass('text-sm')
+    expect(screen.getByText('12')).toHaveClass('text-3xl')
+    expect(screen.getByRole('heading', { name: 'Chat Activity' })).toHaveClass('text-xl')
+    expect(screen.getByRole('heading', { name: 'Recent Chats' })).toHaveClass('text-xl')
   })
 })

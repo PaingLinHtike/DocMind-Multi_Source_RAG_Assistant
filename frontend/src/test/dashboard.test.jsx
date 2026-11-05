@@ -7,7 +7,8 @@ describe('Dashboard', () => {
   it('shows the Figma metrics, chart labels, and recent chats', () => {
     renderApp()
 
-    expect(screen.getByRole('heading', { name: 'Good morning, Aung 👋' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Good morning, Aung' })).toBeInTheDocument()
+    expect(screen.queryByText(/👋/)).not.toBeInTheDocument()
     expect(screen.getByText('Your AI document assistant for asking questions and finding answers from your knowledge.')).toBeInTheDocument()
     for (const value of ['12', '28', '146', '82 MB', '↑ +20%', '↑ +17%', '↑ +32%']) {
       expect(screen.getByText(value)).toBeInTheDocument()

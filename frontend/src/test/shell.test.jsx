@@ -45,6 +45,7 @@ describe('DocMind application shell', () => {
     renderApp()
 
     const trigger = screen.getByRole('button', { name: 'Open navigation' })
+    expect(trigger.querySelector('svg')).toBeInTheDocument()
     await user.click(trigger)
     const mobileNav = screen.getByRole('navigation', { name: 'Mobile navigation' })
     expect(mobileNav).toBeInTheDocument()

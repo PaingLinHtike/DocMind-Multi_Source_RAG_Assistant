@@ -3,9 +3,14 @@ import { NavLink } from 'react-router-dom'
 import avatarBackground from '../../assets/figma/avatar-background.svg'
 import avatarChevron from '../../assets/figma/avatar-chevron.svg'
 import docMindIcon from '../../assets/figma/docmind-icon.svg'
+import Icon from '../ui/Icon.jsx'
 import ProfileMenu from './ProfileMenu.jsx'
 
 const navItems = [{ label: 'Dashboard', to: '/' }, { label: 'Chat', to: '/chat' }, { label: 'Documents', to: '/documents' }]
+
+const desktopLink = ({ isActive }) => `inline-flex h-11 items-center rounded-lg px-4 text-sm font-medium no-underline transition-colors ${isActive ? 'bg-primary text-heading' : 'text-muted hover:bg-white/5 hover:text-heading'}`
+
+const mobileLink = ({ isActive }) => `flex min-h-11 items-center rounded-lg px-3 text-sm font-medium no-underline transition-colors ${isActive ? 'bg-primary text-heading' : 'text-muted hover:bg-white/5 hover:text-heading'}`
 
 export default function TopNav() {
   const [profileOpen, setProfileOpen] = useState(false)
@@ -31,25 +36,25 @@ export default function TopNav() {
     }
   }, [])
   return (
-    <header className="h-[78px] px-5 sm:px-8 lg:px-12">
+    <header className="h-20 px-5 sm:px-8 lg:px-12">
       <div className="relative mx-auto flex h-full max-w-[1344px] items-center justify-between">
-        <NavLink className="flex items-center gap-2.5 text-xl font-bold text-heading no-underline sm:text-[26px]" to="/"><img alt="" src={docMindIcon} /><span>DocMind</span></NavLink>
-        <nav aria-label="Primary navigation" className="hidden items-center gap-3 sm:flex">
-          {navItems.map((item) => <NavLink className={({ isActive }) => `rounded-full px-6 py-2.5 text-sm font-medium text-heading no-underline transition ${isActive ? 'border border-primary-border bg-primary' : 'border border-transparent hover:bg-white/5'}`} end={item.to === '/'} key={item.to} to={item.to}>{item.label}</NavLink>)}
+        <NavLink className="flex items-center gap-2.5 text-xl font-bold text-heading no-underline sm:text-2xl" to="/"><img alt="" src={docMindIcon} /><span>DocMind</span></NavLink>
+        <nav aria-label="Primary navigation" className="hidden items-center gap-1 sm:flex">
+          {navItems.map((item) => <NavLink className={desktopLink} end={item.to === '/'} key={item.to} to={item.to}>{item.label}</NavLink>)}
         </nav>
         <div className="relative ml-auto mr-3 sm:hidden" ref={navigationRef}>
           <button
             aria-expanded={navigationOpen}
             aria-label="Open navigation"
-            className="grid size-11 place-items-center rounded-full border border-border bg-surface"
+            className="grid size-11 place-items-center rounded-lg border border-border bg-surface text-heading transition-colors hover:bg-white/5"
             onClick={() => { setNavigationOpen((open) => !open); setProfileOpen(false) }}
             type="button"
           >
-            <span aria-hidden="true" className="grid gap-1"><span className="block h-0.5 w-5 bg-heading" /><span className="block h-0.5 w-5 bg-heading" /><span className="block h-0.5 w-5 bg-heading" /></span>
+            <Icon name="menu" size={20} />
           </button>
           {navigationOpen && (
-            <nav aria-label="Mobile navigation" className="absolute right-0 top-[54px] z-50 w-52 rounded-2xl border border-border bg-surface p-2 shadow-2xl">
-              {navItems.map((item) => <NavLink className={({ isActive }) => `block rounded-xl px-4 py-3 text-heading no-underline ${isActive ? 'bg-primary' : 'hover:bg-white/5'}`} end={item.to === '/'} key={item.to} onClick={() => setNavigationOpen(false)} to={item.to}>{item.label}</NavLink>)}
+            <nav aria-label="Mobile navigation" className="absolute right-0 top-14 z-50 w-52 rounded-xl border border-border bg-surface p-1.5 shadow-2xl">
+              {navItems.map((item) => <NavLink className={mobileLink} end={item.to === '/'} key={item.to} onClick={() => setNavigationOpen(false)} to={item.to}>{item.label}</NavLink>)}
             </nav>
           )}
         </div>

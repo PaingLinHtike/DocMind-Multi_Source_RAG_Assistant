@@ -6,7 +6,7 @@ import { renderApp } from './renderApp.jsx'
 describe('Sign In', () => {
   it('reports missing and incorrect credentials without clearing the form or navigating', async () => {
     const user = userEvent.setup()
-    renderApp({ route: '/signin' })
+    renderApp({ route: '/signin', authenticated: false })
 
     await user.click(screen.getByRole('button', { name: 'Sign In' }))
     expect(screen.getByRole('alert')).toHaveTextContent('Enter your email and password.')
@@ -25,7 +25,7 @@ describe('Sign In', () => {
 
   it('toggles password visibility and Remember me without changing the password', async () => {
     const user = userEvent.setup()
-    renderApp({ route: '/signin' })
+    renderApp({ route: '/signin', authenticated: false })
 
     const password = screen.getByLabelText('Password')
     const remember = screen.getByRole('checkbox', { name: 'Remember me' })
@@ -44,7 +44,7 @@ describe('Sign In', () => {
 
   it('normalizes the email and navigates to the Dashboard with the exact dummy password', async () => {
     const user = userEvent.setup()
-    renderApp({ route: '/signin' })
+    renderApp({ route: '/signin', authenticated: false })
 
     await user.type(screen.getByLabelText('Email'), '  USER@GMAIL.COM ')
     await user.type(screen.getByLabelText('Password'), 'userUSER1234@@')
@@ -55,7 +55,7 @@ describe('Sign In', () => {
   })
 
   it('announces successful account creation passed through route state', () => {
-    renderApp({ route: { pathname: '/signin', state: { signupComplete: true } } })
+    renderApp({ route: { pathname: '/signin', state: { signupComplete: true } }, authenticated: false })
 
     expect(screen.getByRole('status')).toHaveTextContent('Sign-up complete. This demo does not create accounts; use the demo credentials to sign in.')
   })

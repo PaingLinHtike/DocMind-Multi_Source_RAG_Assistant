@@ -14,7 +14,7 @@ async function fillValidIdentity(user, password) {
 describe('Sign Up', () => {
   it('reports required and malformed fields while retaining entered values', async () => {
     const user = userEvent.setup()
-    renderApp({ route: '/signup' })
+    renderApp({ route: '/signup', authenticated: false })
 
     await user.click(screen.getByRole('button', { name: 'Create Account' }))
     expect(screen.getByText('Enter your full name.')).toBeInTheDocument()
@@ -56,7 +56,7 @@ describe('Sign Up', () => {
     ['no symbol', 'Aa11aaaa'],
   ])('rejects a password with %s', async (_case, invalidPassword) => {
     const user = userEvent.setup()
-    renderApp({ route: '/signup' })
+    renderApp({ route: '/signup', authenticated: false })
     await fillValidIdentity(user, invalidPassword)
 
     await user.click(screen.getByRole('button', { name: 'Create Account' }))
@@ -67,7 +67,7 @@ describe('Sign Up', () => {
 
   it('toggles both password fields independently without changing their values', async () => {
     const user = userEvent.setup()
-    renderApp({ route: '/signup' })
+    renderApp({ route: '/signup', authenticated: false })
     const password = screen.getByLabelText('Password')
     const confirmation = screen.getByLabelText('Confirm Password')
     await user.type(password, 'Aa1!aaaa')
@@ -85,7 +85,7 @@ describe('Sign Up', () => {
 
   it('accepts an eight-character compliant password and redirects with success feedback', async () => {
     const user = userEvent.setup()
-    renderApp({ route: '/signup' })
+    renderApp({ route: '/signup', authenticated: false })
     await fillValidIdentity(user, 'Aa1!aaaa')
 
     await user.click(screen.getByRole('button', { name: 'Create Account' }))

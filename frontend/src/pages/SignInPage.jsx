@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { validateCredentials } from '../auth/auth.js'
+import { useAuth } from '../auth/AuthSession.jsx'
 import AuthField from '../components/auth/AuthField.jsx'
 import AuthLayout from '../components/auth/AuthLayout.jsx'
 import Icon from '../components/ui/Icon.jsx'
@@ -8,6 +9,7 @@ import Icon from '../components/ui/Icon.jsx'
 export default function SignInPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordVisible, setPasswordVisible] = useState(false)
@@ -23,7 +25,8 @@ export default function SignInPage() {
       setError('Email or password is incorrect.')
       return
     }
-    navigate('/')
+    login()
+    navigate('/dashboard', { replace: true })
   }
 
   const passwordToggle = (

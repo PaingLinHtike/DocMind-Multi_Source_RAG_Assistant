@@ -116,7 +116,7 @@ describe('shared visual system', () => {
   })
 
   it('keeps Sign In controls, typography, and password icon accessible', () => {
-    renderApp({ route: '/signin' })
+    renderApp({ route: '/signin', authenticated: false })
 
     expect(screen.getByRole('heading', { name: 'Welcome back' })).toHaveClass('text-3xl', 'sm:text-4xl')
     expect(screen.getByText('Sign in to access your AI document workspace.')).toHaveClass('text-base', 'sm:text-lg')
@@ -131,7 +131,7 @@ describe('shared visual system', () => {
   })
 
   it('keeps Sign Up responsive, touch-friendly, and decorative artwork silent', () => {
-    const { container } = renderApp({ route: '/signup' })
+    const { container } = renderApp({ route: '/signup', authenticated: false })
     const authCard = screen.getByRole('region', { name: 'Create account workspace' })
 
     expect(authCard).toHaveClass('grid-cols-1', 'lg:grid-cols-[1.4fr_1fr]')

@@ -5,7 +5,7 @@ import { renderApp } from './renderApp.jsx'
 
 describe('authentication routes', () => {
   it('renders the standalone Sign In screen with its reference content', () => {
-    const { container } = renderApp({ route: '/signin' })
+    const { container } = renderApp({ route: '/signin', authenticated: false })
 
     expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
     expect(screen.getByText('Sign in to access your AI document workspace.')).toBeInTheDocument()
@@ -28,7 +28,7 @@ describe('authentication routes', () => {
   })
 
   it('renders the standalone Sign Up screen with its reference content', () => {
-    renderApp({ route: '/signup' })
+    renderApp({ route: '/signup', authenticated: false })
 
     expect(screen.getByRole('heading', { name: 'Create your account' })).toBeInTheDocument()
     expect(screen.getByText('Start building your private AI knowledge workspace.')).toBeInTheDocument()

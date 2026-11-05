@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout.jsx'
+import DashboardPage from './pages/DashboardPage.jsx'
 
 function PlaceholderPage({ title }) {
   return (
@@ -13,7 +14,7 @@ export default function App() {
   return (
     <Routes>
       <Route element={<AppLayout />}>
-        <Route index element={<PlaceholderPage title="Dashboard" />} />
+        <Route index element={<DashboardPage />} />
         <Route path="chat" element={<PlaceholderPage title="Chat" />} />
         <Route path="documents" element={<PlaceholderPage title="Documents" />} />
         <Route path="documents/:documentId" element={<PlaceholderPage title="Document details" />} />

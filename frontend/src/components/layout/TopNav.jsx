@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import ProfileMenu from './ProfileMenu.jsx'
 
@@ -6,10 +6,18 @@ const navItems = [{ label: 'Dashboard', to: '/' }, { label: 'Chat', to: '/chat' 
 
 export default function TopNav() {
   const [profileOpen, setProfileOpen] = useState(false)
+  const profileRef = useRef(null)
   useEffect(() => {
     const closeOnEscape = (event) => event.key === 'Escape' && setProfileOpen(false)
+    const closeOnOutsideClick = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) setProfileOpen(false)
+    }
     document.addEventListener('keydown', closeOnEscape)
-    return () => document.removeEventListener('keydown', closeOnEscape)
+    document.addEventListener('pointerdown', closeOnOutsideClick)
+    return () => {
+      document.removeEventListener('keydown', closeOnEscape)
+      document.removeEventListener('pointerdown', closeOnOutsideClick)
+    }
   }, [])
   return (
     <header className="h-[78px] px-5 sm:px-8 lg:px-12">
@@ -18,7 +26,7 @@ export default function TopNav() {
         <nav aria-label="Primary navigation" className="hidden items-center gap-3 sm:flex">
           {navItems.map((item) => <NavLink className={({ isActive }) => `rounded-full px-6 py-2.5 text-sm font-medium text-heading no-underline transition ${isActive ? 'border border-primary-border bg-primary' : 'border border-transparent hover:bg-white/5'}`} end={item.to === '/'} key={item.to} to={item.to}>{item.label}</NavLink>)}
         </nav>
-        <div className="relative">
+        <div className="relative" ref={profileRef}>
           <button aria-expanded={profileOpen} aria-haspopup="menu" aria-label="Open profile menu" className="flex items-center gap-2 rounded-full text-heading" onClick={() => setProfileOpen((open) => !open)} type="button"><span className="grid size-11 place-items-center rounded-full bg-[#6555ee] text-xl font-semibold">A</span><span aria-hidden="true" className="text-muted">⌄</span></button>
           {profileOpen && <ProfileMenu onClose={() => setProfileOpen(false)} />}
         </div>

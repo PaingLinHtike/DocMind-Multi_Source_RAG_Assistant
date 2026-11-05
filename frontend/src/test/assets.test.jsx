@@ -7,7 +7,6 @@ import actionExternal from '../assets/figma/action-external.svg'
 import actionRefresh from '../assets/figma/action-refresh.svg'
 import actionTrash from '../assets/figma/action-trash.svg'
 import actionsChevron from '../assets/figma/actions-chevron.svg'
-import attach from '../assets/figma/attach.svg'
 import avatarBackground from '../assets/figma/avatar-background.svg'
 import avatarChevron from '../assets/figma/avatar-chevron.svg'
 import assistantBook from '../assets/figma/chat-assistant-book.svg'
@@ -70,7 +69,6 @@ describe('local Figma assets', () => {
       ['assistant book', assistantBook],
       ['source file', sourceFile],
       ['source open', sourceOpen],
-      ['attachment icon', attach],
     ])
   })
 

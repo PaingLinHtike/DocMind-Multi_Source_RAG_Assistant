@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
+import attachIcon from '../assets/figma/attach.svg'
 import assistantBook from '../assets/figma/chat-assistant-book.svg'
 import Icon from '../components/ui/Icon.jsx'
 import PageHeading from '../components/ui/PageHeading.jsx'
@@ -67,6 +68,16 @@ describe('shared visual system', () => {
     expect(screen.getByRole('button', { name: 'New Chat' }).querySelector('svg')).toHaveAttribute('width', '18')
     expect(screen.getByRole('button', { name: 'Send question' }).querySelector('svg')).toHaveAttribute('width', '20')
     expect(screen.getByText('Sources (1)').querySelector('svg')).toHaveAttribute('width', '16')
+  })
+
+  it('keeps the chat composer free of attachment controls', () => {
+    const { container } = render(<ChatPage />)
+    const attachment = [...container.querySelectorAll('img')].find((image) => image.getAttribute('src') === attachIcon)
+    const input = screen.getByPlaceholderText('Ask a question about your documents...')
+
+    expect(attachment).toBeUndefined()
+    expect(input).toHaveClass('chat-input')
+    expect(input.closest('form')).toHaveClass('chat-composer')
   })
 
   it('centers the assistant book inside its circular badge', () => {

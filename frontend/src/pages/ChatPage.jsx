@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import actionEdit from '../assets/figma/action-edit.svg'
 import actionTrash from '../assets/figma/action-trash.svg'
-import attachIcon from '../assets/figma/attach.svg'
 import assistantBook from '../assets/figma/chat-assistant-book.svg'
 import assistantCircle from '../assets/figma/chat-assistant-circle.svg'
 import conversationIcon from '../assets/figma/chat-conversation.svg'
@@ -178,9 +177,8 @@ export default function ChatPage() {
             </div>
           ))}
         </div>
-        <form className="flex min-h-14 items-center rounded-xl border border-border bg-[#202a47] p-1.5" onSubmit={handleSubmit}>
-          <span className="ml-1 grid size-5 shrink-0 place-items-center"><img alt="" className="size-full" src={attachIcon} /></span>
-          <input className="min-h-11 min-w-0 flex-1 bg-transparent px-3 text-base text-heading outline-none placeholder:text-muted" onChange={(event) => setQuestion(event.target.value)} placeholder="Ask a question about your documents..." value={question} />
+        <form className="chat-composer flex min-h-14 items-center rounded-xl border border-border bg-[#202a47] p-1.5 transition-colors focus-within:border-primary-border" onSubmit={handleSubmit}>
+          <input className="chat-input min-h-11 min-w-0 flex-1 bg-transparent px-3 text-base text-heading outline-none placeholder:text-muted" onChange={(event) => setQuestion(event.target.value)} placeholder="Ask a question about your documents..." value={question} />
           <button aria-label="Send question" className="grid size-11 shrink-0 place-items-center rounded-lg border border-primary-border bg-primary text-heading transition-colors hover:bg-primary/90" type="submit">
             <Icon name="send" size={20} />
           </button>

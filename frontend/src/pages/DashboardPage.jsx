@@ -1,5 +1,6 @@
 import PageHeading from '../components/ui/PageHeading.jsx'
 import StatusBadge from '../components/ui/StatusBadge.jsx'
+import dashboardChat from '../assets/figma/dashboard-chat.svg'
 import { dashboardMetrics, recentChats } from '../data/mockData.js'
 
 const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -39,7 +40,7 @@ export default function DashboardPage() {
           <div className="mt-8 divide-y divide-border">
             {recentChats.map((chat) => (
               <div className="flex gap-4 py-3 first:pt-0" key={chat.id}>
-                <span aria-hidden="true" className="mt-1 text-primary-border">◔</span>
+                <img alt="" className="mt-1" src={dashboardChat} />
                 <div><p className="text-base text-heading">{chat.title}</p><p className="mt-1 text-xs text-muted">{chat.time}</p></div>
               </div>
             ))}

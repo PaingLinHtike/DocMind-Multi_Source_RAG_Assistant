@@ -1,9 +1,15 @@
+import actionDownload from '../../assets/figma/action-download.svg'
+import actionEdit from '../../assets/figma/action-edit.svg'
+import actionExternal from '../../assets/figma/action-external.svg'
+import actionRefresh from '../../assets/figma/action-refresh.svg'
+import actionTrash from '../../assets/figma/action-trash.svg'
+
 const actions = [
-  { label: 'View Original', icon: '↗', handler: 'onView' },
-  { label: 'Download', icon: '⇩', handler: 'onDownload' },
-  { label: 'Reindex', icon: '↻', handler: 'onReindex' },
-  { label: 'Rename', icon: '⌕', handler: 'onRename' },
-  { label: 'Delete', icon: '♧', handler: 'onDelete', danger: true },
+  { label: 'View Original', icon: actionExternal, handler: 'onView' },
+  { label: 'Download', icon: actionDownload, handler: 'onDownload' },
+  { label: 'Reindex', icon: actionRefresh, handler: 'onReindex' },
+  { label: 'Rename', icon: actionEdit, handler: 'onRename' },
+  { label: 'Delete', icon: actionTrash, handler: 'onDelete', danger: true },
 ]
 
 export default function DocumentActions({ document, onClose, onView, onDownload, onReindex, onRename, onDelete }) {
@@ -23,7 +29,7 @@ export default function DocumentActions({ document, onClose, onView, onDownload,
           onClick={() => run(action.handler)}
           type="button"
         >
-          <span aria-hidden="true" className="w-5 text-center">{action.icon}</span>
+          <span className="w-6"><img alt="" src={action.icon} /></span>
           <span>{action.label}</span>
         </button>
       ))}

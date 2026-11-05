@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import uploadArrow from '../assets/figma/upload-arrow.svg'
+import uploadFileDocx from '../assets/figma/upload-file-docx.svg'
+import uploadFilePdf from '../assets/figma/upload-file-pdf.svg'
 import useDocumentsPrototype from '../hooks/useDocumentsPrototype.js'
 
 const initialUploads = [
@@ -59,7 +62,7 @@ export default function UploadPage() {
             onDragOver={(event) => event.preventDefault()}
             onDrop={handleDrop}
           >
-            <span aria-hidden="true" className="text-6xl font-light text-[#a66cff]">⇧</span>
+            <img alt="" src={uploadArrow} />
             <h2 className="mt-4 text-2xl font-semibold sm:text-[27px]">Drag &amp; drop your document here</h2>
             <p className="mt-1 text-lg text-muted">or choose a file from your computer</p>
             <p className="mt-7 text-base text-muted">Supported: PDF • DOCX • TXT</p>
@@ -76,7 +79,7 @@ export default function UploadPage() {
           <div className="mt-3 divide-y divide-border">
             {recentUploads.slice(0, 4).map((upload) => (
               <div className="flex min-h-[77px] items-center gap-3" data-testid={`recent-upload-${upload.name}`} key={upload.name}>
-                <span aria-hidden="true" className="text-[#f26a7c]">▤</span>
+                <img alt="" src={upload.name.toLocaleLowerCase().endsWith('.docx') ? uploadFileDocx : uploadFilePdf} />
                 <div className="min-w-0 flex-1"><p className="truncate text-sm text-heading">{upload.name}</p><p className="mt-1 text-xs text-muted">{upload.date}</p></div>
                 <span className={`rounded-full px-4 py-1.5 text-xs font-semibold ${upload.status === 'Ready' ? 'bg-[#13a88d]/25' : 'bg-[#6c63ff]/25'}`}>{upload.status}</span>
               </div>

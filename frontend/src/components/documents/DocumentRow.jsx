@@ -1,4 +1,7 @@
 import { Link } from 'react-router-dom'
+import failedFileIcon from '../../assets/figma/document-file-failed.svg'
+import fileIcon from '../../assets/figma/document-file.svg'
+import linkIcon from '../../assets/figma/document-link.svg'
 
 const statusClasses = {
   Ready: 'bg-[#13a88d]/25',
@@ -8,6 +11,7 @@ const statusClasses = {
 
 export default function DocumentRow({ document }) {
   const isWeb = document.type === 'WEB'
+  const icon = isWeb ? linkIcon : document.status === 'Failed' ? failedFileIcon : fileIcon
 
   return (
     <Link
@@ -15,7 +19,7 @@ export default function DocumentRow({ document }) {
       to={`/documents/${document.id}`}
     >
       <span className="flex min-w-0 items-center gap-7 text-[17px]">
-        <span aria-hidden="true" className={isWeb ? 'text-cyan-300' : document.status === 'Failed' ? 'text-[#f26a7c]' : 'text-[#a66cff]'}>{isWeb ? '⌁' : '▤'}</span>
+        <img alt="" src={icon} />
         <span className="truncate">{document.name}</span>
       </span>
       <span className="inline-flex h-[30px] w-[85px] items-center justify-center rounded-full bg-[#536084]/25 text-xs font-semibold">{document.type}</span>

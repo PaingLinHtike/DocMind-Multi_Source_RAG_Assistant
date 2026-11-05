@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import actionsChevron from '../assets/figma/actions-chevron.svg'
+import pdfIcon from '../assets/figma/pdf.svg'
 import DocumentActions from '../components/documents/DocumentActions.jsx'
 import useDocumentsPrototype from '../hooks/useDocumentsPrototype.js'
 
@@ -61,7 +63,7 @@ export default function DocumentDetailsPage() {
 
       <div className="mt-[35px] flex flex-col justify-between gap-7 sm:flex-row sm:items-center">
         <div className="flex items-center gap-6">
-          <div className="grid h-[100px] w-[95px] shrink-0 place-items-center rounded-2xl bg-surface text-4xl text-[#f26a7c]" aria-hidden="true">▤</div>
+          <div className="grid h-[100px] w-[95px] shrink-0 place-items-center rounded-2xl bg-surface"><img alt="" src={pdfIcon} /></div>
           <div>
             <h1 className="text-3xl font-bold text-heading sm:text-[37px]">{activeDocument.name}</h1>
             <div className="mt-3 flex flex-wrap items-center gap-4">
@@ -72,7 +74,7 @@ export default function DocumentDetailsPage() {
         </div>
 
         <div className="relative self-start sm:self-auto" ref={menuRef}>
-          <button aria-expanded={menuOpen} aria-haspopup="menu" aria-label="Actions" className="h-[51px] w-[169px] rounded-[13px] border border-border bg-[#202a47] text-lg font-semibold" onClick={() => setMenuOpen((open) => !open)} type="button">Actions <span aria-hidden="true">⌄</span></button>
+          <button aria-expanded={menuOpen} aria-haspopup="menu" aria-label="Actions" className="flex h-[51px] w-[169px] items-center justify-center gap-1 rounded-[13px] border border-border bg-[#202a47] text-lg font-semibold" onClick={() => setMenuOpen((open) => !open)} type="button"><span>Actions</span><img alt="" src={actionsChevron} /></button>
           {menuOpen && (
             <DocumentActions
               document={activeDocument}

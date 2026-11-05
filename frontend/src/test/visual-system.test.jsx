@@ -4,6 +4,7 @@ import Icon from '../components/ui/Icon.jsx'
 import PageHeading from '../components/ui/PageHeading.jsx'
 import StatusBadge from '../components/ui/StatusBadge.jsx'
 import DashboardPage from '../pages/DashboardPage.jsx'
+import ChatPage from '../pages/ChatPage.jsx'
 
 const iconNames = ['menu', 'plus', 'send', 'chevronDown', 'eye', 'eyeOff', 'logout']
 
@@ -55,5 +56,14 @@ describe('shared visual system', () => {
     expect(screen.getByText('12')).toHaveClass('text-3xl')
     expect(screen.getByRole('heading', { name: 'Chat Activity' })).toHaveClass('text-xl')
     expect(screen.getByRole('heading', { name: 'Recent Chats' })).toHaveClass('text-xl')
+  })
+
+  it('uses the chat icon sizes and heading scale', () => {
+    render(<ChatPage />)
+
+    expect(screen.getByRole('heading', { name: 'Annual leave policy' })).toHaveClass('text-2xl')
+    expect(screen.getByRole('button', { name: 'New Chat' }).querySelector('svg')).toHaveAttribute('width', '18')
+    expect(screen.getByRole('button', { name: 'Send question' }).querySelector('svg')).toHaveAttribute('width', '20')
+    expect(screen.getByText('Sources (1)').querySelector('svg')).toHaveAttribute('width', '16')
   })
 })

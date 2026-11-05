@@ -10,7 +10,9 @@ describe('Chat prototype', () => {
     for (const title of ['Annual leave policy', 'Working hours', 'Company benefits', 'IT policy', 'Employee handbook']) {
       expect(screen.getByRole('button', { name: title })).toBeInTheDocument()
     }
-    expect(screen.getByRole('heading', { name: 'Annual leave policy' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Annual leave policy' })).toHaveClass('text-2xl')
+    expect(screen.getByText('How many annual leave days do employees get?')).toHaveClass('text-base')
+    expect(screen.getByText('How many annual leave days do employees get?')).toBeInTheDocument()
     expect(screen.getByText('How many annual leave days do employees get?')).toBeInTheDocument()
     expect(screen.getByText('Employees receive 20 days of paid annual leave every year. [1]')).toBeInTheDocument()
     expect(screen.getByText('Sources (1)')).toBeInTheDocument()
@@ -25,7 +27,9 @@ describe('Chat prototype', () => {
     await user.click(screen.getByRole('button', { name: 'Working hours' }))
     expect(screen.getByRole('heading', { name: 'Working hours' })).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '+ New Chat' }))
+    const newChat = screen.getByRole('button', { name: 'New Chat' })
+    expect(newChat.querySelector('svg')).toBeInTheDocument()
+    await user.click(newChat)
     expect(screen.getByRole('heading', { name: 'New Chat' })).toBeInTheDocument()
     expect(screen.getByText('Ask your first question to begin.')).toBeInTheDocument()
   })
@@ -34,9 +38,11 @@ describe('Chat prototype', () => {
     const user = userEvent.setup()
     renderApp({ route: '/chat' })
     const input = screen.getByPlaceholderText('Ask a question about your documents...')
+    const send = screen.getByRole('button', { name: 'Send question' })
+    expect(send.querySelector('svg')).toBeInTheDocument()
 
     await user.type(input, '   ')
-    await user.click(screen.getByRole('button', { name: 'Send question' }))
+    await user.click(send)
     expect(screen.queryByText('I found this in your documents. [1]')).not.toBeInTheDocument()
 
     await user.clear(input)

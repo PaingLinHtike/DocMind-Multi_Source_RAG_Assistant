@@ -114,4 +114,40 @@ describe('shared visual system', () => {
     expect(toggle.querySelector('svg')).toHaveAttribute('width', '18')
     expect(toggle).toHaveClass('size-11')
   })
+
+  it('keeps Sign In controls, typography, and password icon accessible', () => {
+    renderApp({ route: '/signin' })
+
+    expect(screen.getByRole('heading', { name: 'Welcome back' })).toHaveClass('text-3xl', 'sm:text-4xl')
+    expect(screen.getByText('Sign in to access your AI document workspace.')).toHaveClass('text-base', 'sm:text-lg')
+    expect(screen.getByLabelText('Email')).toHaveClass('min-h-11')
+    expect(screen.getByLabelText('Password')).toHaveClass('min-h-11')
+    expect(screen.getByRole('button', { name: 'Sign In' })).toHaveClass('min-h-12')
+
+    const passwordToggle = screen.getByRole('button', { name: 'Show password' })
+    expect(passwordToggle).toHaveClass('size-11')
+    expect(passwordToggle.querySelector('svg')).toHaveAttribute('width', '20')
+    expect(passwordToggle.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  it('keeps Sign Up responsive, touch-friendly, and decorative artwork silent', () => {
+    const { container } = renderApp({ route: '/signup' })
+    const authCard = screen.getByRole('region', { name: 'Create account workspace' })
+
+    expect(authCard).toHaveClass('grid-cols-1', 'lg:grid-cols-[1.4fr_1fr]')
+    expect(screen.getByRole('heading', { name: 'Create your account' })).toHaveClass('text-3xl', 'sm:text-4xl')
+    expect(screen.getByLabelText('Full Name')).toHaveClass('min-h-11')
+    expect(screen.getByLabelText('Email')).toHaveClass('min-h-11')
+    expect(screen.getByLabelText('Password')).toHaveClass('min-h-11')
+    expect(screen.getByLabelText('Confirm Password')).toHaveClass('min-h-11')
+    expect(screen.getByRole('button', { name: 'Create Account' })).toHaveClass('min-h-12')
+    expect(screen.getByRole('button', { name: 'Show password' })).toHaveClass('size-11')
+    expect(screen.getByRole('button', { name: 'Show confirm password' })).toHaveClass('size-11')
+
+    const decorativeCircles = container.querySelectorAll('[aria-hidden="true"].pointer-events-none')
+    expect(decorativeCircles).toHaveLength(2)
+    const logos = [...container.querySelectorAll('img')]
+    expect(logos.length).toBeGreaterThan(0)
+    expect(logos.every((logo) => logo.getAttribute('alt') === '')).toBe(true)
+  })
 })

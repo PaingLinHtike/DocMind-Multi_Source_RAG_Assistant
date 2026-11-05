@@ -35,11 +35,11 @@ export default function DocumentDetailsPage() {
   }, [])
 
   if (deleted) {
-    return <section className="mx-auto max-w-[1290px] px-6 py-16"><h1 className="text-4xl font-bold">Document deleted</h1><Link className="mt-6 inline-block text-primary-border" to="/documents">Return to Documents</Link></section>
+    return <section className="mx-auto max-w-[1290px] px-6 py-16"><h1 className="text-3xl font-bold">Document deleted</h1><Link className="mt-6 inline-block text-primary-border" to="/documents">Return to Documents</Link></section>
   }
 
   if (!activeDocument) {
-    return <section className="mx-auto max-w-[1290px] px-6 py-16"><h1 className="text-4xl font-bold">Document not found</h1></section>
+    return <section className="mx-auto max-w-[1290px] px-6 py-16"><h1 className="text-3xl font-bold">Document not found</h1></section>
   }
 
   function handleReindex() {
@@ -58,23 +58,26 @@ export default function DocumentDetailsPage() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-[1290px] px-6 pb-12 pt-[47px] lg:px-0">
-      <nav aria-label="Breadcrumb" className="text-[17px] text-muted"><Link className="text-muted no-underline" to="/documents">Documents</Link><span className="mx-3">›</span><span>{activeDocument.name}</span></nav>
+    <section className="mx-auto w-full max-w-[1290px] px-6 pb-12 pt-10 lg:px-0">
+      <nav aria-label="Breadcrumb" className="text-sm text-muted"><Link className="text-muted no-underline" to="/documents">Documents</Link><span className="mx-2">›</span><span>{activeDocument.name}</span></nav>
 
-      <div className="mt-[58px] flex flex-col justify-between gap-7 sm:flex-row sm:items-center">
-        <div className="flex items-center gap-6">
-          <div className="grid h-[100px] w-[95px] shrink-0 place-items-center rounded-2xl bg-surface"><img alt="" src={pdfIcon} /></div>
-          <div>
-            <h1 className="text-3xl font-bold text-heading sm:text-[37px]">{activeDocument.name}</h1>
-            <div className="mt-3 flex flex-wrap items-center gap-4">
-              <span className="inline-flex h-[30px] min-w-[112px] items-center justify-center rounded-full bg-[#13a88d]/25 text-sm font-semibold">{activeDocument.status}</span>
-              <span className="text-[17px] text-muted">Uploaded {activeDocument.uploadedAt}</span>
+      <div className="mt-10 flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
+        <div className="flex min-w-0 items-center gap-5">
+          <div className="grid size-[72px] shrink-0 place-items-center rounded-xl bg-surface"><img alt="" src={pdfIcon} /></div>
+          <div className="min-w-0">
+            <h1 className="break-words text-3xl font-bold leading-tight text-heading">{activeDocument.name}</h1>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <span className="inline-flex h-6 items-center justify-center rounded-md bg-[#13a88d]/25 px-2 text-xs font-medium">{activeDocument.status}</span>
+              <span className="text-sm text-muted">Uploaded {activeDocument.uploadedAt}</span>
             </div>
           </div>
         </div>
 
         <div className="relative self-start sm:self-auto" ref={menuRef}>
-          <button aria-expanded={menuOpen} aria-haspopup="menu" aria-label="Actions" className="flex h-[51px] w-[169px] items-center justify-center gap-1 rounded-[13px] border border-border bg-[#202a47] text-lg font-semibold" onClick={() => setMenuOpen((open) => !open)} type="button"><span>Actions</span><img alt="" src={actionsChevron} /></button>
+          <button aria-expanded={menuOpen} aria-haspopup="menu" aria-label="Actions" className="flex h-11 w-40 items-center justify-center gap-2 rounded-lg border border-border bg-[#202a47] text-sm font-medium transition-colors hover:bg-white/5" onClick={() => setMenuOpen((open) => !open)} type="button">
+            <span>Actions</span>
+            <span className="grid size-4 place-items-center"><img alt="" className="size-full" src={actionsChevron} /></span>
+          </button>
           {menuOpen && (
             <DocumentActions
               document={activeDocument}
@@ -91,16 +94,16 @@ export default function DocumentDetailsPage() {
 
       {feedback && <p aria-live="polite" className="mt-4 rounded-lg border border-border bg-surface px-4 py-3 text-sm text-heading">{feedback}</p>}
 
-      <div className="mt-[55px]"><h2 className="text-[23px] font-semibold">Overview</h2><div className="mt-3 h-1 w-[171px] bg-[#a66cff]" /></div>
+      <div className="mt-10"><h2 className="text-xl font-semibold">Overview</h2><div className="mt-2 h-1 w-24 bg-[#a66cff]" /></div>
 
-      <dl className="mt-[58px] grid min-h-[160px] gap-7 rounded-[17px] border border-border bg-surface px-5 py-6 sm:grid-cols-2 lg:grid-cols-[0.8fr_0.8fr_0.75fr_0.7fr_1.4fr] lg:px-[30px]">
+      <dl className="mt-8 grid min-h-[160px] gap-6 rounded-xl border border-border bg-surface px-6 py-6 sm:grid-cols-2 lg:grid-cols-[0.8fr_0.8fr_0.75fr_0.7fr_1.4fr]">
         {[
           ['Type', activeDocument.type],
           ['Chunks', activeDocument.chunks],
           ['Size', activeDocument.size],
           ['Source', activeDocument.source],
           ['Storage', activeDocument.storage],
-        ].map(([label, value]) => <div key={label}><dt className="text-[17px] text-muted">{label}</dt><dd className={`mt-4 font-medium text-heading ${label === 'Storage' ? 'break-all text-base' : 'text-[23px]'}`}>{value}</dd></div>)}
+        ].map(([label, value]) => <div key={label}><dt className="text-sm text-muted">{label}</dt><dd className={`mt-2 font-medium text-heading ${label === 'Storage' ? 'break-all text-sm' : 'text-lg'}`}>{value}</dd></div>)}
       </dl>
     </section>
   )

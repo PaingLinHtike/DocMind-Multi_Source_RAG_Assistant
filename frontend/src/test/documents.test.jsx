@@ -19,9 +19,13 @@ describe('Documents prototype', () => {
     expect(screen.getByRole('heading', { name: 'Documents' })).toBeInTheDocument()
     expect(screen.getByText('Manage your uploaded files and knowledge sources.')).toBeInTheDocument()
 
+    const upload = screen.getByRole('link', { name: 'Upload Document' })
+    expect(upload.querySelector('svg')).toBeInTheDocument()
+
     for (const rowData of expectedRows) {
       const row = screen.getByRole('link', { name: new RegExp(rowData[0]) })
       for (const value of rowData) expect(within(row).getByText(value)).toBeInTheDocument()
+      expect(row.querySelector('span.size-5')).toBeInTheDocument()
     }
   })
 
@@ -45,8 +49,12 @@ describe('Documents prototype', () => {
     renderApp({ route: '/documents' })
 
     await user.click(screen.getByRole('link', { name: /Employee Handbook\.pdf/ }))
-    expect(screen.getByRole('heading', { name: 'Employee Handbook.pdf' })).toBeInTheDocument()
+    const detailsHeading = screen.getByRole('heading', { name: 'Employee Handbook.pdf' })
+    expect(detailsHeading).toHaveClass('break-words')
+    expect(detailsHeading).toHaveClass('text-3xl')
     expect(screen.getByText('Uploaded Nov 5, 2026 10:24 AM')).toBeInTheDocument()
+    expect(screen.getByText('Type')).toHaveClass('text-sm')
+    expect(screen.getByText('2.4 MB')).toHaveClass('text-lg')
     for (const value of ['Type', 'PDF', 'Chunks', '120', 'Size', '2.4 MB', 'Source', 'Upload', 'Storage', 'documents/user_001/doc_123.pdf']) {
       expect(screen.getByText(value)).toBeInTheDocument()
     }
@@ -59,7 +67,9 @@ describe('Documents prototype', () => {
 
     await user.click(actions)
     for (const action of ['View Original', 'Download', 'Reindex', 'Rename', 'Delete']) {
-      expect(screen.getByRole('button', { name: action })).toBeInTheDocument()
+      const actionButton = screen.getByRole('button', { name: action })
+      expect(actionButton).toBeInTheDocument()
+      expect(actionButton).toHaveClass('min-h-11')
     }
 
     await user.keyboard('{Escape}')

@@ -5,6 +5,7 @@ import PageHeading from '../components/ui/PageHeading.jsx'
 import StatusBadge from '../components/ui/StatusBadge.jsx'
 import DashboardPage from '../pages/DashboardPage.jsx'
 import ChatPage from '../pages/ChatPage.jsx'
+import { renderApp } from './renderApp.jsx'
 
 const iconNames = ['menu', 'plus', 'send', 'chevronDown', 'eye', 'eyeOff', 'logout']
 
@@ -65,5 +66,12 @@ describe('shared visual system', () => {
     expect(screen.getByRole('button', { name: 'New Chat' }).querySelector('svg')).toHaveAttribute('width', '18')
     expect(screen.getByRole('button', { name: 'Send question' }).querySelector('svg')).toHaveAttribute('width', '20')
     expect(screen.getByText('Sources (1)').querySelector('svg')).toHaveAttribute('width', '16')
+  })
+
+  it('wraps document row icons at 20px', () => {
+    renderApp({ route: '/documents' })
+
+    const row = screen.getByRole('link', { name: /Employee Handbook\.pdf/ })
+    expect(row.querySelector('span.size-5')).toBeInTheDocument()
   })
 })

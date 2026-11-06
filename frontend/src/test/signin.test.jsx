@@ -23,12 +23,11 @@ describe('Sign In', () => {
     expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
   })
 
-  it('toggles password visibility and Remember me without changing the password', async () => {
+  it('toggles password visibility without changing the password and omits Remember me', async () => {
     const user = userEvent.setup()
     renderApp({ route: '/signin', authenticated: false })
 
     const password = screen.getByLabelText('Password')
-    const remember = screen.getByRole('checkbox', { name: 'Remember me' })
     await user.type(password, 'userUSER1234@@')
 
     expect(password).toHaveAttribute('type', 'password')
@@ -37,9 +36,9 @@ describe('Sign In', () => {
     expect(password).toHaveValue('userUSER1234@@')
     expect(screen.getByRole('button', { name: 'Hide password' })).toBeInTheDocument()
 
-    expect(remember).not.toBeChecked()
-    await user.click(remember)
-    expect(remember).toBeChecked()
+    expect(screen.queryByRole('checkbox', { name: 'Remember me' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Remember me')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Forgot password?' })).toHaveClass('ml-auto')
   })
 
   it('normalizes the email and navigates to the Dashboard with the exact dummy password', async () => {

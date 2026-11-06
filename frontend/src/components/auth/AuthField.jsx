@@ -11,7 +11,7 @@ export default function AuthField({ id, label, icon, error, trailingControl, cla
         <input
           aria-describedby={errorId}
           aria-invalid={Boolean(error)}
-          className="min-h-11 min-w-0 flex-1 bg-transparent px-4 text-base text-heading outline-none placeholder:text-muted"
+          className="auth-input min-h-11 min-w-0 flex-1 bg-transparent px-4 text-base text-heading outline-none placeholder:text-muted"
           id={id}
           {...inputProps}
         />

@@ -53,12 +53,8 @@ export default function SignInPage() {
 
         {error && <p className="rounded-lg border border-red-400/50 bg-red-500/10 px-4 py-3 text-sm text-red-200" role="alert">{error}</p>}
 
-        <div className="flex min-h-11 flex-wrap items-center justify-between gap-2 text-sm">
-          <label className="flex min-h-11 cursor-pointer items-center gap-3">
-            <input className="size-5 accent-[#7544f5]" type="checkbox" />
-            <span>Remember me</span>
-          </label>
-          <button className="min-h-11 px-1 font-medium text-[#c07aff] transition-colors hover:text-[#d7aaff]" type="button">Forgot password?</button>
+        <div className="flex min-h-11 items-center text-sm">
+          <button className="ml-auto min-h-11 px-1 font-medium text-[#c07aff] transition-colors hover:text-[#d7aaff]" type="button">Forgot password?</button>
         </div>
 
         <button className="min-h-12 w-full rounded-xl border border-[#9a62ff] bg-gradient-to-r from-[#7544f5] to-[#6831ef] text-base font-semibold text-white transition-colors hover:from-[#8153f7] hover:to-[#7544f5]" type="submit">Sign In</button>

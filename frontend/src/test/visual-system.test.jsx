@@ -120,8 +120,8 @@ describe('shared visual system', () => {
 
     expect(screen.getByRole('heading', { name: 'Welcome back' })).toHaveClass('text-3xl', 'sm:text-4xl')
     expect(screen.getByText('Sign in to access your AI document workspace.')).toHaveClass('text-base', 'sm:text-lg')
-    expect(screen.getByLabelText('Email')).toHaveClass('min-h-11')
-    expect(screen.getByLabelText('Password')).toHaveClass('min-h-11')
+    expect(screen.getByLabelText('Email')).toHaveClass('min-h-11', 'auth-input')
+    expect(screen.getByLabelText('Password')).toHaveClass('min-h-11', 'auth-input')
     expect(screen.getByRole('button', { name: 'Sign In' })).toHaveClass('min-h-12')
 
     const passwordToggle = screen.getByRole('button', { name: 'Show password' })

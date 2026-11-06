@@ -131,6 +131,21 @@ describe('shared visual system', () => {
     expect(document.querySelector('.table-scroll')).toHaveClass('overflow-x-auto')
   })
 
+  it('styles every native scrollbar with a transparent track and compact controls', () => {
+    expect(stylesheet).toMatch(/@supports not selector\(::-webkit-scrollbar\)\s*{[\s\S]*?\*\s*{[\s\S]*?scrollbar-color:\s*#4b5878 transparent;[\s\S]*?scrollbar-width:\s*thin;/)
+    expect(stylesheet).toMatch(/\*::-webkit-scrollbar\s*{[^}]*width:\s*8px;[^}]*height:\s*8px;/)
+    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-track,\s*\*::-webkit-scrollbar-corner\s*{[^}]*background:\s*transparent;/)
+    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-thumb\s*{[^}]*background:\s*#4b5878;[^}]*border:\s*2px solid transparent;[^}]*background-clip:\s*padding-box;[^}]*border-radius:\s*9999px;/)
+    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-thumb:hover\s*{[^}]*background-color:\s*#637194;/)
+    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-thumb:active\s*{[^}]*background-color:\s*#7583a8;/)
+    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-button:single-button\s*{[^}]*background-color:\s*transparent;[^}]*background-position:\s*center;[^}]*background-repeat:\s*no-repeat;[^}]*background-size:\s*5px 5px;/)
+    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-button:single-button:vertical:decrement\s*{[^}]*height:\s*6px;[^}]*background-image:\s*url\(/)
+    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-button:single-button:vertical:increment\s*{[^}]*height:\s*6px;[^}]*background-image:\s*url\(/)
+    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-button:single-button:horizontal:decrement\s*{[^}]*width:\s*6px;[^}]*background-image:\s*url\(/)
+    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-button:single-button:horizontal:increment\s*{[^}]*width:\s*6px;[^}]*background-image:\s*url\(/)
+    expect(stylesheet).not.toMatch(/\.table-scroll::-webkit-scrollbar/)
+  })
+
   it('pins long-value safety in settings', () => {
     renderApp({ route: '/settings' })
 

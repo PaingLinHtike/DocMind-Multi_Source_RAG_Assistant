@@ -165,4 +165,77 @@ describe('Settings', () => {
     expect(screen.getByText('Account changes saved.')).toBeInTheDocument()
     expect(JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY)).email).toBe('keyboard@example.com')
   })
+
+  it('keeps a persistent live status region for save feedback', () => {
+    renderApp({ route: '/settings' })
+    const status = document.querySelector('[aria-live="polite"]')
+
+    expect(status).not.toBeNull()
+    expect(status).toHaveAttribute('aria-atomic', 'true')
+    expect(status).toHaveTextContent('')
+  })
+
+  it('clears the save confirmation when an account field changes', async () => {
+    const user = userEvent.setup()
+    renderApp({ route: '/settings' })
+
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    expect(screen.getByText('Account changes saved.')).toBeInTheDocument()
+
+    await user.type(screen.getByLabelText('Name'), '!')
+    expect(screen.queryByText('Account changes saved.')).not.toBeInTheDocument()
+  })
+
+  it('falls back to defaults when browser storage cannot be read', () => {
+    const getItem = vi.spyOn(window.localStorage, 'getItem').mockImplementation(() => {
+      throw new Error('Storage blocked')
+    })
+
+    try {
+      renderApp({ route: '/settings' })
+    } finally {
+      getItem.mockRestore()
+    }
+
+    expect(screen.getByLabelText('Name')).toHaveValue('Aung')
+    expect(screen.getByLabelText('Email')).toHaveValue('aung@example.com')
+    expect(screen.getByLabelText('Password')).toHaveValue('docmind123')
+  })
+
+  it.each([
+    ['null', 'null'],
+    ['an array', '[]'],
+    ['non-string fields', JSON.stringify({ name: 42, email: null, password: {} })],
+  ])('uses defaults for %s stored settings', (_label, stored) => {
+    window.localStorage.setItem(SETTINGS_STORAGE_KEY, stored)
+    renderApp({ route: '/settings' })
+
+    expect(screen.getByLabelText('Name')).toHaveValue('Aung')
+    expect(screen.getByLabelText('Email')).toHaveValue('aung@example.com')
+    expect(screen.getByLabelText('Password')).toHaveValue('docmind123')
+  })
+
+  it('saves again after a failed save once storage recovers', async () => {
+    const user = userEvent.setup()
+    renderApp({ route: '/settings' })
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
+      throw new Error('Storage blocked')
+    })
+
+    try {
+      await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+      expect(screen.getByText('Unable to save changes in this browser.')).toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    } finally {
+      setItem.mockRestore()
+    }
+
+    expect(screen.getByText('Account changes saved.')).toBeInTheDocument()
+    expect(JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY))).toEqual({
+      name: 'Aung',
+      email: 'aung@example.com',
+      password: 'docmind123',
+    })
+  })
 })

@@ -184,7 +184,10 @@ describe('shared visual system', () => {
     expect(fields).toHaveClass('lg:grid-cols-[200px_minmax(0,480px)]')
     expect(save).toHaveAttribute('type', 'submit')
     expect(save).toHaveClass('h-11')
-    expect(save.closest('form')).toBe(fields.closest('form'))
+
+    const form = fields.closest('form')
+    expect(form).not.toBeNull()
+    expect(save.closest('form')).toBe(form)
   })
 
   it('keeps Sign In controls, typography, and password icon accessible', () => {

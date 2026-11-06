@@ -30,9 +30,16 @@ export default function SettingsPage() {
   const [account, setAccount] = useState(readAccountSettings)
   const [passwordVisible, setPasswordVisible] = useState(false)
   const [feedback, setFeedback] = useState('')
+  const [feedbackVersion, setFeedbackVersion] = useState(0)
+
+  function announceFeedback(message) {
+    setFeedback(message)
+    setFeedbackVersion((version) => version + 1)
+  }
 
   function handleFieldChange(field, value) {
     setAccount((current) => ({ ...current, [field]: value }))
+    setFeedback('')
   }
 
   function handleSave(event) {
@@ -40,9 +47,9 @@ export default function SettingsPage() {
 
     try {
       window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(account))
-      setFeedback('Account changes saved.')
+      announceFeedback('Account changes saved.')
     } catch {
-      setFeedback('Unable to save changes in this browser.')
+      announceFeedback('Unable to save changes in this browser.')
     }
   }
 
@@ -69,14 +76,16 @@ export default function SettingsPage() {
                 <Icon name={passwordVisible ? 'eyeOff' : 'eye'} size={18} />
               </button>
             </div>
-            <button className="h-11 rounded-lg border border-border bg-[#202a47] text-sm font-medium transition-colors hover:bg-white/5" onClick={() => setFeedback(`Password change link sent to ${account.email}.`)} type="button">Change Password</button>
+            <button className="h-11 rounded-lg border border-border bg-[#202a47] text-sm font-medium transition-colors hover:bg-white/5" onClick={() => announceFeedback(`Password change link sent to ${account.email}.`)} type="button">Change Password</button>
           </div>
 
           <div className="flex justify-end lg:col-start-2">
             <button className="h-11 w-full rounded-lg border border-primary-border bg-primary text-sm font-semibold text-heading transition-colors hover:bg-primary/90 sm:w-auto sm:px-6" type="submit">Save Changes</button>
           </div>
 
-          {feedback && <p aria-live="polite" className="max-w-[480px] break-all rounded-lg border border-border bg-[#202a47] px-4 py-3 text-sm lg:col-start-2">{feedback}</p>}
+          <p aria-atomic="true" aria-live="polite" className={feedback ? 'max-w-[480px] rounded-lg border border-border bg-[#202a47] px-4 py-3 text-sm lg:col-start-2' : 'sr-only'} role="status">
+            <span className="break-all" key={feedbackVersion}>{feedback}</span>
+          </p>
         </div>
       </form>
     </section>

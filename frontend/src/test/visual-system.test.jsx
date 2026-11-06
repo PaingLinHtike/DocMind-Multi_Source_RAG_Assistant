@@ -176,6 +176,17 @@ describe('shared visual system', () => {
     expect(toggle).toHaveClass('size-11')
   })
 
+  it('uses compact account controls and a Save Changes submit action', () => {
+    const { container } = renderApp({ route: '/settings' })
+    const fields = container.querySelector('.account-fields')
+    const save = screen.getByRole('button', { name: 'Save Changes' })
+
+    expect(fields).toHaveClass('lg:grid-cols-[200px_minmax(0,480px)]')
+    expect(save).toHaveAttribute('type', 'submit')
+    expect(save).toHaveClass('h-11')
+    expect(save.closest('form')).toBe(fields.closest('form'))
+  })
+
   it('keeps Sign In controls, typography, and password icon accessible', () => {
     renderApp({ route: '/signin', authenticated: false })
 

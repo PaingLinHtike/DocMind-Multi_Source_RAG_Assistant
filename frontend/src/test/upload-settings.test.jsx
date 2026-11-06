@@ -1,7 +1,9 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { renderApp } from './renderApp.jsx'
+
+const SETTINGS_STORAGE_KEY = 'docmind.account-settings.v1'
 
 describe('Upload Document', () => {
   it('validates missing and unsupported files without adding an upload', () => {
@@ -85,5 +87,82 @@ describe('Settings', () => {
     await user.type(email, 'aung.min.with.an.extremely.long.account.address.for.testing@example-docmind-domain.com')
     await user.click(screen.getByRole('button', { name: 'Change Password' }))
     expect(screen.getByText(/^Password change link sent/)).toHaveClass('break-all')
+  })
+
+  it('saves all account fields locally and restores them after remount', async () => {
+    const user = userEvent.setup()
+    const first = renderApp({ route: '/settings' })
+    const name = screen.getByLabelText('Name')
+    const email = screen.getByLabelText('Email')
+    const password = screen.getByLabelText('Password')
+
+    await user.clear(name)
+    await user.type(name, 'Aung Min')
+    await user.clear(email)
+    await user.type(email, 'aung.min@example.com')
+    await user.clear(password)
+    await user.type(password, 'new-secret')
+
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+
+    expect(screen.getByText('Account changes saved.')).toBeInTheDocument()
+    expect(JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY))).toEqual({
+      name: 'Aung Min',
+      email: 'aung.min@example.com',
+      password: 'new-secret',
+    })
+
+    first.unmount()
+    renderApp({ route: '/settings' })
+
+    expect(screen.getByLabelText('Name')).toHaveValue('Aung Min')
+    expect(screen.getByLabelText('Email')).toHaveValue('aung.min@example.com')
+    expect(screen.getByLabelText('Password')).toHaveValue('new-secret')
+  })
+
+  it('falls back to defaults for broken or incomplete stored settings', () => {
+    window.localStorage.setItem(SETTINGS_STORAGE_KEY, '{broken')
+    const first = renderApp({ route: '/settings' })
+
+    expect(screen.getByLabelText('Name')).toHaveValue('Aung')
+    expect(screen.getByLabelText('Email')).toHaveValue('aung@example.com')
+    expect(screen.getByLabelText('Password')).toHaveValue('docmind123')
+
+    first.unmount()
+    window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({ name: 'Stored Name' }))
+    renderApp({ route: '/settings' })
+
+    expect(screen.getByLabelText('Name')).toHaveValue('Stored Name')
+    expect(screen.getByLabelText('Email')).toHaveValue('aung@example.com')
+    expect(screen.getByLabelText('Password')).toHaveValue('docmind123')
+  })
+
+  it('keeps the form usable and reports failure when storage rejects a save', async () => {
+    const user = userEvent.setup()
+    renderApp({ route: '/settings' })
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('Storage blocked')
+    })
+
+    try {
+      await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    } finally {
+      setItem.mockRestore()
+    }
+
+    expect(screen.getByText('Unable to save changes in this browser.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Email')).toHaveValue('aung@example.com')
+  })
+
+  it('submits the account form with Enter from a field', async () => {
+    const user = userEvent.setup()
+    renderApp({ route: '/settings' })
+    const email = screen.getByLabelText('Email')
+
+    await user.clear(email)
+    await user.type(email, 'keyboard@example.com{Enter}')
+
+    expect(screen.getByText('Account changes saved.')).toBeInTheDocument()
+    expect(JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY)).email).toBe('keyboard@example.com')
   })
 })

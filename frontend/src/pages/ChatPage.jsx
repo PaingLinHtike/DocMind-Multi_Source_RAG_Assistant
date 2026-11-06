@@ -107,7 +107,7 @@ export default function ChatPage() {
   }
 
   return (
-    <section className="mx-auto grid min-h-[732px] max-w-[1380px] grid-cols-1 px-5 pb-8 lg:grid-cols-[340px_1fr] lg:gap-8">
+    <section className="chat-page mx-auto grid min-h-[732px] max-w-[1380px] grid-cols-1 px-5 pb-8 lg:h-[calc(100dvh-5rem)] lg:min-h-0 lg:grid-cols-[340px_1fr] lg:gap-8 lg:overflow-hidden">
       <aside className="border-border pt-10 lg:border-r lg:pr-7">
         <button className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-primary-border bg-primary text-sm font-semibold text-heading transition-colors hover:bg-primary/90" onClick={createConversation} type="button">
           <Icon name="plus" size={18} />
@@ -155,9 +155,9 @@ export default function ChatPage() {
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-col pt-10 lg:pr-3">
+      <div className="chat-panel flex min-w-0 flex-col pt-10 lg:min-h-0 lg:pr-3">
         <h1 className="break-words border-b border-border pb-4 text-2xl font-semibold">{activeConversation.title}</h1>
-        <div className="min-h-[450px] flex-1 space-y-6 overflow-y-auto py-6">
+        <div className="chat-thread min-h-[450px] flex-1 space-y-6 overflow-y-auto py-6 lg:min-h-0">
           {activeConversation.messages.length === 0 && <p className="pt-16 text-center text-sm text-muted">Ask your first question to begin.</p>}
           {activeConversation.messages.map((message) => message.role === 'user' ? (
             <div className="ml-auto flex max-w-[610px] items-start justify-end gap-3" key={message.id}>

@@ -84,6 +84,18 @@ describe('shared visual system', () => {
     expect(input.closest('form')).toHaveClass('chat-composer')
   })
 
+  it('contains desktop Chat within the viewport and assigns overflow to the message thread', () => {
+    const { container } = render(<ChatPage />)
+    const page = container.querySelector('.chat-page')
+    const panel = container.querySelector('.chat-panel')
+    const thread = container.querySelector('.chat-thread')
+
+    expect(page).toHaveClass('min-h-[732px]', 'lg:h-[calc(100dvh-5rem)]', 'lg:min-h-0', 'lg:overflow-hidden')
+    expect(page).not.toHaveClass('h-[calc(100dvh-5rem)]', 'overflow-hidden')
+    expect(panel).toHaveClass('flex', 'flex-col', 'lg:min-h-0')
+    expect(thread).toHaveClass('min-h-[450px]', 'lg:min-h-0', 'flex-1', 'overflow-y-auto')
+  })
+
   it('centers the assistant book inside its circular badge', () => {
     const { container } = render(<ChatPage />)
     const book = [...container.querySelectorAll('img')].find((image) => image.getAttribute('src') === assistantBook)

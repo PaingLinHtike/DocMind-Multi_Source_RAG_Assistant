@@ -43,7 +43,7 @@
 - Consumes: `Icon`, `PageHeading`, `window.localStorage`, and the existing account defaults.
 - Produces: `SETTINGS_STORAGE_KEY = 'docmind.account-settings.v1'`, `readAccountSettings()`, a semantic account form, and a `Save Changes` submit button.
 
-- [ ] **Step 1: Write failing persistence and recovery tests**
+- [x] **Step 1: Write failing persistence and recovery tests**
 
 In `frontend/src/test/upload-settings.test.jsx`, import `vi` from Vitest and add `const SETTINGS_STORAGE_KEY = 'docmind.account-settings.v1'`. Add these tests inside `describe('Settings', ...)`:
 
@@ -114,7 +114,7 @@ it('keeps the form usable and reports failure when storage rejects a save', asyn
 })
 ```
 
-- [ ] **Step 2: Write failing compact-layout and keyboard-contract tests**
+- [x] **Step 2: Write failing compact-layout and keyboard-contract tests**
 
 In `frontend/src/test/upload-settings.test.jsx`, add a test that saves by pressing Enter from the Email field:
 
@@ -147,25 +147,25 @@ it('uses compact account controls and a Save Changes submit action', () => {
 })
 ```
 
-- [ ] **Step 3: Run focused tests and verify RED**
+- [x] **Step 3: Run focused tests and verify RED**
 
 Run: `npm test -- --run src/test/upload-settings.test.jsx src/test/visual-system.test.jsx`
 
 Expected: FAIL because there is no Save button, no `localStorage` persistence, and no `.account-fields` compact grid.
 
-- [ ] **Step 4: Add storage defaults and safe readers in `SettingsPage.jsx`**
+- [x] **Step 4: Add storage defaults and safe readers in `SettingsPage.jsx`**
 
 Add the exact constant `SETTINGS_STORAGE_KEY = 'docmind.account-settings.v1'` and a `DEFAULT_ACCOUNT` object with `name: 'Aung'`, `email: 'aung@example.com'`, and `password: 'docmind123'`.
 
 Implement `readAccountSettings()` to read and `JSON.parse` the key, return a copy of `DEFAULT_ACCOUNT` when parsing fails or the parsed value is not a plain object (excluding `null` and arrays), and copy the stored value only when that field is a string; otherwise use that field's default. Wrap the whole read in `try/catch`. Add a code comment stating that password persistence is prototype-only and must not be used for production credentials.
 
-- [ ] **Step 5: Convert Settings state to one account object**
+- [x] **Step 5: Convert Settings state to one account object**
 
 Replace the three field states with `const [account, setAccount] = useState(readAccountSettings)`. Keep `passwordVisible` and `feedback`.
 
 Render Name, Email, and Password from `account`, and update through one `handleFieldChange(field, value)` helper or equivalent object spread. Keep `feedback` for both save and Change Password messages.
 
-- [ ] **Step 6: Add the compact form and Save Changes action**
+- [x] **Step 6: Add the compact form and Save Changes action**
 
 Wrap the account card in `<form onSubmit={handleSave}>`. Give the field grid `className="account-fields mt-6 grid gap-4 lg:grid-cols-[200px_minmax(0,480px)] lg:items-center lg:gap-x-10"`.
 
@@ -175,17 +175,17 @@ Move the feedback paragraph into the grid's compact column with `lg:col-start-2`
 
 Implement `handleSave(event)` to call `event.preventDefault()`, write `JSON.stringify(account)` under `SETTINGS_STORAGE_KEY`, set `Account changes saved.` on success, and set `Unable to save changes in this browser.` when storage throws. Keep Change Password feedback unchanged.
 
-- [ ] **Step 7: Isolate browser storage between tests**
+- [x] **Step 7: Isolate browser storage between tests**
 
 In `frontend/src/test/setup.js`, add `window.localStorage.clear()` beside the existing `sessionStorage.clear()` in `afterEach`.
 
-- [ ] **Step 8: Run focused tests and verify GREEN**
+- [x] **Step 8: Run focused tests and verify GREEN**
 
 Run: `npm test -- --run src/test/upload-settings.test.jsx src/test/visual-system.test.jsx`
 
 Expected: both files pass.
 
-- [ ] **Step 9: Run complete verification**
+- [x] **Step 9: Run complete verification**
 
 Run:
 
@@ -197,11 +197,11 @@ npm run build
 
 Expected: all tests pass, ESLint reports no errors, and Vite builds successfully.
 
-- [ ] **Step 10: Verify in a browser**
+- [x] **Step 10: Verify in a browser**
 
 At desktop and 375px widths, confirm the fields are shorter on desktop, full-width on mobile, password visibility still works, Save Changes persists values across reload, and both save success/failure messages are announced. Confirm Change Password still works and authentication/routes are unchanged.
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add frontend/src/pages/SettingsPage.jsx frontend/src/test/upload-settings.test.jsx frontend/src/test/visual-system.test.jsx frontend/src/test/setup.js

@@ -50,13 +50,13 @@ button, a { -webkit-tap-highlight-color: transparent; }
   background: transparent;
 }
 *::-webkit-scrollbar-thumb {
-  background: #4b5878;
+  background: #6376a0;
   border: 2px solid transparent;
   background-clip: padding-box;
   border-radius: 9999px;
 }
-*::-webkit-scrollbar-thumb:hover { background-color: #637194; }
-*::-webkit-scrollbar-thumb:active { background-color: #7583a8; }
+*::-webkit-scrollbar-thumb:hover { background-color: #7589b8; }
+*::-webkit-scrollbar-thumb:active { background-color: #879aca; }
 *::-webkit-scrollbar-button:single-button {
   display: block;
   background-color: transparent;
@@ -82,7 +82,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 }
 @supports not selector(::-webkit-scrollbar) {
   * {
-    scrollbar-color: #4b5878 transparent;
+    scrollbar-color: #6376a0 transparent;
     scrollbar-width: thin;
   }
 }

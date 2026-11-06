@@ -15,7 +15,7 @@
 - Apply the styling to every application scrollbar, including Chat, page/Recent Chats scrolling, and the Documents horizontal table.
 - Preserve native scrolling and browser-calculated proportional thumb length.
 - Keep scrollbar tracks and corners transparent.
-- Use an 8px Chromium/WebKit scrollbar gutter with a rounded muted blue-gray thumb.
+- Use an 8px Chromium/WebKit scrollbar gutter with a rounded muted blue-gray thumb that maintains at least 3:1 contrast against `#0c1429`, `#19223a`, and `#202a47`.
 - Use 6px directional button boxes in supporting Chromium/WebKit browsers.
 - Use `scrollbar-width: thin` and a transparent track in Firefox.
 - Do not create scroll containers, change overflow ownership, add JavaScript, add dependencies, or replace native scrolling.
@@ -44,11 +44,12 @@
 
 In `frontend/src/test/visual-system.test.jsx`, add a test named `styles every native scrollbar with a transparent track and compact controls`. Assert against the existing `stylesheet` string that:
 
-- the Firefox feature-query fallback applies `scrollbar-width: thin` and `scrollbar-color: #4b5878 transparent` globally;
+- the Firefox feature-query fallback applies `scrollbar-width: thin` and `scrollbar-color: #6376a0 transparent` globally;
 - the global `*::-webkit-scrollbar` rule sets `width: 8px` and `height: 8px`;
 - track and corner selectors use `background: transparent`;
-- the base thumb uses `#4b5878`, a fully rounded radius, transparent border, and `background-clip: padding-box`;
-- hover and active thumb selectors use `#637194` and `#7583a8` respectively;
+- the base thumb uses `#6376a0`, a fully rounded radius, transparent border, and `background-clip: padding-box`;
+- the base thumb maintains at least 3:1 contrast against `#0c1429`, `#19223a`, and `#202a47`;
+- hover and active thumb selectors use `#7589b8` and `#879aca` respectively;
 - the base WebKit button rule is transparent and uses centered, non-repeating 5px arrow artwork;
 - vertical and horizontal increment/decrement button selectors exist and use 6px dimensions;
 - no `.table-scroll::-webkit-scrollbar` selector remains.
@@ -63,7 +64,7 @@ Expected: FAIL because scrollbar styling is still scoped to `.table-scroll` and 
 
 - [ ] **Step 3: Replace page-specific scrollbar CSS with global standards rules**
 
-In `frontend/src/index.css`, remove the `.table-scroll` scrollbar block. Replace its Firefox feature-query fallback with a universal rule containing `scrollbar-width: thin` and `scrollbar-color: #4b5878 transparent`, so viewport and nested scrollers share the standard contract without overriding Chromium's WebKit pseudo-element styling.
+In `frontend/src/index.css`, remove the `.table-scroll` scrollbar block. Replace its Firefox feature-query fallback with a universal rule containing `scrollbar-width: thin` and `scrollbar-color: #6376a0 transparent`, so viewport and nested scrollers share the standard contract without overriding Chromium's WebKit pseudo-element styling.
 
 - [ ] **Step 4: Add global Chromium/WebKit track and thumb rules**
 
@@ -71,9 +72,9 @@ Add global WebKit selectors with these exact values:
 
 - gutter: `width: 8px; height: 8px`;
 - track and corner: transparent;
-- base thumb: `background: #4b5878`, `border: 2px solid transparent`, `background-clip: padding-box`, and `border-radius: 9999px`;
-- hover thumb: `#637194`;
-- active thumb: `#7583a8`.
+- base thumb: `background: #6376a0`, `border: 2px solid transparent`, `background-clip: padding-box`, and `border-radius: 9999px`;
+- hover thumb: `#7589b8`;
+- active thumb: `#879aca`.
 
 Do not set a thumb height or minimum height, leaving length proportional and browser-controlled.
 

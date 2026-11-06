@@ -15,6 +15,18 @@ const stylesheet = readFileSync(resolve('src/index.css'), 'utf8')
 
 const iconNames = ['menu', 'plus', 'send', 'chevronDown', 'eye', 'eyeOff', 'logout', 'more']
 
+function relativeLuminance(hex) {
+  const channels = [1, 3, 5].map((index) => Number.parseInt(hex.slice(index, index + 2), 16) / 255)
+    .map((channel) => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4)
+
+  return (0.2126 * channels[0]) + (0.7152 * channels[1]) + (0.0722 * channels[2])
+}
+
+function contrastRatio(first, second) {
+  const [lighter, darker] = [relativeLuminance(first), relativeLuminance(second)].sort((a, b) => b - a)
+  return (lighter + 0.05) / (darker + 0.05)
+}
+
 describe('shared visual system', () => {
   it.each(iconNames)('renders the %s icon as a decorative 20px SVG', (name) => {
     const { container } = render(<Icon name={name} />)
@@ -132,18 +144,24 @@ describe('shared visual system', () => {
   })
 
   it('styles every native scrollbar with a transparent track and compact controls', () => {
-    expect(stylesheet).toMatch(/@supports not selector\(::-webkit-scrollbar\)\s*{[\s\S]*?\*\s*{[\s\S]*?scrollbar-color:\s*#4b5878 transparent;[\s\S]*?scrollbar-width:\s*thin;/)
+    expect(stylesheet).toMatch(/@supports not selector\(::-webkit-scrollbar\)\s*{[\s\S]*?\*\s*{[\s\S]*?scrollbar-color:\s*#6376a0 transparent;[\s\S]*?scrollbar-width:\s*thin;/)
     expect(stylesheet).toMatch(/\*::-webkit-scrollbar\s*{[^}]*width:\s*8px;[^}]*height:\s*8px;/)
     expect(stylesheet).toMatch(/\*::-webkit-scrollbar-track,\s*\*::-webkit-scrollbar-corner\s*{[^}]*background:\s*transparent;/)
-    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-thumb\s*{[^}]*background:\s*#4b5878;[^}]*border:\s*2px solid transparent;[^}]*background-clip:\s*padding-box;[^}]*border-radius:\s*9999px;/)
-    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-thumb:hover\s*{[^}]*background-color:\s*#637194;/)
-    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-thumb:active\s*{[^}]*background-color:\s*#7583a8;/)
+    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-thumb\s*{[^}]*background:\s*#6376a0;[^}]*border:\s*2px solid transparent;[^}]*background-clip:\s*padding-box;[^}]*border-radius:\s*9999px;/)
+    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-thumb:hover\s*{[^}]*background-color:\s*#7589b8;/)
+    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-thumb:active\s*{[^}]*background-color:\s*#879aca;/)
     expect(stylesheet).toMatch(/\*::-webkit-scrollbar-button:single-button\s*{[^}]*background-color:\s*transparent;[^}]*background-position:\s*center;[^}]*background-repeat:\s*no-repeat;[^}]*background-size:\s*5px 5px;/)
     expect(stylesheet).toMatch(/\*::-webkit-scrollbar-button:single-button:vertical:decrement\s*{[^}]*height:\s*6px;[^}]*background-image:\s*url\(/)
     expect(stylesheet).toMatch(/\*::-webkit-scrollbar-button:single-button:vertical:increment\s*{[^}]*height:\s*6px;[^}]*background-image:\s*url\(/)
     expect(stylesheet).toMatch(/\*::-webkit-scrollbar-button:single-button:horizontal:decrement\s*{[^}]*width:\s*6px;[^}]*background-image:\s*url\(/)
     expect(stylesheet).toMatch(/\*::-webkit-scrollbar-button:single-button:horizontal:increment\s*{[^}]*width:\s*6px;[^}]*background-image:\s*url\(/)
     expect(stylesheet).not.toMatch(/\.table-scroll::-webkit-scrollbar/)
+
+    const thumbColor = stylesheet.match(/\*::-webkit-scrollbar-thumb\s*{[^}]*background:\s*(#[\da-f]{6});/i)?.[1]
+    expect(thumbColor).toBeTruthy()
+    for (const surface of ['#0c1429', '#19223a', '#202a47']) {
+      expect(contrastRatio(thumbColor, surface)).toBeGreaterThanOrEqual(3)
+    }
   })
 
   it('pins long-value safety in settings', () => {

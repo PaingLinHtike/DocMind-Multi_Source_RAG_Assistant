@@ -13,7 +13,7 @@ Replace bright native scrollbar tracks throughout DocMind with a compact, dark, 
 ## Visual Treatment
 
 - Use a transparent scrollbar track and corner so no white rail is visible.
-- Use an 8px scrollbar gutter on Chromium/WebKit, with a muted blue-gray rounded thumb that fits the existing dark interface.
+- Use an 8px scrollbar gutter on Chromium/WebKit, with a muted blue-gray rounded thumb that fits the existing dark interface and maintains at least 3:1 contrast against supported dark surfaces.
 - Keep native proportional thumb length; do not impose a minimum length that makes the thumb appear longer.
 - Add subtle hover and active thumb colors for discoverability.
 - Reduce scrollbar button boxes to approximately 6px and draw tiny directional indicators for vertical and horizontal scrollbars where WebKit pseudo-elements are supported.

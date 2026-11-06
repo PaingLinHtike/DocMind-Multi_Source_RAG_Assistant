@@ -12,19 +12,32 @@ import useChatPrototype from '../hooks/useChatPrototype.js'
 
 const menuItem = 'flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-medium transition-colors'
 
-function Citation({ citation }) {
+function Citation({ citation, messageId }) {
+  const [expanded, setExpanded] = useState(true)
+  const panelId = `sources-${messageId}`
+
   return (
     <div className="mt-4 pl-2 sm:pl-14">
-      <p className="mb-2 flex items-center gap-1 text-sm font-medium text-heading">
-        <Icon name="chevronDown" size={16} />
+      <button
+        aria-controls={panelId}
+        aria-expanded={expanded}
+        className="flex min-h-11 w-full max-w-[545px] items-center gap-1 text-left text-sm font-medium text-heading"
+        onClick={() => setExpanded((current) => !current)}
+        type="button"
+      >
+        <Icon className={`transition-transform duration-200 ${expanded ? '' : '-rotate-90'}`} name="chevronDown" size={16} />
         Sources (1)
-      </p>
-      <button className="flex w-full max-w-[545px] items-center gap-3 rounded-xl border border-border bg-[#202a47] px-4 py-3 text-left" type="button">
-        <span className="grid size-5 shrink-0 place-items-center"><img alt="" className="size-full" src={sourceFile} /></span>
-        <span className="min-w-0 flex-1 break-words text-sm text-heading">{citation.file}</span>
-        <span className="shrink-0 text-xs text-muted">{citation.page}</span>
-        <span className="grid size-5 shrink-0 place-items-center"><img alt="" className="size-full" src={sourceOpen} /></span>
       </button>
+      {expanded && (
+        <div id={panelId}>
+          <button className="flex w-full max-w-[545px] items-center gap-3 rounded-xl border border-border bg-[#202a47] px-4 py-3 text-left" type="button">
+            <span className="grid size-5 shrink-0 place-items-center"><img alt="" className="size-full" src={sourceFile} /></span>
+            <span className="min-w-0 flex-1 break-words text-sm text-heading">{citation.file}</span>
+            <span className="shrink-0 text-xs text-muted">{citation.page}</span>
+            <span className="grid size-5 shrink-0 place-items-center"><img alt="" className="size-full" src={sourceOpen} /></span>
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -173,7 +186,7 @@ export default function ChatPage() {
                   <p className="mt-1 text-xs text-muted">{message.time}</p>
                 </div>
               </div>
-              <Citation citation={message.citation} />
+              <Citation citation={message.citation} messageId={message.id} />
             </div>
           ))}
         </div>

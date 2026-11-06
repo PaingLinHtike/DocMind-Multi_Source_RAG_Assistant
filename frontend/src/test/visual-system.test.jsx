@@ -74,6 +74,18 @@ describe('shared visual system', () => {
     expect(screen.getByText('Sources (1)').querySelector('svg')).toHaveAttribute('width', '16')
   })
 
+  it('uses an accessible full-row disclosure control for answer sources', () => {
+    render(<ChatPage />)
+    const control = screen.getByRole('button', { name: 'Sources (1)' })
+    const panelId = control.getAttribute('aria-controls')
+
+    expect(control).toHaveClass('min-h-11')
+    expect(control).toHaveAttribute('aria-expanded', 'true')
+    expect(panelId).toBeTruthy()
+    expect(document.getElementById(panelId)).toBeInTheDocument()
+    expect(control.querySelector('svg')).toHaveClass('transition-transform')
+  })
+
   it('keeps the chat composer free of attachment controls', () => {
     const { container } = render(<ChatPage />)
     const attachment = [...container.querySelectorAll('img')].find((image) => image.getAttribute('src') === attachIcon)

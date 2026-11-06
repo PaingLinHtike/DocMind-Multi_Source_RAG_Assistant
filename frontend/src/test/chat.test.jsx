@@ -176,4 +176,42 @@ describe('Chat prototype', () => {
     expect(thread).not.toContainElement(composer)
     expect(screen.getAllByText('Employee Handbook.pdf').length).toBeGreaterThan(1)
   })
+
+  it('toggles each answer source panel independently by pointer and keyboard', async () => {
+    const user = userEvent.setup()
+    renderApp({ route: '/chat' })
+    const input = screen.getByPlaceholderText('Ask a question about your documents...')
+
+    await user.type(input, 'What is the remote work policy?')
+    await user.click(screen.getByRole('button', { name: 'Send question' }))
+
+    const controls = screen.getAllByRole('button', { name: 'Sources (1)' })
+    expect(controls).toHaveLength(2)
+    const [first, second] = controls
+    const firstPanelId = first.getAttribute('aria-controls')
+    const secondPanelId = second.getAttribute('aria-controls')
+
+    expect(first).toHaveAttribute('aria-expanded', 'true')
+    expect(second).toHaveAttribute('aria-expanded', 'true')
+    expect(firstPanelId).not.toBe(secondPanelId)
+    expect(document.getElementById(firstPanelId)).toHaveTextContent('Employee Handbook.pdf')
+    expect(document.getElementById(secondPanelId)).toHaveTextContent('Employee Handbook.pdf')
+
+    await user.click(first)
+
+    expect(first).toHaveAttribute('aria-expanded', 'false')
+    expect(first.querySelector('svg')).toHaveClass('-rotate-90')
+    expect(document.getElementById(firstPanelId)).not.toBeInTheDocument()
+    expect(second).toHaveAttribute('aria-expanded', 'true')
+    expect(document.getElementById(secondPanelId)).toBeInTheDocument()
+    expect(screen.getByText('Employees receive 20 days of paid annual leave every year. [1]')).toBeInTheDocument()
+    expect(screen.getByText('I found this in your documents. [1]')).toBeInTheDocument()
+    expect(input.closest('form')).toBeInTheDocument()
+
+    first.focus()
+    await user.keyboard('{Enter}')
+
+    expect(first).toHaveAttribute('aria-expanded', 'true')
+    expect(document.getElementById(firstPanelId)).toHaveTextContent('Employee Handbook.pdf')
+  })
 })

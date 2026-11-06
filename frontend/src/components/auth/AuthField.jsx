@@ -6,7 +6,7 @@ export default function AuthField({ id, label, icon, error, trailingControl, cla
   return (
     <div className={className}>
       <label className="mb-1.5 block text-sm font-medium text-heading" htmlFor={id}>{label}</label>
-      <div className={`flex min-h-12 items-center rounded-xl border bg-[#202b4b] transition-colors focus-within:border-primary-border ${error ? 'border-red-400' : 'border-[#506184]'}`}>
+      <div className={`auth-field-control flex min-h-12 items-center rounded-xl border bg-[#202b4b] transition-colors focus-within:border-primary-border ${error ? 'border-red-400' : 'border-[#506184]'}`}>
         <span className="ml-4 grid size-5 shrink-0 place-items-center text-muted"><Icon name={icon} size={20} /></span>
         <input
           aria-describedby={errorId}

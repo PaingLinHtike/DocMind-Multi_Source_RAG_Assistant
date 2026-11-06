@@ -30,6 +30,9 @@ button, a { -webkit-tap-highlight-color: transparent; }
 :focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
 .auth-input:focus-visible { outline: none; }
 .chat-input:focus-visible { outline: none; }
+@media (forced-colors: active) {
+  .auth-field-control:focus-within { outline: 2px solid CanvasText; outline-offset: 2px; }
+}
 @keyframes menu-enter {
   from { opacity: 0; transform: translateY(-6px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }

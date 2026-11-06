@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import attachIcon from '../assets/figma/attach.svg'
@@ -8,6 +10,8 @@ import StatusBadge from '../components/ui/StatusBadge.jsx'
 import DashboardPage from '../pages/DashboardPage.jsx'
 import ChatPage from '../pages/ChatPage.jsx'
 import { renderApp } from './renderApp.jsx'
+
+const stylesheet = readFileSync(resolve('src/index.css'), 'utf8')
 
 const iconNames = ['menu', 'plus', 'send', 'chevronDown', 'eye', 'eyeOff', 'logout', 'more']
 
@@ -122,7 +126,11 @@ describe('shared visual system', () => {
     expect(screen.getByText('Sign in to access your AI document workspace.')).toHaveClass('text-base', 'sm:text-lg')
     expect(screen.getByLabelText('Email')).toHaveClass('min-h-11', 'auth-input')
     expect(screen.getByLabelText('Password')).toHaveClass('min-h-11', 'auth-input')
+    expect(screen.getByLabelText('Email').parentElement).toHaveClass('auth-field-control', 'focus-within:border-primary-border')
     expect(screen.getByRole('button', { name: 'Sign In' })).toHaveClass('min-h-12')
+
+    expect(stylesheet).toMatch(/\.auth-input:focus-visible\s*{\s*outline:\s*none;/)
+    expect(stylesheet).toMatch(/@media\s*\(forced-colors:\s*active\)[\s\S]*\.auth-field-control:focus-within\s*{[\s\S]*outline:/)
 
     const passwordToggle = screen.getByRole('button', { name: 'Show password' })
     expect(passwordToggle).toHaveClass('size-11')
@@ -140,6 +148,11 @@ describe('shared visual system', () => {
     expect(screen.getByLabelText('Email')).toHaveClass('min-h-11')
     expect(screen.getByLabelText('Password')).toHaveClass('min-h-11')
     expect(screen.getByLabelText('Confirm Password')).toHaveClass('min-h-11')
+    for (const label of ['Full Name', 'Email', 'Password', 'Confirm Password']) {
+      const input = screen.getByLabelText(label)
+      expect(input).toHaveClass('auth-input')
+      expect(input.parentElement).toHaveClass('auth-field-control', 'focus-within:border-primary-border')
+    }
     expect(screen.getByRole('button', { name: 'Create Account' })).toHaveClass('min-h-12')
     expect(screen.getByRole('button', { name: 'Show password' })).toHaveClass('size-11')
     expect(screen.getByRole('button', { name: 'Show confirm password' })).toHaveClass('size-11')

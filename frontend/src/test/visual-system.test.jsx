@@ -249,16 +249,20 @@ describe('shared visual system', () => {
     expect(toggle).toHaveClass('size-11')
   })
 
-  it('uses compact account controls and a Save Changes submit action', () => {
+  it('uses a ruled 480px account column and a Save changes submit action', () => {
     const { container } = renderApp({ route: '/settings' })
     const fields = container.querySelector('.account-fields')
-    const save = screen.getByRole('button', { name: 'Save Changes' })
+    const save = screen.getByRole('button', { name: 'Save changes' })
 
-    expect(fields).toHaveClass('lg:grid-cols-[200px_minmax(0,480px)]')
+    expect(fields).toHaveClass('w-full', 'max-w-[480px]')
     expect(save).toHaveAttribute('type', 'submit')
-    expect(save).toHaveClass('h-11')
+    expect(save).toHaveClass('min-h-11', 'rounded-[2px]', 'bg-accent')
+    expect(screen.getByRole('button', { name: 'Change password' })).toHaveClass('bg-surface', 'text-text')
 
     const form = fields.closest('form')
+    expect(form).toHaveClass('border-t', 'border-border')
+    expect(form).not.toHaveClass('rounded-xl', 'bg-surface')
+
     expect(form).not.toBeNull()
     expect(save.closest('form')).toBe(form)
   })

@@ -1,8 +1,9 @@
 import { useState } from 'react'
+import Button from '../components/ui/Button.jsx'
+import Field from '../components/ui/Field.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import PageHeading from '../components/ui/PageHeading.jsx'
 
-const inputClasses = 'h-11 w-full min-w-0 rounded-lg border border-border bg-[#202a47] px-3 text-sm text-heading outline-none focus:border-primary-border'
 const SETTINGS_STORAGE_KEY = 'docmind.account-settings.v1'
 const DEFAULT_ACCOUNT = { name: 'Aung', email: 'aung@example.com', password: 'docmind123' }
 
@@ -54,36 +55,55 @@ export default function SettingsPage() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-[1290px] px-6 pb-12 pt-10 lg:px-0">
+    <section className="mx-auto w-full max-w-[1290px] px-6 pb-12 pt-10 lg:px-8">
       <PageHeading title="Settings" subtitle="Manage your account information and security settings." />
 
-      <form className="mt-10 min-h-[360px] rounded-xl border border-border bg-surface px-6 py-6 sm:px-8" onSubmit={handleSave}>
-        <h2 className="text-2xl font-semibold">Account</h2>
-        <p className="mt-2 text-sm text-muted">Update your account information and security settings.</p>
+      <form className="mt-10 min-h-[360px] border-t border-border py-8" onSubmit={handleSave}>
+        <h2 className="font-display text-2xl font-medium">Account</h2>
+        <p className="mt-2 text-sm text-text-secondary">Update your account information and security settings.</p>
 
-        <div className="account-fields mt-6 grid gap-4 lg:grid-cols-[200px_minmax(0,480px)] lg:items-center lg:gap-x-10">
-          <label className="text-sm font-medium" htmlFor="account-name">Name</label>
-          <input className={inputClasses} id="account-name" onChange={(event) => handleFieldChange('name', event.target.value)} value={account.name} />
+        <div className="account-fields mt-6 grid w-full max-w-[480px] gap-5">
+          <Field
+            id="account-name"
+            label="Name"
+            leadingIcon={<Icon className="text-text-secondary" name="user" />}
+            onChange={(event) => handleFieldChange('name', event.target.value)}
+            value={account.name}
+          />
 
-          <label className="text-sm font-medium" htmlFor="account-email">Email</label>
-          <input className={inputClasses} id="account-email" onChange={(event) => handleFieldChange('email', event.target.value)} type="email" value={account.email} />
+          <Field
+            id="account-email"
+            label="Email"
+            leadingIcon={<Icon className="text-text-secondary" name="mail" />}
+            onChange={(event) => handleFieldChange('email', event.target.value)}
+            type="email"
+            value={account.email}
+          />
 
-          <label className="text-sm font-medium" htmlFor="account-password">Password</label>
-          <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_150px]">
-            <div className="relative min-w-0">
-              <input className={`${inputClasses} pr-12`} id="account-password" onChange={(event) => handleFieldChange('password', event.target.value)} type={passwordVisible ? 'text' : 'password'} value={account.password} />
-              <button aria-label={passwordVisible ? 'Hide password' : 'Show password'} className="absolute right-0 top-0 grid size-11 place-items-center rounded-lg text-heading transition-colors hover:bg-white/5" onClick={() => setPasswordVisible((visible) => !visible)} type="button">
-                <Icon name={passwordVisible ? 'eyeOff' : 'eye'} size={18} />
-              </button>
-            </div>
-            <button className="h-11 rounded-lg border border-border bg-[#202a47] text-sm font-medium transition-colors hover:bg-white/5" onClick={() => announceFeedback(`Password change link sent to ${account.email}.`)} type="button">Change Password</button>
+          <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_150px] sm:items-end">
+            <Field
+              className="min-w-0"
+              id="account-password"
+              inputClassName="pr-1"
+              label="Password"
+              leadingIcon={<Icon className="text-text-secondary" name="lock" />}
+              onChange={(event) => handleFieldChange('password', event.target.value)}
+              trailingControl={(
+                <button aria-label={passwordVisible ? 'Hide password' : 'Show password'} className="grid size-11 place-items-center rounded-[2px] text-text-secondary transition-colors hover:bg-surface-muted hover:text-accent" onClick={() => setPasswordVisible((visible) => !visible)} type="button">
+                  <Icon name={passwordVisible ? 'eyeOff' : 'eye'} size={18} />
+                </button>
+              )}
+              type={passwordVisible ? 'text' : 'password'}
+              value={account.password}
+            />
+            <Button className="w-full" onClick={() => announceFeedback(`Password change link sent to ${account.email}.`)} type="button" variant="secondary">Change password</Button>
           </div>
 
-          <div className="flex justify-end lg:col-start-2">
-            <button className="h-11 w-full rounded-lg border border-primary-border bg-primary text-sm font-semibold text-heading transition-colors hover:bg-primary/90 sm:w-auto sm:px-6" type="submit">Save Changes</button>
+          <div className="flex justify-start">
+            <Button className="w-full sm:w-auto" type="submit">Save changes</Button>
           </div>
 
-          <p aria-atomic="true" aria-live="polite" className={feedback ? 'max-w-[480px] rounded-lg border border-border bg-[#202a47] px-4 py-3 text-sm lg:col-start-2' : 'sr-only'} role="status">
+          <p aria-atomic="true" aria-live="polite" className={feedback ? 'max-w-[480px] rounded-[2px] border-l-2 border-accent bg-surface px-4 py-3 text-sm text-text' : 'sr-only'} role="status">
             <span className="break-all" key={feedbackVersion}>{feedback}</span>
           </p>
         </div>

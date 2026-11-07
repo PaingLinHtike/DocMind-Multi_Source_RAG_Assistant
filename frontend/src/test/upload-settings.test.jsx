@@ -54,7 +54,11 @@ describe('Settings', () => {
     expect(email).toHaveValue('aung@example.com')
     expect(password).toHaveAttribute('type', 'password')
     expect(screen.getByRole('heading', { name: 'Account' })).toHaveClass('text-2xl')
-    for (const field of [name, email, password]) expect(field).toHaveClass('h-11')
+    for (const field of [name, email, password]) {
+      expect(field).toHaveClass('min-h-11', 'bg-transparent')
+      expect(field.parentElement).toHaveClass('field-control', 'bg-surface', 'focus-within:border-focus')
+    }
+    expect(name.parentElement.querySelector('svg')).toHaveClass('text-text-secondary')
 
     await user.clear(name)
     await user.type(name, 'Aung Min')
@@ -70,11 +74,11 @@ describe('Settings', () => {
     expect(screen.getByRole('button', { name: 'Hide password' })).toBeInTheDocument()
   })
 
-  it('simulates Change Password feedback locally', async () => {
+  it('simulates Change password feedback locally', async () => {
     const user = userEvent.setup()
     renderApp({ route: '/settings' })
 
-    await user.click(screen.getByRole('button', { name: 'Change Password' }))
+    await user.click(screen.getByRole('button', { name: 'Change password' }))
     expect(screen.getByText('Password change link sent to aung@example.com.')).toBeInTheDocument()
   })
 
@@ -85,7 +89,7 @@ describe('Settings', () => {
 
     await user.clear(email)
     await user.type(email, 'aung.min.with.an.extremely.long.account.address.for.testing@example-docmind-domain.com')
-    await user.click(screen.getByRole('button', { name: 'Change Password' }))
+    await user.click(screen.getByRole('button', { name: 'Change password' }))
     expect(screen.getByText(/^Password change link sent/)).toHaveClass('break-all')
   })
 
@@ -103,7 +107,7 @@ describe('Settings', () => {
     await user.clear(password)
     await user.type(password, 'new-secret')
 
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
 
     expect(screen.getByText('Account changes saved.')).toBeInTheDocument()
     expect(JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY))).toEqual({
@@ -145,7 +149,7 @@ describe('Settings', () => {
     })
 
     try {
-      await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+      await user.click(screen.getByRole('button', { name: 'Save changes' }))
     } finally {
       setItem.mockRestore()
     }
@@ -179,7 +183,7 @@ describe('Settings', () => {
     const user = userEvent.setup()
     renderApp({ route: '/settings' })
 
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
     expect(screen.getByText('Account changes saved.')).toBeInTheDocument()
 
     await user.type(screen.getByLabelText('Name'), '!')
@@ -223,10 +227,10 @@ describe('Settings', () => {
     })
 
     try {
-      await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+      await user.click(screen.getByRole('button', { name: 'Save changes' }))
       expect(screen.getByText('Unable to save changes in this browser.')).toBeInTheDocument()
 
-      await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+      await user.click(screen.getByRole('button', { name: 'Save changes' }))
     } finally {
       setItem.mockRestore()
     }

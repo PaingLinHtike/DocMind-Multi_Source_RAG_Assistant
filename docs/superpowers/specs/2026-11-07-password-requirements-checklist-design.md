@@ -69,7 +69,8 @@ Prop: `password`.
   3. One lowercase letter (`lowercase`)
   4. One number (`number`)
   5. One symbol (`symbol`)
-- The list has `aria-label="Password requirements"`, `aria-live="polite"`, and `aria-atomic="false"`, so a rule changing state is announced without repeating the entire checklist.
+- A visually hidden paragraph, `Password requirements`, renders immediately before the list and is part of the field's description. The list itself is deliberately unnamed: an author-provided name on the list would short-circuit Chrome's text-alternative computation for the input's `aria-describedby` target, so the five rule states would not contribute to the input's accessible description.
+- The list has `aria-live="polite"` and `aria-atomic="false"`, so a rule changing state is announced without repeating the entire checklist.
 - Unmet item: hollow `circle` icon, `text-text-muted`, and screen-reader text `Not met:` before the rule.
 - Met item: `check` icon, `text-success`, and screen-reader text `Met:` before the rule.
 - Icons are 16px and decorative (`aria-hidden` comes from `Icon`); the visible rule text plus the screen-reader state carry the meaning.
@@ -105,7 +106,7 @@ Add both names to the icon contract test in `frontend/src/test/visual-system.tes
 
 ## Accessibility
 
-- The Password input's accessible description contains the five rule states.
+- The Password input's computed accessible description contains `Password requirements` and all five rule states, including their `Met` / `Not met` words. Verify this in the browser accessibility tree, not only the `aria-describedby` attribute.
 - When a password error is present, the input references both the error and the checklist.
 - State is conveyed by icon shape, text color, and the screen-reader words `Met` / `Not met`; color is never the only signal.
 - The list uses native list semantics and is not focusable.

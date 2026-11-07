@@ -24,7 +24,7 @@
 
 ## Review Focus
 
-- **Non-ASCII letters:** `Ää1!aaaa` must show uppercase/lowercase unmet because the existing policy is ASCII-only; the checklist must mirror the validator, not intuition (Task 3 table).
+- **Non-ASCII letters:** the existing policy is ASCII-only, so `Ää1!AAAA` meets uppercase through its trailing `AAAA` but leaves lowercase unmet, while `ÄÄ1!aaaa` leaves uppercase unmet and meets lowercase through its trailing `aaaa`. The checklist must mirror the validator, not intuition (Task 3 table). Note: `Ää1!aaaa` reports lowercase met because its trailing ASCII `aaaa` satisfies the lowercase rule; it is not an unmet-lowercase case.
 - **Whitespace as symbol:** `Aa1 aaaa` counts the space as the symbol and is therefore fully met; this is existing policy (Task 3 table).
 - **Error plus checklist:** an invalid submit must keep both `signup-password-error` and `signup-password-description` in `aria-describedby`, in that order (Task 3).
 - **Very long password:** a 128-character value at 375px must not create page overflow or clip the checklist (Task 5).
@@ -165,7 +165,7 @@ git commit -m "feat(frontend): link persistent field descriptions"
 
 **Interfaces:**
 - Consumes: `getPasswordValidation(password)` returning `{ minLength, uppercase, lowercase, number, symbol, valid }`; `Icon` `check`/`circle`; `Field` `description`.
-- Produces: `<PasswordRequirements password={string} />` renders a named five-item list. The Password input's description ID is `signup-password-description`.
+- Produces: `<PasswordRequirements password={string} />` renders an sr-only `Password requirements` paragraph followed by an unnamed five-item list. The paragraph and list together form the Password input's description; the list is unnamed so its item text contributes to the input's computed accessible description. The description ID is `signup-password-description`.
 
 - [ ] **Step 1: Write the failing signup checklist tests**
 
@@ -181,10 +181,12 @@ Add these tests inside the existing `describe('Sign Up', ...)`:
 it('shows every password requirement unmet and links the list to the password field', () => {
   renderApp({ route: '/signup', authenticated: false })
 
-  const list = screen.getByRole('list', { name: 'Password requirements' })
+  const list = screen.getByRole('list')
   const items = within(list).getAllByRole('listitem')
+  const description = document.getElementById('signup-password-description')
 
   expect(items).toHaveLength(5)
+  expect(description).toHaveTextContent('Password requirements')
   for (const label of [
     'At least 8 characters',
     'One uppercase letter',
@@ -193,10 +195,11 @@ it('shows every password requirement unmet and links the list to the password fi
     'One symbol',
   ]) {
     expect(within(list).getByText(label)).toBeInTheDocument()
+    expect(description).toHaveTextContent(label)
   }
   expect(within(list).getAllByText('Not met:')).toHaveLength(5)
   expect(screen.getByLabelText('Password')).toHaveAttribute('aria-describedby', 'signup-password-description')
-  expect(document.getElementById('signup-password-description')).toContainElement(list)
+  expect(description).toContainElement(list)
   expect(list).toHaveAttribute('aria-live', 'polite')
   expect(list).toHaveAttribute('aria-atomic', 'false')
   expect(screen.getByLabelText('Confirm password')).not.toHaveAttribute('aria-describedby')
@@ -210,14 +213,15 @@ it.each([
   ['Aa!!aaaa', [true, true, true, false, true]],
   ['Aa11aaaa', [true, true, true, true, false]],
   ['Aa1!aaaa', [true, true, true, true, true]],
-  ['Ää1!aaaa', [true, false, false, true, true]],
+  ['Ää1!AAAA', [true, true, false, true, true]],
+  ['ÄÄ1!aaaa', [true, false, true, true, true]],
   ['Aa1 aaaa', [true, true, true, true, true]],
 ])('marks requirements for %j', async (password, states) => {
   const user = userEvent.setup()
   renderApp({ route: '/signup', authenticated: false })
   if (password) await user.type(screen.getByLabelText('Password'), password)
 
-  const list = screen.getByRole('list', { name: 'Password requirements' })
+  const list = screen.getByRole('list')
   const items = within(list).getAllByRole('listitem')
 
   items.forEach((item, index) => {
@@ -243,6 +247,21 @@ it('keeps the checklist linked when the password error appears', async () => {
     'aria-describedby',
     'signup-password-error signup-password-description',
   )
+
+  const list = screen.getByRole('list')
+  const description = document.getElementById('signup-password-description')
+  expect(within(list).getAllByRole('listitem')).toHaveLength(5)
+  expect(description).toContainElement(list)
+  expect(description).toHaveTextContent('Password requirements')
+  for (const label of [
+    'At least 8 characters',
+    'One uppercase letter',
+    'One lowercase letter',
+    'One number',
+    'One symbol',
+  ]) {
+    expect(description).toHaveTextContent(label)
+  }
 })
 
 it('keeps requirement state when password visibility is toggled', async () => {
@@ -250,7 +269,7 @@ it('keeps requirement state when password visibility is toggled', async () => {
   renderApp({ route: '/signup', authenticated: false })
   await user.type(screen.getByLabelText('Password'), 'Aa1!aaaa')
 
-  const list = screen.getByRole('list', { name: 'Password requirements' })
+  const list = screen.getByRole('list')
   expect(within(list).getAllByText('Met:')).toHaveLength(5)
 
   await user.click(screen.getByRole('button', { name: 'Show password' }))
@@ -263,16 +282,19 @@ In `frontend/src/test/signin.test.jsx`, add:
 ```jsx
 it('does not render the create-account password checklist', () => {
   renderApp({ route: '/signin', authenticated: false })
-  expect(screen.queryByRole('list', { name: 'Password requirements' })).not.toBeInTheDocument()
+  expect(screen.queryByText('Password requirements')).not.toBeInTheDocument()
+  expect(document.getElementById('signin-password-description')).not.toBeInTheDocument()
 })
 ```
 
 - [ ] **Step 2: Run the signup tests to verify they fail**
 
 Run: `npm test -- --run src/test/signup.test.jsx src/test/signin.test.jsx`
-Expected: FAIL — no list named `Password requirements`; `aria-describedby` is absent.
+Expected: FAIL — the description lacks the `Password requirements` text and therefore does not carry the rule states; `aria-describedby` is absent before wiring.
 
 - [ ] **Step 3: Create `frontend/src/components/auth/PasswordRequirements.jsx`**
+
+> **Final-review update:** the list is deliberately unnamed. In Chrome 157, an `aria-label` on this list (nested inside the input's `aria-describedby` target) short-circuits the description computation, so the input exposes only `Password requirements` and none of the rule states. The sr-only paragraph supplies the heading phrase without giving the list a name, so all five item texts contribute.
 
 ```jsx
 import { getPasswordValidation } from '../../auth/auth.js'
@@ -290,20 +312,23 @@ export default function PasswordRequirements({ password }) {
   const validation = getPasswordValidation(password)
 
   return (
-    <ul aria-atomic="false" aria-label="Password requirements" aria-live="polite" className="space-y-1 text-sm leading-5">
-      {rules.map(({ key, label }) => {
-        const met = validation[key]
-        return (
-          <li className={`flex items-start gap-2 ${met ? 'text-success' : 'text-text-muted'}`} key={key}>
-            <Icon className="mt-0.5 shrink-0" name={met ? 'check' : 'circle'} size={16} />
-            <span className="min-w-0">
-              <span className="sr-only">{met ? 'Met: ' : 'Not met: '}</span>
-              {label}
-            </span>
-          </li>
-        )
-      })}
-    </ul>
+    <>
+      <p className="sr-only">Password requirements</p>
+      <ul aria-atomic="false" aria-live="polite" className="space-y-1 text-sm leading-5">
+        {rules.map(({ key, label }) => {
+          const met = validation[key]
+          return (
+            <li className={`flex items-start gap-2 ${met ? 'text-success' : 'text-text-muted'}`} key={key}>
+              <Icon className="mt-0.5 shrink-0" name={met ? 'check' : 'circle'} size={16} />
+              <span className="min-w-0">
+                <span className="sr-only">{met ? 'Met: ' : 'Not met: '}</span>
+                {label}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+    </>
   )
 }
 ```

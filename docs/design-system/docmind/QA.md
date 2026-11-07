@@ -37,6 +37,23 @@ Installed Google Chrome `157.0.8103.39` (headless), driven by `playwright-core`,
 
 The browser script, result JSON, and screenshots are temporary execution artifacts and are not committed. **Limitation:** this was scripted headless Chrome rather than a human review on a physical display; OS-level display scaling above 100% was not exercised.
 
+### Final-review accessibility fix — 2026-11-08
+
+The whole-branch review found that the original `<ul aria-label="Password requirements">` caused Chrome to compute the Password input's accessible description as only `Password requirements`, omitting all five rule states. The list's author-provided name short-circuited the `aria-describedby` text-alternative computation. The fix removes the list's `aria-label` and renders a visually hidden `Password requirements` paragraph before the now-unnamed native list, so the paragraph and all five item texts participate in the input's description.
+
+Verified in the production build with installed Google Chrome `157.0.8103.39` (headless) and CDP `Accessibility.getPartialAXTree`; the browser script ran **34 assertions; 34 passed**:
+
+| Check | Result |
+|---|---|
+| Computed description before typing | `Password requirements Not met: At least 8 characters Not met: One uppercase letter Not met: One lowercase letter Not met: One number Not met: One symbol` |
+| Computed description after typing `Aa1!aaa` | `Password requirements Not met: At least 8 characters Met: One uppercase letter Met: One lowercase letter Met: One number Met: One symbol` |
+| Computed description after invalid submit | `Use 8+ characters with uppercase, lowercase, number, and symbol. Password requirements Not met: At least 8 characters Met: One uppercase letter Met: One lowercase letter Met: One number Met: One symbol` |
+| 320×800 empty state | PASS — five visible rules, no page horizontal overflow, `aria-describedby="signup-password-description"` present |
+| 320×800, 128-character compliant password (`Aa1!` + 124×`a`) | PASS — five rules met, no page horizontal overflow |
+| 375/768/1024/1440 empty states, partial/complete states, toggle, error linkage, 200% zoom equivalent, forced colors, 128-character password at 375px | PASS — no regressions from the original checklist QA |
+
+**Limitation:** this was scripted headless Chrome, not a human review on a physical display; OS-level display scaling above 100% was not exercised.
+
 ## Browser QA
 
 Executed against the production build (`vite preview`) in installed Google Chrome `157.0.8103.39` (headless), driven by `playwright-core`. The script ran **253 assertions; 253 passed**. Screenshots were captured for every route/viewport and spot-checked at 375, 1024, and 1440px. The check script and screenshots live in the execution environment, not the repository.

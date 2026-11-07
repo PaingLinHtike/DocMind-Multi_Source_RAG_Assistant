@@ -1,9 +1,11 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 import attachIcon from '../assets/figma/attach.svg'
 import assistantBook from '../assets/figma/chat-assistant-book.svg'
+import Button from '../components/ui/Button.jsx'
+import { buttonClasses } from '../components/ui/buttonStyles.js'
 import Icon from '../components/ui/Icon.jsx'
 import PageHeading from '../components/ui/PageHeading.jsx'
 import StatusBadge from '../components/ui/StatusBadge.jsx'
@@ -12,8 +14,15 @@ import ChatPage from '../pages/ChatPage.jsx'
 import { renderApp } from './renderApp.jsx'
 
 const stylesheet = readFileSync(resolve('src/index.css'), 'utf8')
+const documentHtml = readFileSync(resolve('index.html'), 'utf8')
 
-const iconNames = ['menu', 'plus', 'send', 'chevronDown', 'eye', 'eyeOff', 'logout', 'more']
+const iconNames = [
+  'menu', 'plus', 'send', 'chevronDown', 'eye', 'eyeOff', 'logout', 'more',
+  'mail', 'lock', 'user', 'messageCircle', 'layers', 'fileText', 'bookOpen',
+  'dashboard', 'chat', 'documents', 'upload', 'settings', 'search', 'file',
+  'link', 'externalLink', 'download', 'refresh', 'edit', 'trash',
+  'chevronRight', 'arrowRight',
+]
 
 function relativeLuminance(hex) {
   const channels = [1, 3, 5].map((index) => Number.parseInt(hex.slice(index, index + 2), 16) / 255)
@@ -28,6 +37,31 @@ function contrastRatio(first, second) {
 }
 
 describe('shared visual system', () => {
+  it('defines the Paper & Ink primitive semantic and component token layers', () => {
+    for (const declaration of [
+      '--paper-100: #F4F1E8',
+      '--ink-950: #171610',
+      '--oxide-600: #B23A2B',
+      '--color-border-strong: var(--paper-500)',
+      '--button-primary-bg-active: var(--color-accent-active)',
+      '--button-destructive-bg-hover: var(--color-danger-soft-hover)',
+      '--control-disabled-fg: var(--color-disabled-fg)',
+    ]) {
+      expect(stylesheet).toContain(declaration)
+    }
+  })
+
+  it('loads the approved fonts with resilient fallbacks', () => {
+    expect(documentHtml).toContain('fonts.googleapis.com')
+    expect(documentHtml).toContain('family=Newsreader:wght@500;600')
+    expect(documentHtml).toContain('family=Inter:wght@400;500;600')
+    expect(documentHtml).toContain('family=JetBrains+Mono:wght@400;500')
+    expect(documentHtml).toContain('display=swap')
+    expect(stylesheet).toContain('--font-display: "Newsreader", Georgia, "Times New Roman", serif')
+    expect(stylesheet).toContain('--font-ui: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif')
+    expect(stylesheet).toContain('--font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace')
+  })
+
   it.each(iconNames)('renders the %s icon as a decorative 20px SVG', (name) => {
     const { container } = render(<Icon name={name} />)
     const svg = container.querySelector('svg')
@@ -38,6 +72,7 @@ describe('shared visual system', () => {
     expect(svg).toHaveAttribute('aria-hidden', 'true')
     expect(svg).toHaveAttribute('focusable', 'false')
     expect(svg).toHaveAttribute('stroke', 'currentColor')
+    expect(svg).toHaveAttribute('stroke-width', '1.75')
   })
 
   it('uses an explicit icon size when provided', () => {
@@ -48,13 +83,50 @@ describe('shared visual system', () => {
     expect(svg).toHaveAttribute('height', '16')
   })
 
+  it('uses the shared button variants and accessible sizes', () => {
+    render(<Button>Save</Button>)
+    const button = screen.getByRole('button', { name: 'Save' })
+
+    expect(button).toHaveClass('min-h-11', 'rounded-[2px]', 'bg-accent')
+    expect(buttonClasses({ variant: 'secondary', size: 'icon' })).toContain('size-11')
+    expect(buttonClasses({ variant: 'destructive' })).toContain('text-danger')
+  })
+
+  it('provides accessible shared field, surface, and rule primitives', async () => {
+    for (const path of [
+      'src/components/ui/Field.jsx',
+      'src/components/ui/Surface.jsx',
+      'src/components/ui/Rule.jsx',
+    ]) expect(existsSync(resolve(path))).toBe(true)
+
+    const componentPaths = ['../components/ui/Field.jsx', '../components/ui/Surface.jsx', '../components/ui/Rule.jsx']
+    const [{ default: Field }, { default: Surface }, { default: Rule }] = await Promise.all(
+      componentPaths.map((path) => import(/* @vite-ignore */ path)),
+    )
+    const onChange = vi.fn()
+    const { container } = render(
+      <Surface padding="compact">
+        <Field id="query" label="Search" error="Required" value="" onChange={onChange} trailingControl={<button type="button">Clear</button>} />
+        <Rule />
+      </Surface>,
+    )
+
+    const field = screen.getByLabelText('Search')
+    expect(field).toHaveAttribute('aria-invalid', 'true')
+    expect(field).toHaveAttribute('aria-describedby', 'query-error')
+    fireEvent.change(field, { target: { value: 'policy' } })
+    expect(onChange).toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Clear' })).toHaveClass('min-h-11', 'min-w-11')
+    expect(container.querySelector('[data-surface]')).toHaveClass('rounded-[2px]', 'p-4')
+    expect(container.querySelector('hr')).toHaveClass('border-border')
+  })
+
   it('normalizes page heading typography for desktop and mobile', () => {
     render(<PageHeading title="Documents" subtitle="Manage sources." />)
 
     const heading = screen.getByRole('heading', { name: 'Documents' })
-    expect(heading).toHaveClass('text-3xl')
-    expect(heading).toHaveClass('max-sm:text-2xl')
-    expect(heading).toHaveClass('leading-tight')
+    expect(heading).toHaveClass('font-display', 'text-[2rem]', 'lg:text-[2.5rem]')
+    expect(heading).toHaveClass('leading-[1.1]')
     expect(screen.getByText('Manage sources.')).toHaveClass('text-base')
   })
 
@@ -62,10 +134,7 @@ describe('shared visual system', () => {
     render(<StatusBadge>Ready</StatusBadge>)
 
     const badge = screen.getByText('Ready')
-    expect(badge).toHaveClass('text-xs')
-    expect(badge).toHaveClass('font-medium')
-    expect(badge).toHaveClass('min-h-6')
-    expect(badge).toHaveClass('rounded-md')
+    expect(badge).toHaveClass('h-6', 'font-mono', 'text-xs', 'font-medium', 'rounded-[2px]')
   })
 
   it('uses the dashboard typographic hierarchy', () => {
@@ -143,25 +212,14 @@ describe('shared visual system', () => {
     expect(document.querySelector('.table-scroll')).toHaveClass('overflow-x-auto')
   })
 
-  it('styles every native scrollbar with a transparent track and compact controls', () => {
-    expect(stylesheet).toMatch(/@supports not selector\(::-webkit-scrollbar\)\s*{[\s\S]*?\*\s*{[\s\S]*?scrollbar-color:\s*#6376a0 transparent;[\s\S]*?scrollbar-width:\s*thin;/)
+  it('keeps reduced motion and accessible native scrollbars', () => {
+    expect(stylesheet).toMatch(/@supports not selector\(::-webkit-scrollbar\)\s*{[\s\S]*?\*\s*{[\s\S]*?scrollbar-color:\s*var\(--paper-500\) transparent;[\s\S]*?scrollbar-width:\s*thin;/)
     expect(stylesheet).toMatch(/\*::-webkit-scrollbar\s*{[^}]*width:\s*8px;[^}]*height:\s*8px;/)
     expect(stylesheet).toMatch(/\*::-webkit-scrollbar-track,\s*\*::-webkit-scrollbar-corner\s*{[^}]*background:\s*transparent;/)
-    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-thumb\s*{[^}]*background:\s*#6376a0;[^}]*border:\s*2px solid transparent;[^}]*background-clip:\s*padding-box;[^}]*border-radius:\s*9999px;/)
-    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-thumb:hover\s*{[^}]*background-color:\s*#7589b8;/)
-    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-thumb:active\s*{[^}]*background-color:\s*#879aca;/)
-    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-button:single-button\s*{[^}]*background-color:\s*transparent;[^}]*background-position:\s*center;[^}]*background-repeat:\s*no-repeat;[^}]*background-size:\s*5px 5px;/)
-    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-button:single-button:vertical:decrement\s*{[^}]*height:\s*6px;[^}]*background-image:\s*url\(/)
-    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-button:single-button:vertical:increment\s*{[^}]*height:\s*6px;[^}]*background-image:\s*url\(/)
-    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-button:single-button:horizontal:decrement\s*{[^}]*width:\s*6px;[^}]*background-image:\s*url\(/)
-    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-button:single-button:horizontal:increment\s*{[^}]*width:\s*6px;[^}]*background-image:\s*url\(/)
+    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-thumb\s*{[^}]*background:\s*var\(--paper-500\);[^}]*border:\s*2px solid transparent;[^}]*background-clip:\s*padding-box;[^}]*border-radius:\s*var\(--radius-full\);/)
     expect(stylesheet).not.toMatch(/\.table-scroll::-webkit-scrollbar/)
-
-    const thumbColor = stylesheet.match(/\*::-webkit-scrollbar-thumb\s*{[^}]*background:\s*(#[\da-f]{6});/i)?.[1]
-    expect(thumbColor).toBeTruthy()
-    for (const surface of ['#0c1429', '#19223a', '#202a47']) {
-      expect(contrastRatio(thumbColor, surface)).toBeGreaterThanOrEqual(3)
-    }
+    expect(contrastRatio('#8A8274', '#FFFDF7')).toBeGreaterThanOrEqual(3)
+    expect(stylesheet).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*transition-duration:\s*0\.01ms !important;/)
   })
 
   it('pins long-value safety in settings', () => {

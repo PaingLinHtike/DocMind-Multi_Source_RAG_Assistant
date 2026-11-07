@@ -60,7 +60,7 @@ A score is a different feature: it would imply policy beyond the five binary rul
 
 New file: `frontend/src/components/auth/PasswordRequirements.jsx`.
 
-Props: `id` and `password`.
+Prop: `password`.
 
 - Calls `getPasswordValidation(password)`; it does not restate the policy.
 - Renders a five-item list in this order and wording:
@@ -80,10 +80,12 @@ Props: `id` and `password`.
 `frontend/src/pages/SignUpPage.jsx` passes:
 
 ```jsx
-description={<PasswordRequirements id="signup-password-requirements" password={form.password} />}
+description={<PasswordRequirements password={form.password} />}
 ```
 
-to the Password `AuthField` only. No other signup field changes.
+to the Password `AuthField` only. No other signup field changes. The Field
+description wrapper carries the ID `signup-password-description`, which is the
+Password input's description target.
 
 ### Icons
 
@@ -114,8 +116,8 @@ Add both names to the icon contract test in `frontend/src/test/visual-system.tes
 
 - Before typing, the Password field is followed by all five requirements, each showing the hollow circle and `Not met`.
 - Typing a password updates each rule independently and immediately; satisfying all five shows five check marks and `Met` for each.
-- The Password input's `aria-describedby` includes `signup-password-requirements`.
-- After an invalid submit, `aria-describedby` includes both `signup-password-error` and `signup-password-requirements`.
+- The Password input's `aria-describedby` includes `signup-password-description`.
+- After an invalid submit, `aria-describedby` includes both `signup-password-error` and `signup-password-description`.
 - The checklist appears only under Password, not Confirm password.
 - Existing validation, error text, submission, redirect, and password visibility tests still pass.
 - The checklist fits at 320px and 375px without page overflow and remains readable at 200% zoom.

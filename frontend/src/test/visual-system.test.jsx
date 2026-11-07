@@ -200,11 +200,13 @@ describe('shared visual system', () => {
     expect(book.parentElement).not.toHaveClass('absolute')
   })
 
-  it('wraps document row icons at 20px', () => {
+  it('uses compact unified document rows and status badges', () => {
     renderApp({ route: '/documents' })
 
     const row = screen.getByRole('link', { name: /Employee Handbook\.pdf/ })
-    expect(row.querySelector('span.size-5')).toBeInTheDocument()
+    expect(row).toHaveClass('min-h-[52px]')
+    expect(row.querySelector('svg')).toHaveAttribute('width', '20')
+    expect(within(row).getByText('Ready')).toHaveClass('h-6', 'font-mono', 'rounded-[2px]')
   })
 
   it('styles the intentional documents table scroller', () => {

@@ -26,6 +26,31 @@ class LegacySchemaMigrationTest extends TestCase
             'created_at' => '2026-11-07 00:00:00',
         ]);
 
+        Schema::create('documents', function (Blueprint $table): void {
+            $table->uuid('id')->primary();
+            $table->uuid('user_id');
+            $table->string('filename');
+            $table->string('source_type', 20);
+            $table->text('source_url')->nullable();
+            $table->text('storage_key')->nullable();
+            $table->string('checksum', 64)->nullable();
+            $table->string('status', 20)->default('UPLOADED');
+            $table->unsignedInteger('chunk_count')->default(0);
+            $table->timestampTz('created_at')->useCurrent();
+            $table->timestampTz('updated_at')->useCurrent();
+        });
+        DB::table('documents')->insert([
+            'id' => 'ba2bb395-417d-4f40-9c81-53ae72444d26',
+            'user_id' => 'c7cb2e04-f86f-4b1c-a042-e5031afc8741',
+            'filename' => 'preserved.pdf',
+            'source_type' => 'pdf',
+            'storage_key' => 'documents/preserved.pdf',
+            'status' => 'UPLOADED',
+            'chunk_count' => 3,
+            'created_at' => '2026-11-07 00:00:00',
+            'updated_at' => '2026-11-07 00:00:00',
+        ]);
+
         $exitCode = Artisan::call('migrate', ['--force' => true]);
 
         $this->assertSame(0, $exitCode);
@@ -45,5 +70,19 @@ class LegacySchemaMigrationTest extends TestCase
         $this->assertTrue(Schema::hasTable('cache'));
         $this->assertTrue(Schema::hasTable('jobs'));
         $this->assertTrue(Schema::hasTable('personal_access_tokens'));
+        $this->assertDatabaseHas('documents', [
+            'id' => 'ba2bb395-417d-4f40-9c81-53ae72444d26',
+            'filename' => 'preserved.pdf',
+            'status' => 'UPLOADED',
+        ]);
+        $this->assertTrue(Schema::hasColumns('documents', [
+            'original_name',
+            'extension',
+            'mime_type',
+            'storage_disk',
+            'size_bytes',
+            'failure_reason',
+            'indexed_at',
+        ]));
     }
 }

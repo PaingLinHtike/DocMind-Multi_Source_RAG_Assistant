@@ -6,6 +6,10 @@ use App\Http\Controllers\Api\V1\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Api\V1\Auth\NewPasswordController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Api\V1\Auth\RegisteredUserController;
+use App\Http\Controllers\Api\V1\DocumentContentController;
+use App\Http\Controllers\Api\V1\DocumentController;
+use App\Http\Controllers\Api\V1\RecentUploadController;
+use App\Http\Controllers\Api\V1\ReindexDocumentController;
 use App\Http\Resources\Api\V1\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -42,5 +46,21 @@ Route::prefix('v1')->group(function (): void {
             ->name('api.v1.account.profile.update');
         Route::put('/password', PasswordController::class)
             ->name('api.v1.account.password.update');
+    });
+
+    Route::middleware('auth:sanctum')->group(function (): void {
+        Route::apiResource('documents', DocumentController::class)
+            ->except('store');
+        Route::post('/documents', [DocumentController::class, 'store'])
+            ->middleware('throttle:uploads')
+            ->name('api.v1.documents.store');
+        Route::get('/documents/{document}/content', [DocumentContentController::class, 'show'])
+            ->name('api.v1.documents.content');
+        Route::get('/documents/{document}/download', [DocumentContentController::class, 'download'])
+            ->name('api.v1.documents.download');
+        Route::post('/documents/{document}/reindex', ReindexDocumentController::class)
+            ->name('api.v1.documents.reindex');
+        Route::get('/uploads/recent', RecentUploadController::class)
+            ->name('api.v1.uploads.recent');
     });
 });

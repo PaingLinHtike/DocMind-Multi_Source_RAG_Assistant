@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { extname, join, relative, resolve } from 'node:path'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import Button from '../components/ui/Button.jsx'
@@ -12,6 +12,16 @@ import { renderApp } from './renderApp.jsx'
 
 const stylesheet = readFileSync(resolve('src/index.css'), 'utf8')
 const documentHtml = readFileSync(resolve('index.html'), 'utf8')
+
+function collectFiles(directory) {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(directory, entry.name)
+    return entry.isDirectory() ? collectFiles(path) : [path]
+  })
+}
+
+const productionJsx = collectFiles(resolve('src'))
+  .filter((path) => extname(path) === '.jsx' && !relative(resolve('src'), path).startsWith('test'))
 
 const iconNames = [
   'menu', 'plus', 'send', 'chevronDown', 'eye', 'eyeOff', 'logout', 'more',
@@ -34,6 +44,26 @@ function contrastRatio(first, second) {
 }
 
 describe('shared visual system', () => {
+  it('keeps production JSX free of retired visual-system drift', () => {
+    const sources = productionJsx.map((path) => ({ path: relative(resolve('src'), path), source: readFileSync(path, 'utf8') }))
+    const combined = sources.map(({ path, source }) => `/* ${path} */\n${source}`).join('\n')
+
+    expect(combined).not.toMatch(/#[0-9a-f]{6}\b/i)
+    expect(combined).not.toMatch(/assets\/figma|bg-gradient|shadow-(?!none)|backdrop-blur|(?:^|\s)blur(?:-|\s)|bg-white\/|hover:bg-white\//i)
+    expect(combined).not.toMatch(/863bff|7e14ff|ede6ff|7861bf|202a47|383e6e|navy|purple|blue-/i)
+    expect(combined).not.toMatch(/Chat Activity|↑ \+20%|↑ \+17%|↑ \+32%/)
+    expect(combined).toMatch(/import Button from ['"].*components\/ui\/Button\.jsx['"]/)
+  })
+
+  it('keeps global assets free of the retired purple palette', () => {
+    const favicon = readFileSync(resolve('public/favicon.svg'), 'utf8')
+    const globalSources = `${stylesheet}\n${documentHtml}\n${favicon}`
+
+    expect(globalSources).not.toMatch(/#(?:863bff|7e14ff|ede6ff|7861bf|202a47|383e6e)/i)
+    expect(stylesheet).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)/)
+    expect(stylesheet).toMatch(/@media\s*\(forced-colors:\s*active\)/)
+  })
+
   it('defines the Paper & Ink primitive semantic and component token layers', () => {
     for (const declaration of [
       '--paper-100: #F4F1E8',

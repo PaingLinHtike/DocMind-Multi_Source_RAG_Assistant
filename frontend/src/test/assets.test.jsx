@@ -1,9 +1,15 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { render } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { renderApp } from './renderApp.jsx'
 describe('Paper & Ink brand assets', () => {
+  it('removes the retired Figma SVG asset set', () => {
+    const directory = resolve('src/assets/figma')
+    const svgFiles = existsSync(directory) ? readdirSync(directory).filter((file) => file.endsWith('.svg')) : []
+    expect(svgFiles).toEqual([])
+  })
+
   it('renders a decorative current-color open-book BrandMark', async () => {
     expect(existsSync(resolve('src/components/ui/BrandMark.jsx'))).toBe(true)
     const modulePath = '../components/ui/BrandMark.jsx'

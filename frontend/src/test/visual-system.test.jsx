@@ -1,19 +1,36 @@
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
-import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
-import attachIcon from '../assets/figma/attach.svg'
-import assistantBook from '../assets/figma/chat-assistant-book.svg'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { extname, join, relative, resolve } from 'node:path'
+import { fireEvent, render, screen, within } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
+import Button from '../components/ui/Button.jsx'
+import { buttonClasses } from '../components/ui/buttonStyles.js'
+import Field from '../components/ui/Field.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import PageHeading from '../components/ui/PageHeading.jsx'
 import StatusBadge from '../components/ui/StatusBadge.jsx'
-import DashboardPage from '../pages/DashboardPage.jsx'
 import ChatPage from '../pages/ChatPage.jsx'
 import { renderApp } from './renderApp.jsx'
 
 const stylesheet = readFileSync(resolve('src/index.css'), 'utf8')
+const documentHtml = readFileSync(resolve('index.html'), 'utf8')
 
-const iconNames = ['menu', 'plus', 'send', 'chevronDown', 'eye', 'eyeOff', 'logout', 'more']
+function collectFiles(directory) {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(directory, entry.name)
+    return entry.isDirectory() ? collectFiles(path) : [path]
+  })
+}
+
+const productionJsx = collectFiles(resolve('src'))
+  .filter((path) => extname(path) === '.jsx' && !relative(resolve('src'), path).startsWith('test'))
+
+const iconNames = [
+  'menu', 'plus', 'send', 'chevronDown', 'eye', 'eyeOff', 'logout', 'more',
+  'mail', 'lock', 'user', 'messageCircle', 'layers', 'fileText', 'bookOpen',
+  'dashboard', 'chat', 'documents', 'upload', 'settings', 'search', 'file',
+  'link', 'externalLink', 'download', 'refresh', 'edit', 'trash',
+  'chevronRight', 'arrowRight', 'check', 'circle',
+]
 
 function relativeLuminance(hex) {
   const channels = [1, 3, 5].map((index) => Number.parseInt(hex.slice(index, index + 2), 16) / 255)
@@ -28,6 +45,51 @@ function contrastRatio(first, second) {
 }
 
 describe('shared visual system', () => {
+  it('keeps production JSX free of retired visual-system drift', () => {
+    const sources = productionJsx.map((path) => ({ path: relative(resolve('src'), path), source: readFileSync(path, 'utf8') }))
+    const combined = sources.map(({ path, source }) => `/* ${path} */\n${source}`).join('\n')
+
+    expect(combined).not.toMatch(/#[0-9a-f]{6}\b/i)
+    expect(combined).not.toMatch(/assets\/figma|bg-gradient|shadow-(?!none)|backdrop-blur|(?:^|\s)blur(?:-|\s)|bg-white\/|hover:bg-white\//i)
+    expect(combined).not.toMatch(/863bff|7e14ff|ede6ff|7861bf|202a47|383e6e|navy|purple|blue-/i)
+    expect(combined).not.toMatch(/Chat Activity|↑ \+20%|↑ \+17%|↑ \+32%/)
+    expect(combined).toMatch(/import Button from ['"].*components\/ui\/Button\.jsx['"]/)
+  })
+
+  it('keeps global assets free of the retired purple palette', () => {
+    const favicon = readFileSync(resolve('public/favicon.svg'), 'utf8')
+    const globalSources = `${stylesheet}\n${documentHtml}\n${favicon}`
+
+    expect(globalSources).not.toMatch(/#(?:863bff|7e14ff|ede6ff|7861bf|202a47|383e6e)/i)
+    expect(stylesheet).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)/)
+    expect(stylesheet).toMatch(/@media\s*\(forced-colors:\s*active\)/)
+  })
+
+  it('defines the Paper & Ink primitive semantic and component token layers', () => {
+    for (const declaration of [
+      '--paper-100: #F4F1E8',
+      '--ink-950: #171610',
+      '--oxide-600: #B23A2B',
+      '--color-border-strong: var(--paper-500)',
+      '--button-primary-bg-active: var(--color-accent-active)',
+      '--button-destructive-bg-hover: var(--color-danger-soft-hover)',
+      '--control-disabled-fg: var(--color-disabled-fg)',
+    ]) {
+      expect(stylesheet).toContain(declaration)
+    }
+  })
+
+  it('loads the approved fonts with resilient fallbacks', () => {
+    expect(documentHtml).toContain('fonts.googleapis.com')
+    expect(documentHtml).toContain('family=Newsreader:wght@500;600')
+    expect(documentHtml).toContain('family=Inter:wght@400;500;600')
+    expect(documentHtml).toContain('family=JetBrains+Mono:wght@400;500')
+    expect(documentHtml).toContain('display=swap')
+    expect(stylesheet).toContain('--font-display: "Newsreader", Georgia, "Times New Roman", serif')
+    expect(stylesheet).toContain('--font-ui: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif')
+    expect(stylesheet).toContain('--font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace')
+  })
+
   it.each(iconNames)('renders the %s icon as a decorative 20px SVG', (name) => {
     const { container } = render(<Icon name={name} />)
     const svg = container.querySelector('svg')
@@ -38,6 +100,7 @@ describe('shared visual system', () => {
     expect(svg).toHaveAttribute('aria-hidden', 'true')
     expect(svg).toHaveAttribute('focusable', 'false')
     expect(svg).toHaveAttribute('stroke', 'currentColor')
+    expect(svg).toHaveAttribute('stroke-width', '1.75')
   })
 
   it('uses an explicit icon size when provided', () => {
@@ -48,13 +111,70 @@ describe('shared visual system', () => {
     expect(svg).toHaveAttribute('height', '16')
   })
 
+  it('uses the shared button variants and accessible sizes', () => {
+    render(<Button>Save</Button>)
+    const button = screen.getByRole('button', { name: 'Save' })
+
+    expect(button).toHaveClass('min-h-11', 'rounded-[2px]', 'bg-accent')
+    expect(buttonClasses({ variant: 'secondary', size: 'icon' })).toContain('size-11')
+    expect(buttonClasses({ variant: 'destructive' })).toContain('text-danger')
+  })
+
+  it('provides accessible shared field, surface, and rule primitives', async () => {
+    for (const path of [
+      'src/components/ui/Field.jsx',
+      'src/components/ui/Surface.jsx',
+      'src/components/ui/Rule.jsx',
+    ]) expect(existsSync(resolve(path))).toBe(true)
+
+    const componentPaths = ['../components/ui/Field.jsx', '../components/ui/Surface.jsx', '../components/ui/Rule.jsx']
+    const [{ default: Field }, { default: Surface }, { default: Rule }] = await Promise.all(
+      componentPaths.map((path) => import(/* @vite-ignore */ path)),
+    )
+    const onChange = vi.fn()
+    const { container } = render(
+      <Surface padding="compact">
+        <Field id="query" label="Search" error="Required" value="" onChange={onChange} trailingControl={<button type="button">Clear</button>} />
+        <Rule />
+      </Surface>,
+    )
+
+    const field = screen.getByLabelText('Search')
+    expect(field).toHaveAttribute('aria-invalid', 'true')
+    expect(field).toHaveAttribute('aria-describedby', 'query-error')
+    fireEvent.change(field, { target: { value: 'policy' } })
+    expect(onChange).toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Clear' })).toHaveClass('min-h-11', 'min-w-11')
+    expect(container.querySelector('[data-surface]')).toHaveClass('rounded-[2px]', 'p-4')
+    expect(container.querySelector('hr')).toHaveClass('border-border')
+  })
+
+  it('links a persistent field description alongside errors and helpers', () => {
+    const { rerender } = render(
+      <Field description={<p>At least 8 characters</p>} id="query" label="Search" onChange={() => {}} value="" />,
+    )
+
+    expect(screen.getByLabelText('Search')).toHaveAttribute('aria-describedby', 'query-description')
+    expect(document.getElementById('query-description')).toHaveTextContent('At least 8 characters')
+
+    rerender(
+      <Field description={<p>At least 8 characters</p>} error="Required" id="query" label="Search" onChange={() => {}} value="" />,
+    )
+    expect(screen.getByLabelText('Search')).toHaveAttribute('aria-describedby', 'query-error query-description')
+    expect(document.getElementById('query-description')).toHaveTextContent('At least 8 characters')
+
+    rerender(
+      <Field description={<p>At least 8 characters</p>} helperText="Searches titles and text." id="query" label="Search" onChange={() => {}} value="" />,
+    )
+    expect(screen.getByLabelText('Search')).toHaveAttribute('aria-describedby', 'query-helper query-description')
+  })
+
   it('normalizes page heading typography for desktop and mobile', () => {
     render(<PageHeading title="Documents" subtitle="Manage sources." />)
 
     const heading = screen.getByRole('heading', { name: 'Documents' })
-    expect(heading).toHaveClass('text-3xl')
-    expect(heading).toHaveClass('max-sm:text-2xl')
-    expect(heading).toHaveClass('leading-tight')
+    expect(heading).toHaveClass('font-display', 'text-[2rem]', 'lg:text-[2.5rem]')
+    expect(heading).toHaveClass('leading-[1.1]')
     expect(screen.getByText('Manage sources.')).toHaveClass('text-base')
   })
 
@@ -62,19 +182,26 @@ describe('shared visual system', () => {
     render(<StatusBadge>Ready</StatusBadge>)
 
     const badge = screen.getByText('Ready')
-    expect(badge).toHaveClass('text-xs')
-    expect(badge).toHaveClass('font-medium')
-    expect(badge).toHaveClass('min-h-6')
-    expect(badge).toHaveClass('rounded-md')
+    expect(badge).toHaveClass('h-6', 'font-mono', 'text-xs', 'font-medium', 'rounded-[2px]')
   })
 
-  it('uses the dashboard typographic hierarchy', () => {
-    render(<DashboardPage />)
+  it('uses one ruled Overview data strip instead of four metric cards', () => {
+    renderApp()
 
-    expect(screen.getByText('Documents')).toHaveClass('text-sm')
-    expect(screen.getByText('12')).toHaveClass('text-3xl')
-    expect(screen.getByRole('heading', { name: 'Chat Activity' })).toHaveClass('text-xl')
-    expect(screen.getByRole('heading', { name: 'Recent Chats' })).toHaveClass('text-xl')
+    const strip = screen.getByRole('list', { name: 'Library statistics' })
+    expect(strip).toHaveClass('border-y', 'border-border')
+    expect(within(strip).getAllByRole('listitem')).toHaveLength(4)
+    expect(within(strip).getByText('12')).toHaveClass('font-mono')
+    expect(screen.getByRole('heading', { name: 'Recent conversations' })).toHaveClass('font-display')
+    expect(screen.queryByRole('heading', { name: 'Chat Activity' })).not.toBeInTheDocument()
+  })
+
+  it('reserves one 64px header row instead of a desktop sidebar', () => {
+    const { container } = renderApp()
+    const main = container.querySelector('main')
+
+    expect(main).toHaveClass('min-h-screen', 'pt-16')
+    expect(main).not.toHaveClass('lg:pl-60', 'lg:pt-0')
   })
 
   it('uses the chat icon sizes and heading scale', () => {
@@ -100,12 +227,19 @@ describe('shared visual system', () => {
 
   it('keeps the chat composer free of attachment controls', () => {
     const { container } = render(<ChatPage />)
-    const attachment = [...container.querySelectorAll('img')].find((image) => image.getAttribute('src') === attachIcon)
     const input = screen.getByPlaceholderText('Ask a question about your documents...')
 
-    expect(attachment).toBeUndefined()
+    expect(screen.queryByRole('button', { name: /attach/i })).not.toBeInTheDocument()
     expect(input).toHaveClass('chat-input')
-    expect(input.closest('form')).toHaveClass('chat-composer')
+    expect(input.closest('form')).toHaveClass('chat-composer', 'bg-surface', 'rounded-[2px]')
+    expect(container.querySelectorAll('img')).toHaveLength(0)
+  })
+
+  it('gives the chat composer a visible 2px oxide focus ring', () => {
+    render(<ChatPage />)
+    const form = screen.getByPlaceholderText('Ask a question about your documents...').closest('form')
+
+    expect(form).toHaveClass('focus-within:outline', 'focus-within:outline-2', 'focus-within:outline-offset-2', 'focus-within:outline-focus')
   })
 
   it('contains desktop Chat within the viewport and assigns overflow to the message thread', () => {
@@ -114,27 +248,27 @@ describe('shared visual system', () => {
     const panel = container.querySelector('.chat-panel')
     const thread = container.querySelector('.chat-thread')
 
-    expect(page).toHaveClass('min-h-[732px]', 'lg:h-[calc(100dvh-5rem)]', 'lg:min-h-0', 'lg:overflow-hidden')
-    expect(page).not.toHaveClass('h-[calc(100dvh-5rem)]', 'overflow-hidden')
+    expect(page).toHaveClass('min-h-[732px]', 'lg:h-[calc(100dvh-4rem)]', 'lg:min-h-0', 'lg:overflow-hidden')
+    expect(page).not.toHaveClass('h-[calc(100dvh-4rem)]', 'overflow-hidden')
     expect(panel).toHaveClass('flex', 'flex-col', 'lg:min-h-0')
-    expect(thread).toHaveClass('min-h-[450px]', 'lg:min-h-0', 'flex-1', 'overflow-y-auto')
+    expect(thread).toHaveClass('min-h-[450px]', 'lg:min-h-0', 'flex-1', 'lg:overflow-y-auto')
+    expect(thread).not.toHaveClass('overflow-y-auto')
   })
 
-  it('centers the assistant book inside its circular badge', () => {
-    const { container } = render(<ChatPage />)
-    const book = [...container.querySelectorAll('img')].find((image) => image.getAttribute('src') === assistantBook)
-
-    expect(book).toBeInTheDocument()
-    expect(book.parentElement).toHaveClass('grid')
-    expect(book.parentElement).toHaveClass('place-items-center')
-    expect(book.parentElement).not.toHaveClass('absolute')
+  it('uses paper message surfaces without legacy chat bubbles', () => {
+    render(<ChatPage />)
+    expect(screen.getByText('How many annual leave days do employees get?')).toHaveClass('bg-surface-muted', 'border-accent')
+    expect(screen.getByText('Employees receive 20 days of paid annual leave every year. [1]')).toHaveClass('bg-transparent')
+    expect(screen.getByText('Employee Handbook.pdf').closest('button')).toHaveClass('bg-surface', 'shadow-none')
   })
 
-  it('wraps document row icons at 20px', () => {
+  it('uses compact unified document rows and status badges', () => {
     renderApp({ route: '/documents' })
 
     const row = screen.getByRole('link', { name: /Employee Handbook\.pdf/ })
-    expect(row.querySelector('span.size-5')).toBeInTheDocument()
+    expect(row).toHaveClass('min-h-[52px]')
+    expect(row.querySelector('svg')).toHaveAttribute('width', '20')
+    expect(within(row).getByText('Ready')).toHaveClass('h-6', 'font-mono', 'rounded-[2px]')
   })
 
   it('styles the intentional documents table scroller', () => {
@@ -143,25 +277,22 @@ describe('shared visual system', () => {
     expect(document.querySelector('.table-scroll')).toHaveClass('overflow-x-auto')
   })
 
-  it('styles every native scrollbar with a transparent track and compact controls', () => {
-    expect(stylesheet).toMatch(/@supports not selector\(::-webkit-scrollbar\)\s*{[\s\S]*?\*\s*{[\s\S]*?scrollbar-color:\s*#6376a0 transparent;[\s\S]*?scrollbar-width:\s*thin;/)
+  it('keeps reduced motion and accessible native scrollbars', () => {
+    expect(stylesheet).toMatch(/@supports not selector\(::-webkit-scrollbar\)\s*{[\s\S]*?\*\s*{[\s\S]*?scrollbar-color:\s*var\(--paper-500\) transparent;[\s\S]*?scrollbar-width:\s*thin;/)
     expect(stylesheet).toMatch(/\*::-webkit-scrollbar\s*{[^}]*width:\s*8px;[^}]*height:\s*8px;/)
     expect(stylesheet).toMatch(/\*::-webkit-scrollbar-track,\s*\*::-webkit-scrollbar-corner\s*{[^}]*background:\s*transparent;/)
-    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-thumb\s*{[^}]*background:\s*#6376a0;[^}]*border:\s*2px solid transparent;[^}]*background-clip:\s*padding-box;[^}]*border-radius:\s*9999px;/)
-    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-thumb:hover\s*{[^}]*background-color:\s*#7589b8;/)
-    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-thumb:active\s*{[^}]*background-color:\s*#879aca;/)
-    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-button:single-button\s*{[^}]*background-color:\s*transparent;[^}]*background-position:\s*center;[^}]*background-repeat:\s*no-repeat;[^}]*background-size:\s*5px 5px;/)
-    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-button:single-button:vertical:decrement\s*{[^}]*height:\s*6px;[^}]*background-image:\s*url\(/)
-    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-button:single-button:vertical:increment\s*{[^}]*height:\s*6px;[^}]*background-image:\s*url\(/)
-    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-button:single-button:horizontal:decrement\s*{[^}]*width:\s*6px;[^}]*background-image:\s*url\(/)
-    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-button:single-button:horizontal:increment\s*{[^}]*width:\s*6px;[^}]*background-image:\s*url\(/)
+    expect(stylesheet).toMatch(/\*::-webkit-scrollbar-thumb\s*{[^}]*background:\s*var\(--paper-500\);[^}]*border:\s*2px solid transparent;[^}]*background-clip:\s*padding-box;[^}]*border-radius:\s*var\(--radius-full\);/)
     expect(stylesheet).not.toMatch(/\.table-scroll::-webkit-scrollbar/)
+    expect(contrastRatio('#8A8274', '#FFFDF7')).toBeGreaterThanOrEqual(3)
+    expect(stylesheet).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*transition-duration:\s*0\.01ms !important;/)
+  })
 
-    const thumbColor = stylesheet.match(/\*::-webkit-scrollbar-thumb\s*{[^}]*background:\s*(#[\da-f]{6});/i)?.[1]
-    expect(thumbColor).toBeTruthy()
-    for (const surface of ['#0c1429', '#19223a', '#202a47']) {
-      expect(contrastRatio(thumbColor, surface)).toBeGreaterThanOrEqual(3)
-    }
+  it('styles Upload as a paper inbox and ruled list', () => {
+    renderApp({ route: '/upload' })
+    const dropArea = screen.getByTestId('upload-drop-area')
+    expect(dropArea).toHaveClass('border-dashed', 'border-border-strong', 'rounded-[2px]')
+    expect(screen.getByRole('heading', { name: 'Recent uploads' })).toHaveClass('font-display')
+    expect(screen.getByTestId('recent-upload-Employee Handbook.pdf')).toHaveClass('border-b')
   })
 
   it('pins long-value safety in settings', () => {
@@ -176,29 +307,33 @@ describe('shared visual system', () => {
     expect(toggle).toHaveClass('size-11')
   })
 
-  it('uses compact account controls and a Save Changes submit action', () => {
+  it('uses a ruled 480px account column and a Save changes submit action', () => {
     const { container } = renderApp({ route: '/settings' })
     const fields = container.querySelector('.account-fields')
-    const save = screen.getByRole('button', { name: 'Save Changes' })
+    const save = screen.getByRole('button', { name: 'Save changes' })
 
-    expect(fields).toHaveClass('lg:grid-cols-[200px_minmax(0,480px)]')
+    expect(fields).toHaveClass('w-full', 'max-w-[480px]')
     expect(save).toHaveAttribute('type', 'submit')
-    expect(save).toHaveClass('h-11')
+    expect(save).toHaveClass('min-h-11', 'rounded-[2px]', 'bg-accent')
+    expect(screen.getByRole('button', { name: 'Change password' })).toHaveClass('bg-surface', 'text-text')
 
     const form = fields.closest('form')
+    expect(form).toHaveClass('border-t', 'border-border')
+    expect(form).not.toHaveClass('rounded-xl', 'bg-surface')
+
     expect(form).not.toBeNull()
     expect(save.closest('form')).toBe(form)
   })
 
-  it('keeps Sign In controls, typography, and password icon accessible', () => {
+  it('keeps Sign in controls, typography, and password icon accessible', () => {
     renderApp({ route: '/signin', authenticated: false })
 
-    expect(screen.getByRole('heading', { name: 'Welcome back' })).toHaveClass('text-3xl', 'sm:text-4xl')
-    expect(screen.getByText('Sign in to access your AI document workspace.')).toHaveClass('text-base', 'sm:text-lg')
-    expect(screen.getByLabelText('Email')).toHaveClass('min-h-11', 'auth-input')
-    expect(screen.getByLabelText('Password')).toHaveClass('min-h-11', 'auth-input')
-    expect(screen.getByLabelText('Email').parentElement).toHaveClass('auth-field-control', 'focus-within:border-primary-border')
-    expect(screen.getByRole('button', { name: 'Sign In' })).toHaveClass('min-h-12')
+    expect(screen.getByRole('heading', { name: 'Welcome back' })).toHaveClass('font-display', 'text-[2rem]')
+    expect(screen.getByText('Sign in to access your AI document workspace.')).toHaveClass('text-base')
+    expect(screen.getByLabelText('Email')).toHaveClass('min-h-12', 'auth-input')
+    expect(screen.getByLabelText('Password')).toHaveClass('min-h-12', 'auth-input')
+    expect(screen.getByLabelText('Email').parentElement).toHaveClass('auth-field-control', 'focus-within:border-focus')
+    expect(screen.getByRole('button', { name: 'Sign in' })).toHaveClass('min-h-12', 'rounded-[2px]')
 
     expect(stylesheet).toMatch(/\.auth-input:focus-visible\s*{\s*outline:\s*none;/)
     expect(stylesheet).toMatch(/@media\s*\(forced-colors:\s*active\)[\s\S]*\.auth-field-control:focus-within\s*{[\s\S]*outline:/)
@@ -209,29 +344,26 @@ describe('shared visual system', () => {
     expect(passwordToggle.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
   })
 
-  it('keeps Sign Up responsive, touch-friendly, and decorative artwork silent', () => {
+  it('keeps Create account responsive and touch-friendly without decorative artwork', () => {
     const { container } = renderApp({ route: '/signup', authenticated: false })
     const authCard = screen.getByRole('region', { name: 'Create account workspace' })
 
-    expect(authCard).toHaveClass('grid-cols-1', 'lg:grid-cols-[1.4fr_1fr]')
-    expect(screen.getByRole('heading', { name: 'Create your account' })).toHaveClass('text-3xl', 'sm:text-4xl')
-    expect(screen.getByLabelText('Full Name')).toHaveClass('min-h-11')
-    expect(screen.getByLabelText('Email')).toHaveClass('min-h-11')
-    expect(screen.getByLabelText('Password')).toHaveClass('min-h-11')
-    expect(screen.getByLabelText('Confirm Password')).toHaveClass('min-h-11')
-    for (const label of ['Full Name', 'Email', 'Password', 'Confirm Password']) {
+    expect(authCard).toHaveClass('grid-cols-1', 'lg:grid-cols-[1fr_1px_1fr]')
+    expect(screen.getByRole('heading', { name: 'Create your account' })).toHaveClass('font-display', 'text-[2rem]')
+    expect(screen.getByLabelText('Full name')).toHaveClass('min-h-12')
+    expect(screen.getByLabelText('Email')).toHaveClass('min-h-12')
+    expect(screen.getByLabelText('Password')).toHaveClass('min-h-12')
+    expect(screen.getByLabelText('Confirm password')).toHaveClass('min-h-12')
+    for (const label of ['Full name', 'Email', 'Password', 'Confirm password']) {
       const input = screen.getByLabelText(label)
       expect(input).toHaveClass('auth-input')
-      expect(input.parentElement).toHaveClass('auth-field-control', 'focus-within:border-primary-border')
+      expect(input.parentElement).toHaveClass('auth-field-control', 'focus-within:border-focus')
     }
-    expect(screen.getByRole('button', { name: 'Create Account' })).toHaveClass('min-h-12')
+    expect(screen.getByRole('button', { name: 'Create account' })).toHaveClass('min-h-12')
     expect(screen.getByRole('button', { name: 'Show password' })).toHaveClass('size-11')
     expect(screen.getByRole('button', { name: 'Show confirm password' })).toHaveClass('size-11')
 
-    const decorativeCircles = container.querySelectorAll('[aria-hidden="true"].pointer-events-none')
-    expect(decorativeCircles).toHaveLength(2)
-    const logos = [...container.querySelectorAll('img')]
-    expect(logos.length).toBeGreaterThan(0)
-    expect(logos.every((logo) => logo.getAttribute('alt') === '')).toBe(true)
+    expect(container.querySelectorAll('[aria-hidden="true"].pointer-events-none')).toHaveLength(0)
+    expect(container.querySelectorAll('img')).toHaveLength(0)
   })
 })

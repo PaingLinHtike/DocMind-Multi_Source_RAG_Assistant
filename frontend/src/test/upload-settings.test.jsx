@@ -5,18 +5,18 @@ import { renderApp } from './renderApp.jsx'
 
 const SETTINGS_STORAGE_KEY = 'docmind.account-settings.v1'
 
-describe('Upload Document', () => {
+describe('Upload document', () => {
   it('validates missing and unsupported files without adding an upload', () => {
     renderApp({ route: '/upload' })
-    const input = screen.getByLabelText('Choose File')
+    const input = screen.getByLabelText('Choose file')
     const picker = input.closest('label')
     expect(picker).toHaveClass('focus-within:outline-2')
     expect(picker).toHaveClass('focus-within:outline-focus')
 
-    const heading = screen.getByRole('heading', { name: 'Upload Document' })
-    expect(heading).toHaveClass('text-3xl')
-    expect(heading).toHaveClass('sm:text-4xl')
-    expect(screen.getByText('Choose File')).toHaveClass('h-11')
+    const heading = screen.getByRole('heading', { name: 'Upload document' })
+    expect(heading).toHaveClass('font-display', 'text-[2rem]')
+    expect(screen.getByText('Choose file')).toHaveClass('min-h-11')
+    expect(screen.getByTestId('upload-drop-area')).toHaveClass('border-dashed', 'border-border-strong')
     expect(screen.getByText('Employee Handbook.pdf')).toBeInTheDocument()
     expect(screen.getAllByText('Ready').length).toBeGreaterThan(0)
     expect(screen.getByText('Supported: PDF • DOCX • TXT')).toBeInTheDocument()
@@ -31,14 +31,14 @@ describe('Upload Document', () => {
 
   it('accepts a PDF and simulates Processing to Ready in Recent Uploads', async () => {
     renderApp({ route: '/upload' })
-    const input = screen.getByLabelText('Choose File')
+    const input = screen.getByLabelText('Choose file')
     const pdf = new File(['policy'], 'Remote Work Policy.pdf', { type: 'application/pdf' })
 
     fireEvent.change(input, { target: { files: [pdf] } })
     const upload = screen.getByTestId('recent-upload-Remote Work Policy.pdf')
-    expect(within(upload).getByText('Processing')).toBeInTheDocument()
+    expect(within(upload).getByText('Processing')).toHaveClass('h-6', 'font-mono')
 
-    await waitFor(() => expect(within(upload).getByText('Ready')).toBeInTheDocument())
+    await waitFor(() => expect(within(upload).getByText('Ready')).toHaveClass('h-6', 'font-mono'))
   })
 })
 
@@ -54,7 +54,11 @@ describe('Settings', () => {
     expect(email).toHaveValue('aung@example.com')
     expect(password).toHaveAttribute('type', 'password')
     expect(screen.getByRole('heading', { name: 'Account' })).toHaveClass('text-2xl')
-    for (const field of [name, email, password]) expect(field).toHaveClass('h-11')
+    for (const field of [name, email, password]) {
+      expect(field).toHaveClass('min-h-11', 'bg-transparent')
+      expect(field.parentElement).toHaveClass('field-control', 'bg-surface', 'focus-within:border-focus')
+    }
+    expect(name.parentElement.querySelector('svg')).toHaveClass('text-text-secondary')
 
     await user.clear(name)
     await user.type(name, 'Aung Min')
@@ -70,11 +74,11 @@ describe('Settings', () => {
     expect(screen.getByRole('button', { name: 'Hide password' })).toBeInTheDocument()
   })
 
-  it('simulates Change Password feedback locally', async () => {
+  it('simulates Change password feedback locally', async () => {
     const user = userEvent.setup()
     renderApp({ route: '/settings' })
 
-    await user.click(screen.getByRole('button', { name: 'Change Password' }))
+    await user.click(screen.getByRole('button', { name: 'Change password' }))
     expect(screen.getByText('Password change link sent to aung@example.com.')).toBeInTheDocument()
   })
 
@@ -85,7 +89,7 @@ describe('Settings', () => {
 
     await user.clear(email)
     await user.type(email, 'aung.min.with.an.extremely.long.account.address.for.testing@example-docmind-domain.com')
-    await user.click(screen.getByRole('button', { name: 'Change Password' }))
+    await user.click(screen.getByRole('button', { name: 'Change password' }))
     expect(screen.getByText(/^Password change link sent/)).toHaveClass('break-all')
   })
 
@@ -103,7 +107,7 @@ describe('Settings', () => {
     await user.clear(password)
     await user.type(password, 'new-secret')
 
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
 
     expect(screen.getByText('Account changes saved.')).toBeInTheDocument()
     expect(JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY))).toEqual({
@@ -145,7 +149,7 @@ describe('Settings', () => {
     })
 
     try {
-      await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+      await user.click(screen.getByRole('button', { name: 'Save changes' }))
     } finally {
       setItem.mockRestore()
     }
@@ -179,7 +183,7 @@ describe('Settings', () => {
     const user = userEvent.setup()
     renderApp({ route: '/settings' })
 
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
     expect(screen.getByText('Account changes saved.')).toBeInTheDocument()
 
     await user.type(screen.getByLabelText('Name'), '!')
@@ -223,10 +227,10 @@ describe('Settings', () => {
     })
 
     try {
-      await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+      await user.click(screen.getByRole('button', { name: 'Save changes' }))
       expect(screen.getByText('Unable to save changes in this browser.')).toBeInTheDocument()
 
-      await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+      await user.click(screen.getByRole('button', { name: 'Save changes' }))
     } finally {
       setItem.mockRestore()
     }

@@ -1,6 +1,6 @@
 # DocMind Design System — Paper & Ink
 
-**Status:** Proposed for approval  
+**Status:** Approved, amended 2026-11-07
 **Direction:** A — Paper & Ink  
 **Product:** React web application for asking questions about a personal document library  
 **Source of truth:** This file governs the redesign unless a later page-specific document explicitly overrides it.
@@ -17,13 +17,23 @@ The design supports the product's real jobs:
 - understand processing, ready, and failed states;
 - manage account settings without changing existing prototype behavior.
 
+### 1.1 Approved amendment — horizontal header and light interaction surfaces
+
+Approved on 2026-11-07; this amendment supersedes the earlier fixed desktop sidebar direction:
+
+- At 1024px and wider, use one horizontal header with DocMind left, Overview/Chat/Documents navigation, and the profile control right. Below 1024px, collapse those three links into the existing menu button.
+- Upload document, Settings, and Log out remain in the profile menu; Upload and Settings are not primary-navigation items.
+- Remove remaining navy, blue, purple, gradient, glass, glow, and decorative-shadow styling.
+- Fields and the Chat composer use paper-0 `#FFFDF7`. User questions use paper-200 `#ECE7DA` with an oxide rule. Assistant answers use the transparent canvas. Citations use warm-white paper-0 ruled rows.
+- Icons use ink gray by default and oxide `#B23A2B` for active/selected states. White icons are limited to filled oxide/destructive actions; conversation icons are never white or purple.
+
 ## 2. Goals, Non-goals, and Anti-goals
 
 ### Goals
 
 - Establish one three-layer token system instead of per-file colors.
 - Make documents and citations the visual center of the product.
-- Use a desktop sidebar and a compact mobile top bar for clear navigation.
+- Use one horizontal application header at 1024px and wider, with compact menu navigation below 1024px.
 - Standardize typography, controls, icons, tables, badges, surfaces, and menus.
 - Preserve all routes, hooks, test IDs, storage keys, authentication behavior, and interactions.
 - Meet WCAG AA contrast for text and visible focus; retain 44px minimum controls.
@@ -224,7 +234,7 @@ Additional dimensions:
 - Minimum interactive height/width: 44px.
 - Default control height: 44px.
 - Large auth control height: 48px.
-- Desktop sidebar: 240px.
+- Application header: 64px.
 - Main content maximum: 1200px.
 - Reading column maximum: 760px.
 - Menu width: 224–288px according to content.
@@ -276,20 +286,20 @@ At minimum define component aliases for:
 
 ### Desktop: 1024px and wider
 
-- Persistent 240px sidebar, fixed to the viewport height, with a 1px right rule.
-- Main area occupies the remaining width; content is centered with a 1200px maximum and 32–48px adaptive gutters.
-- Sidebar contains brand, primary navigation, a quiet “Recent” section when applicable, and the account control at the bottom.
-- The page itself owns vertical scrolling. Chat is the exception: its message thread owns desktop vertical overflow, preserving the existing tested behavior.
+- One 64px horizontal header spans the viewport with a 1px bottom rule and opaque paper background.
+- DocMind sits left, Overview/Chat/Documents form the primary navigation, and the profile control sits right. Upload and Settings do not appear in primary navigation.
+- Main content sits below the header, uses the full available width, and is centered with a 1200px maximum and 32–48px adaptive gutters.
+- The page itself owns vertical scrolling. Chat is the exception: its message thread owns desktop vertical overflow beneath the header, preserving the existing tested behavior.
 
 ### Tablet: 768–1023px
 
-- Use the compact top bar and the current anchored, bordered menu popover rather than a new drawer or squeezed sidebar.
+- Keep the same 64px header but collapse Overview/Chat/Documents into the existing menu button and anchored, bordered menu popover. Do not introduce a drawer.
 - Two-column page content may remain only when each column stays readable; otherwise stack.
 - Tables retain intentional horizontal scrolling.
 
 ### Mobile: below 768px
 
-- 64px top bar with brand, menu control, and profile control.
+- 64px header with brand, primary-navigation menu control, and profile control.
 - One content column with 24px gutters.
 - Controls and primary actions become full width where that improves clarity.
 - Labels remain above fields.
@@ -299,7 +309,7 @@ At minimum define component aliases for:
 
 - 375px: small phone.
 - 768px: tablet boundary.
-- 1024px: desktop sidebar boundary.
+- 1024px: horizontal-navigation boundary.
 - 1440px: wide desktop.
 - 200% zoom: no clipped controls, hidden focus, or horizontal page overflow.
 
@@ -312,6 +322,7 @@ At minimum define component aliases for:
 - Decorative icons use `aria-hidden="true"` and `focusable="false"`.
 - Icon-only controls require an accessible label and applicable expanded/pressed state.
 - Use outline icons at the same hierarchy; do not mix filled, duotone, and exported Figma styles.
+- Default navigation, menu, conversation, field, and utility icons use ink gray (`--color-text-secondary`). Active or selected icons use oxide (`--color-accent`). White icons are reserved for oxide/destructive filled buttons; purple icons are prohibited.
 - Create a current-color open-book `BrandMark` component. Use ink in normal contexts and oxide only for the mark, never a purple exported logo.
 - During migration, remove unused Figma SVG imports and update `assets.test.jsx` to test the new shared icon/mark contract instead of preserving old artwork.
 
@@ -347,6 +358,7 @@ Create a shared field primitive for text, email, password, search, and composer 
 - Optional leading icon: 20px; trailing action: 44px hit area.
 - Focus: border oxide plus visible 2px ring; never remove focus without replacing it.
 - Error: red border, error icon/text, `aria-invalid`, and linked description.
+- A field may carry a persistent description block below the control, linked after any error or helper ID through `aria-describedby`; use it for rules that stay visible while typing.
 - Disabled/read-only states must be visibly distinct and semantically native.
 
 ### 9.3 Surface
@@ -388,14 +400,14 @@ Badges are compact text labels, not large pills.
 - Long names truncate visually but keep an accessible full name.
 - Below the table's minimum width, keep the existing intentional horizontal scroller and visible scrollbar.
 
-### 9.7 Sidebar and mobile navigation
+### 9.7 Application header and responsive navigation
 
-- Desktop sidebar: paper-100, right rule, 24px padding.
-- Brand at top; primary links grouped below; account/logout at bottom.
-- Active link: 2px oxide left rule, ink text, paper-200 fill. Do not use a filled purple pill.
+- Header: paper-100, bottom rule, 64px high, no shadow, with brand left and profile control right.
+- At 1024px and wider, Overview, Chat, and Documents render as horizontal primary links. Upload and Settings are absent from primary navigation.
+- Active link: oxide bottom rule and oxide icon with ink text. Do not use a filled purple pill.
 - Link height: 44px; icon 20px; radius 2px.
-- Mobile top bar: paper-100, bottom rule, 64px high.
-- Mobile menu uses an opaque bordered panel, no shadow; it closes on selection, Escape, and outside click as today.
+- Below 1024px, the existing menu button reveals Overview, Chat, and Documents in an opaque bordered panel with no shadow. It closes on selection, Escape, and outside click as today.
+- The profile menu remains separate at every width and retains Upload document, Settings, and Log out.
 
 ### 9.8 Menu
 
@@ -418,7 +430,7 @@ Badges are compact text labels, not large pills.
 - `frontend/src/components/ui/Icon.jsx`
 - new `frontend/src/components/ui/BrandMark.jsx`
 
-**Design:** Replace ambient images and centered top navigation with the responsive shell in Section 7. Desktop uses the sidebar; tablet/mobile use the top bar. Rename the visible dashboard link to **Overview** while keeping `/dashboard`. Include Chat, Documents, Upload, and Settings as first-class navigation destinations. Profile menu retains name/email, upload, settings, and logout behavior.
+**Design:** Replace the interim sidebar with the responsive horizontal header in Section 7. At 1024px and wider, place DocMind left, **Overview**, **Chat**, and **Documents** in the horizontal primary navigation, and the profile control right. Below 1024px, collapse those three primary links into the existing menu button. Keep `/dashboard` as the Overview route. Do not show Upload or Settings in primary navigation; the profile menu retains name/email, **Upload document**, **Settings**, and **Log out** behavior.
 
 ### 10.2 Authentication
 
@@ -438,6 +450,8 @@ Approved right-side copy:
 - Feature rows may retain the current three feature meanings, rewritten in sentence case without new product claims.
 
 Keep the current field meanings, validation, password toggles, route-state success message, demo credential behavior, and minimum 44px actions. Change visible labels and buttons to the approved sentence-case policy and update accessible-name tests accordingly.
+
+The Password field carries an always-visible five-rule checklist: at least 8 characters, one uppercase letter, one lowercase letter, one number, and one symbol. Each rule switches from a hollow circle with `Not met` to a check mark with `Met` as it becomes true; the list is the field's description and never replaces the existing validation message.
 
 ### 10.3 Overview dashboard
 
@@ -461,7 +475,7 @@ Keep the current field meanings, validation, password toggles, route-state succe
 - `frontend/src/pages/ChatPage.jsx`
 - `frontend/src/hooks/useChatPrototype.js` (behavior preserved)
 
-**Design:** Keep the conversation rail and message thread, but express them as an index plus reading pane. Recent conversations use numbered/index rows and a slim active rule. Assistant answers appear as readable text blocks, not “AI cards.” User questions use a quiet paper-200 inset with a left rule rather than a dark chat bubble. Citations become footnote-style numbered sources with the filename and page in mono. Preserve new/select/rename/delete, source disclosure, message sending, desktop thread scrolling, and mobile page scrolling.
+**Design:** Keep the conversation rail and message thread, but express them as an index plus reading pane. Recent conversations use numbered/index rows and a slim active oxide rule; their icons are ink gray by default and oxide when selected. Assistant answers sit directly on the transparent canvas as readable text blocks, not “AI cards.” User questions use paper-200 (`#ECE7DA`) with an oxide left rule rather than a dark chat bubble. Citations become warm-white paper-0 (`#FFFDF7`) ruled rows with footnote numbers, filename, and page in mono. The composer uses paper-0. Preserve new/select/rename/delete, source disclosure, message sending, desktop thread scrolling, and mobile page scrolling.
 
 ### 10.5 Documents list
 
@@ -492,7 +506,7 @@ Keep the current field meanings, validation, password toggles, route-state succe
 
 **File:** `frontend/src/pages/SettingsPage.jsx`
 
-**Design:** Keep the compact 480px account control column, 44px controls, password visibility, Change Password, Save Changes, local storage key, safe fallback behavior, persistent live region, and stale-feedback clearing. Replace dark card styling with a ruled section and standard Field/Button/Status treatments. Keep full-width controls at 320/375px.
+**Design:** Keep the compact 480px account control column, 44px controls, password visibility, Change password, Save changes, local storage key, safe fallback behavior, persistent live region, and stale-feedback clearing. Replace dark card styling with a ruled section and standard Field/Button/Status treatments. Fields use paper-0 (`#FFFDF7`); icons use ink gray and oxide only for active/focus states. Keep full-width controls at 320/375px.
 
 ## 11. Shared Component/File Plan
 
@@ -557,7 +571,7 @@ The current baseline is 100 passing tests. The redesign must update visual asser
 - `visual-system.test.jsx`: replace old purple/dark exact classes with token, component, type, focus, layout, and contrast contracts.
 - `dashboard.test.jsx`: remove weekday/fake-chart expectations; assert the data strip, ask action, recent conversation links, and library summary.
 - `assets.test.jsx`: stop requiring retired Figma SVGs; test `BrandMark` and the unified `Icon` contract.
-- `shell.test.jsx`: update top-navigation class expectations for desktop sidebar/mobile top bar while preserving navigation/menu behavior.
+- `shell.test.jsx`: assert the horizontal desktop header, three-link primary navigation, compact menu below 1024px, and profile-only Upload/Settings access while preserving menu behavior.
 - auth route visual assertions: update the old decorative-circle and dark-card assumptions.
 
 ### Add system-level contracts
@@ -566,19 +580,20 @@ The current baseline is 100 passing tests. The redesign must update visual asser
 - Font stylesheet contains Newsreader, Inter, and JetBrains Mono with `display=swap`.
 - Primary text and button combinations meet documented contrast ratios.
 - Controls stay at least 44px.
-- Sidebar appears at desktop; compact top bar appears below 1024px.
+- Horizontal primary navigation appears at desktop; its three links collapse into the compact menu below 1024px.
 - Reduced-motion rule remains present.
 
 ## 14. Implementation Sequence
 
 1. **Foundations:** tokens, font loading, BrandMark/Icon, Button, PageHeading, Badge, Field, Surface, Rule.
-2. **Shell and auth:** responsive sidebar/top bar, profile menu, sign-in, sign-up.
+2. **Shell and auth:** initial responsive shell, profile menu, sign-in, sign-up.
 3. **Overview:** data strip, ask action, linked recent conversations, library summary; remove fake chart.
 4. **Documents:** list, row, details, actions.
 5. **Upload.**
-6. **Chat.**
-7. **Settings.**
-8. **Final QA:** contrast, keyboard, focus, reduced motion, 200% zoom, 375/768/1024/1440 widths, empty/error/disabled states. Viewport and zoom checks are a documented manual Chromium browser checklist; do not add browser-test tooling unless separately approved.
+6. **Approved shell amendment:** replace the interim desktop sidebar with the horizontal header and restrict primary navigation to Overview/Chat/Documents.
+7. **Chat.**
+8. **Settings.**
+9. **Final QA:** contrast, keyboard, focus, reduced motion, 200% zoom, 375/768/1024/1440 widths, empty/error/disabled states. Viewport and zoom checks are a documented manual Chromium browser checklist; do not add browser-test tooling unless separately approved.
 
 Each numbered implementation stage must finish with focused tests, full tests, lint, build, and browser verification before moving on.
 

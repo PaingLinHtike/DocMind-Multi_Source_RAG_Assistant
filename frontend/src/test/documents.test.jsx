@@ -1,6 +1,8 @@
-import { screen, within } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import DocumentRow from '../components/documents/DocumentRow.jsx'
 import { renderApp } from './renderApp.jsx'
 
 const expectedRows = [
@@ -13,20 +15,32 @@ const expectedRows = [
 afterEach(() => vi.unstubAllGlobals())
 
 describe('Documents prototype', () => {
-  it('shows all Figma document rows and metadata', () => {
+  it('shows a ruled document index with explicit statuses and mono metadata', () => {
     renderApp({ route: '/documents' })
 
     expect(screen.getByRole('heading', { name: 'Documents' })).toBeInTheDocument()
     expect(screen.getByText('Manage your uploaded files and knowledge sources.')).toBeInTheDocument()
 
-    const upload = screen.getByRole('link', { name: 'Upload Document' })
+    const upload = screen.getByRole('link', { name: 'Upload document' })
     expect(upload.querySelector('svg')).toBeInTheDocument()
 
     for (const rowData of expectedRows) {
       const row = screen.getByRole('link', { name: new RegExp(rowData[0]) })
       for (const value of rowData) expect(within(row).getByText(value)).toBeInTheDocument()
-      expect(row.querySelector('span.size-5')).toBeInTheDocument()
+      expect(row).toHaveClass('min-h-[52px]')
+      expect(row.querySelector('svg')).toBeInTheDocument()
+      expect(within(row).getByText(rowData[4])).toHaveClass('font-mono')
     }
+    for (const status of ['Ready', 'Processing', 'Failed']) expect(screen.getAllByText(status).length).toBeGreaterThan(0)
+    expect(screen.getByPlaceholderText('Search documents...').closest('.field-control')).toBeInTheDocument()
+  })
+
+  it('keeps an unusually long document name locally constrained', () => {
+    const document = { id: 'long', name: `${'Quarterly-policy-and-compliance-'.repeat(8)}.pdf`, type: 'PDF', status: 'Ready', chunks: '1', uploadedAt: 'Nov 7, 2026' }
+    render(<MemoryRouter><DocumentRow document={document} /></MemoryRouter>)
+    const name = screen.getByText(document.name)
+    expect(name).toHaveClass('min-w-0', 'truncate')
+    expect(name.parentElement).toHaveClass('min-w-0')
   })
 
   it('filters case-insensitively and shows an intentional empty state', async () => {
@@ -60,9 +74,17 @@ describe('Documents prototype', () => {
     expect(screen.getByText('Uploaded Nov 5, 2026 10:24 AM')).toBeInTheDocument()
     expect(screen.getByText('Type')).toHaveClass('text-sm')
     expect(screen.getByText('2.4 MB')).toHaveClass('text-lg')
+    const metadata = screen.getByText('documents/user_001/doc_123.pdf').closest('dl')
     for (const value of ['Type', 'PDF', 'Chunks', '120', 'Size', '2.4 MB', 'Source', 'Upload', 'Storage', 'documents/user_001/doc_123.pdf']) {
-      expect(screen.getByText(value)).toBeInTheDocument()
+      expect(within(metadata).getByText(value)).toBeInTheDocument()
     }
+    expect(screen.getByText('documents/user_001/doc_123.pdf')).toHaveClass('break-all', 'font-mono')
+  })
+
+  it('renders an explicit not-found state for an unknown document', () => {
+    renderApp({ route: '/documents/missing-document' })
+    expect(screen.getByRole('heading', { name: 'Document not found' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Return to documents' })).toHaveAttribute('href', '/documents')
   })
 
   it('opens the actions menu and dismisses it with Escape or an outside click', async () => {
@@ -74,7 +96,7 @@ describe('Documents prototype', () => {
     const menu = screen.getByRole('menu')
     expect(menu).toHaveClass('left-0')
     expect(menu).toHaveClass('sm:right-0')
-    for (const action of ['View Original', 'Download', 'Reindex', 'Rename', 'Delete']) {
+    for (const action of ['View original', 'Download', 'Reindex', 'Rename', 'Delete']) {
       const actionButton = screen.getByRole('button', { name: action })
       expect(actionButton).toBeInTheDocument()
       expect(actionButton).toHaveClass('min-h-11')
@@ -106,9 +128,9 @@ describe('Documents prototype', () => {
     await user.click(screen.getByRole('button', { name: 'Actions' }))
     await user.click(screen.getByRole('button', { name: 'Delete' }))
     expect(screen.getByRole('heading', { name: 'Document deleted' })).toBeInTheDocument()
-    const returnLink = screen.getByRole('link', { name: 'Return to Documents' })
+    const returnLink = screen.getByRole('link', { name: 'Return to documents' })
     expect(returnLink).toHaveClass('min-h-11')
-    expect(returnLink).toHaveClass('text-heading')
+    expect(returnLink).toHaveClass('text-accent')
     expect(fetchMock).not.toHaveBeenCalled()
   })
 })

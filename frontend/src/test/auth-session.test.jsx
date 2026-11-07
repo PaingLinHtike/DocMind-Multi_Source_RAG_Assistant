@@ -37,7 +37,7 @@ describe('authentication session routing', () => {
 
     await user.type(screen.getByLabelText('Email'), 'user@gmail.com')
     await user.type(screen.getByLabelText('Password'), 'userUSER1234@@')
-    await user.click(screen.getByRole('button', { name: 'Sign In' }))
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
 
     expect(screen.getByRole('heading', { name: 'Good morning, Aung' })).toBeInTheDocument()
     expect(window.sessionStorage.getItem(sessionKey)).toBe('true')
@@ -48,7 +48,7 @@ describe('authentication session routing', () => {
     const firstRender = renderApp({ route: '/signin', authenticated: false })
     await user.type(screen.getByLabelText('Email'), 'user@gmail.com')
     await user.type(screen.getByLabelText('Password'), 'userUSER1234@@')
-    await user.click(screen.getByRole('button', { name: 'Sign In' }))
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
     firstRender.unmount()
 
     renderApp({ route: '/dashboard', preserveSession: true })
@@ -60,7 +60,7 @@ describe('authentication session routing', () => {
     const user = userEvent.setup()
     const authenticatedRender = renderApp({ route: '/documents', authenticated: true })
     await user.click(screen.getByRole('button', { name: 'Open profile menu' }))
-    await user.click(screen.getByRole('button', { name: 'Log Out' }))
+    await user.click(screen.getByRole('button', { name: 'Log out' }))
 
     expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
     expect(window.sessionStorage.getItem(sessionKey)).toBeNull()

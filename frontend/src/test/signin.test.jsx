@@ -8,14 +8,14 @@ describe('Sign In', () => {
     const user = userEvent.setup()
     renderApp({ route: '/signin', authenticated: false })
 
-    await user.click(screen.getByRole('button', { name: 'Sign In' }))
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
     expect(screen.getByRole('alert')).toHaveTextContent('Enter your email and password.')
 
     const email = screen.getByLabelText('Email')
     const password = screen.getByLabelText('Password')
     await user.type(email, 'user@gmail.com')
     await user.type(password, 'userUSER1234@')
-    await user.click(screen.getByRole('button', { name: 'Sign In' }))
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
 
     expect(screen.getByRole('alert')).toHaveTextContent('Email or password is incorrect.')
     expect(email).toHaveValue('user@gmail.com')
@@ -47,7 +47,7 @@ describe('Sign In', () => {
 
     await user.type(screen.getByLabelText('Email'), '  USER@GMAIL.COM ')
     await user.type(screen.getByLabelText('Password'), 'userUSER1234@@')
-    await user.click(screen.getByRole('button', { name: 'Sign In' }))
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
 
     expect(screen.getByRole('heading', { name: 'Good morning, Aung' })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Welcome back' })).not.toBeInTheDocument()
@@ -57,5 +57,11 @@ describe('Sign In', () => {
     renderApp({ route: { pathname: '/signin', state: { signupComplete: true } }, authenticated: false })
 
     expect(screen.getByRole('status')).toHaveTextContent('Sign-up complete. This demo does not create accounts; use the demo credentials to sign in.')
+  })
+
+  it('does not render the create-account password checklist', () => {
+    renderApp({ route: '/signin', authenticated: false })
+    expect(screen.queryByText('Password requirements')).not.toBeInTheDocument()
+    expect(document.getElementById('signin-password-description')).not.toBeInTheDocument()
   })
 })

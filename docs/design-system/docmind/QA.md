@@ -17,6 +17,26 @@
 | Production build | `npm run build` | PASS â€” Vite 8.3.6, 53 modules |
 | Static anti-drift scan | `npm test -- --run src/test/visual-system.test.jsx src/test/assets.test.jsx` | PASS â€” 61 tests |
 
+## Password Requirements Checklist — 2026-11-07
+
+Implemented and verified on `feature/password-checklist` against the production build. Automated gates passed: **12 files / 155 tests** with `npm test -- --run --maxWorkers=1`, lint completed with no errors, and Vite 8.3.6 built 54 modules. The single-worker test command was used because the host's current parallel-worker load exceeded the existing 5-second per-test timing budget; earlier isolated/default-worker runs on the same branch also passed the changed test files and full suite.
+
+Installed Google Chrome `157.0.8103.39` (headless), driven by `playwright-core`, ran **27 assertions; 27 passed**:
+
+| Check | Result |
+|---|---|
+| Empty checklist at 375, 768, 1024, and 1440px | PASS — five visible unmet rules, no page horizontal overflow, Password linked to `signup-password-description` |
+| Live partial state at 375 and 1440px | PASS — `Aa1!aaa` showed four checks and one hollow circle |
+| Live complete state and visibility toggle | PASS — `Aa1!aaaa` showed five checks; Show password preserved all states |
+| State colors | PASS — met resolved to success `rgb(47, 107, 79)`; unmet resolved to muted ink `rgb(107, 101, 90)` |
+| Error plus checklist description | PASS — invalid submit retained the existing error and set `aria-describedby="signup-password-error signup-password-description"` |
+| 200% zoom equivalent (720×450 CSS viewport) | PASS — checklist remained visible and no page horizontal overflow occurred |
+| 128-character compliant password at 375px | PASS — five rules met with no page horizontal overflow |
+| Forced colors | PASS — every rule retained visible text and its SVG state icon |
+| Screenshot review | PASS — empty, complete, and error states were spot-checked at 375 and 1440px |
+
+The browser script, result JSON, and screenshots are temporary execution artifacts and are not committed. **Limitation:** this was scripted headless Chrome rather than a human review on a physical display; OS-level display scaling above 100% was not exercised.
+
 ## Browser QA
 
 Executed against the production build (`vite preview`) in installed Google Chrome `157.0.8103.39` (headless), driven by `playwright-core`. The script ran **253 assertions; 253 passed**. Screenshots were captured for every route/viewport and spot-checked at 375, 1024, and 1440px. The check script and screenshots live in the execution environment, not the repository.

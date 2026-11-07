@@ -47,5 +47,11 @@ class AppServiceProvider extends ServiceProvider
                 (string) ($request->user()?->getAuthIdentifier() ?? $request->ip()),
             );
         });
+
+        RateLimiter::for('messages', function (Request $request): Limit {
+            return Limit::perMinute(20)->by(
+                (string) ($request->user()?->getAuthIdentifier() ?? $request->ip()),
+            );
+        });
     }
 }

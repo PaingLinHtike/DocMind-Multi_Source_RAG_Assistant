@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\V1\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Api\V1\Auth\NewPasswordController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Api\V1\Auth\RegisteredUserController;
+use App\Http\Controllers\Api\V1\ConversationController;
+use App\Http\Controllers\Api\V1\ConversationMessageController;
 use App\Http\Controllers\Api\V1\DocumentContentController;
 use App\Http\Controllers\Api\V1\DocumentController;
 use App\Http\Controllers\Api\V1\RecentUploadController;
@@ -49,6 +51,10 @@ Route::prefix('v1')->group(function (): void {
     });
 
     Route::middleware('auth:sanctum')->group(function (): void {
+        Route::post('/conversations/{conversation}/messages', ConversationMessageController::class)
+            ->middleware('throttle:messages')
+            ->name('api.v1.conversations.messages.store');
+        Route::apiResource('conversations', ConversationController::class);
         Route::apiResource('documents', DocumentController::class)
             ->except('store');
         Route::post('/documents', [DocumentController::class, 'store'])

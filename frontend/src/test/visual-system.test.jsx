@@ -214,6 +214,13 @@ describe('shared visual system', () => {
     expect(container.querySelectorAll('img')).toHaveLength(0)
   })
 
+  it('gives the chat composer a visible 2px oxide focus ring', () => {
+    render(<ChatPage />)
+    const form = screen.getByPlaceholderText('Ask a question about your documents...').closest('form')
+
+    expect(form).toHaveClass('focus-within:outline', 'focus-within:outline-2', 'focus-within:outline-offset-2', 'focus-within:outline-focus')
+  })
+
   it('contains desktop Chat within the viewport and assigns overflow to the message thread', () => {
     const { container } = render(<ChatPage />)
     const page = container.querySelector('.chat-page')

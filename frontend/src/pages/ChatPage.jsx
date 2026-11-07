@@ -182,7 +182,7 @@ export default function ChatPage() {
             </div>
           ))}
         </div>
-        <form className="chat-composer flex min-h-14 items-center rounded-[2px] border border-border-strong bg-surface p-1.5 transition-colors focus-within:border-focus" onSubmit={handleSubmit}>
+        <form className="chat-composer flex min-h-14 items-center rounded-[2px] border border-border-strong bg-surface p-1.5 transition-colors focus-within:border-focus focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus" onSubmit={handleSubmit}>
           <input className="chat-input min-h-11 min-w-0 flex-1 bg-transparent px-3 text-base text-text outline-none placeholder:text-text-muted" onChange={(event) => setQuestion(event.target.value)} placeholder="Ask a question about your documents..." value={question} />
           <Button aria-label="Send question" className="shrink-0" size="icon" type="submit">
             <Icon name="send" size={20} />

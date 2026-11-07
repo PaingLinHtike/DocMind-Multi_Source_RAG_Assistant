@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { renderApp } from './renderApp.jsx'
@@ -26,11 +26,11 @@ describe('Dashboard', () => {
     renderApp()
 
     await user.click(screen.getByRole('button', { name: 'Open profile menu' }))
-    await user.click(screen.getByRole('link', { name: 'Settings' }))
+    await user.click(within(screen.getByRole('menu')).getByRole('link', { name: 'Settings' }))
     expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Open profile menu' }))
-    await user.click(screen.getByRole('link', { name: 'Upload Document' }))
+    await user.click(within(screen.getByRole('menu')).getByRole('link', { name: 'Upload document' }))
     expect(screen.getByRole('heading', { name: 'Upload Document' })).toBeInTheDocument()
   })
 

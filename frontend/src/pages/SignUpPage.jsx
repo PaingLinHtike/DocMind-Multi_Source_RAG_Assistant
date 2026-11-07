@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { getPasswordValidation } from '../auth/auth.js'
 import AuthField from '../components/auth/AuthField.jsx'
 import AuthLayout from '../components/auth/AuthLayout.jsx'
+import Button from '../components/ui/Button.jsx'
 import Icon from '../components/ui/Icon.jsx'
 
 const initialForm = { name: '', email: '', password: '', confirmation: '', termsAccepted: false }
@@ -44,7 +45,7 @@ export default function SignUpPage() {
     return (
       <button
         aria-label={`${visible ? 'Hide' : 'Show'} ${label}`}
-        className="mr-1 grid size-11 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-white/5 hover:text-heading"
+        className="mr-1 grid size-11 shrink-0 place-items-center rounded-[2px] text-text-muted transition-colors hover:bg-surface-muted hover:text-text"
         onClick={() => setVisible((current) => !current)}
         type="button"
       >
@@ -55,25 +56,25 @@ export default function SignUpPage() {
 
   return (
     <AuthLayout variant="signup">
-      <h1 className="text-3xl font-bold leading-tight sm:text-4xl">Create your account</h1>
-      <p className="mt-2 text-base text-muted sm:text-lg">Start building your private AI knowledge workspace.</p>
+      <h1 className="font-display text-[2rem] font-medium leading-[1.1] text-text lg:text-[2.5rem]">Create your account</h1>
+      <p className="mt-2 text-base text-text-secondary">Start building your private AI knowledge workspace.</p>
 
       <form className="mt-5 space-y-3" noValidate onSubmit={handleSubmit}>
-        <AuthField autoComplete="name" error={errors.name} id="signup-name" icon="user" label="Full Name" onChange={(event) => updateField('name', event.target.value)} placeholder="Full Name" type="text" value={form.name} />
+        <AuthField autoComplete="name" error={errors.name} id="signup-name" icon="user" label="Full name" onChange={(event) => updateField('name', event.target.value)} placeholder="Full name" type="text" value={form.name} />
         <AuthField autoComplete="email" error={errors.email} id="signup-email" icon="mail" label="Email" onChange={(event) => updateField('email', event.target.value)} placeholder="Email" type="email" value={form.email} />
         <AuthField autoComplete="new-password" error={errors.password} id="signup-password" icon="lock" label="Password" onChange={(event) => updateField('password', event.target.value)} placeholder="Password" trailingControl={visibilityToggle('password')} type={passwordVisible ? 'text' : 'password'} value={form.password} />
-        <AuthField autoComplete="new-password" error={errors.confirmation} id="signup-confirm-password" icon="lock" label="Confirm Password" onChange={(event) => updateField('confirmation', event.target.value)} placeholder="Confirm Password" trailingControl={visibilityToggle('confirmation')} type={confirmationVisible ? 'text' : 'password'} value={form.confirmation} />
+        <AuthField autoComplete="new-password" error={errors.confirmation} id="signup-confirm-password" icon="lock" label="Confirm password" onChange={(event) => updateField('confirmation', event.target.value)} placeholder="Confirm password" trailingControl={visibilityToggle('confirmation')} type={confirmationVisible ? 'text' : 'password'} value={form.confirmation} />
 
-        <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm text-muted">
-          <input aria-describedby={errors.termsAccepted ? 'signup-terms-error' : undefined} aria-invalid={Boolean(errors.termsAccepted)} checked={form.termsAccepted} className="size-5 shrink-0 accent-[#7544f5]" onChange={(event) => updateField('termsAccepted', event.target.checked)} type="checkbox" />
-          <span>I agree to the <span className="font-medium text-[#c07aff]">Terms</span> and <span className="font-medium text-[#c07aff]">Privacy Policy</span></span>
+        <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm text-text-secondary">
+          <input aria-describedby={errors.termsAccepted ? 'signup-terms-error' : undefined} aria-invalid={Boolean(errors.termsAccepted)} checked={form.termsAccepted} className="size-5 shrink-0 accent-accent" onChange={(event) => updateField('termsAccepted', event.target.checked)} type="checkbox" />
+          <span>I agree to the <span className="font-medium text-accent">Terms</span> and <span className="font-medium text-accent">Privacy Policy</span></span>
         </label>
-        {errors.termsAccepted && <p className="text-sm text-red-300" id="signup-terms-error" role="alert">{errors.termsAccepted}</p>}
+        {errors.termsAccepted && <p className="text-sm text-danger" id="signup-terms-error" role="alert">{errors.termsAccepted}</p>}
 
-        <button className="min-h-12 w-full rounded-xl border border-[#9a62ff] bg-gradient-to-r from-[#7544f5] to-[#6831ef] text-base font-semibold text-white transition-colors hover:from-[#8153f7] hover:to-[#7544f5]" type="submit">Create Account</button>
+        <Button className="w-full" size="large" type="submit">Create account</Button>
       </form>
 
-      <p className="mt-6 text-center text-base text-muted">Already have an account? <Link className="ml-2 font-semibold text-[#c07aff] no-underline hover:text-[#d7aaff]" to="/signin">Sign In</Link></p>
+      <p className="mt-6 text-center text-base text-text-secondary">Already have an account? <Link className="ml-2 font-semibold text-accent no-underline hover:text-accent-hover" to="/signin">Sign in</Link></p>
     </AuthLayout>
   )
 }

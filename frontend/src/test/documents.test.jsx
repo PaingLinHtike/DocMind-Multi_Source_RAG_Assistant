@@ -60,8 +60,9 @@ describe('Documents prototype', () => {
     expect(screen.getByText('Uploaded Nov 5, 2026 10:24 AM')).toBeInTheDocument()
     expect(screen.getByText('Type')).toHaveClass('text-sm')
     expect(screen.getByText('2.4 MB')).toHaveClass('text-lg')
+    const metadata = screen.getByText('documents/user_001/doc_123.pdf').closest('dl')
     for (const value of ['Type', 'PDF', 'Chunks', '120', 'Size', '2.4 MB', 'Source', 'Upload', 'Storage', 'documents/user_001/doc_123.pdf']) {
-      expect(screen.getByText(value)).toBeInTheDocument()
+      expect(within(metadata).getByText(value)).toBeInTheDocument()
     }
   })
 

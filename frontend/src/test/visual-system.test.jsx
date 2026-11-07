@@ -248,15 +248,15 @@ describe('shared visual system', () => {
     expect(save.closest('form')).toBe(form)
   })
 
-  it('keeps Sign In controls, typography, and password icon accessible', () => {
+  it('keeps Sign in controls, typography, and password icon accessible', () => {
     renderApp({ route: '/signin', authenticated: false })
 
-    expect(screen.getByRole('heading', { name: 'Welcome back' })).toHaveClass('text-3xl', 'sm:text-4xl')
-    expect(screen.getByText('Sign in to access your AI document workspace.')).toHaveClass('text-base', 'sm:text-lg')
-    expect(screen.getByLabelText('Email')).toHaveClass('min-h-11', 'auth-input')
-    expect(screen.getByLabelText('Password')).toHaveClass('min-h-11', 'auth-input')
-    expect(screen.getByLabelText('Email').parentElement).toHaveClass('auth-field-control', 'focus-within:border-primary-border')
-    expect(screen.getByRole('button', { name: 'Sign In' })).toHaveClass('min-h-12')
+    expect(screen.getByRole('heading', { name: 'Welcome back' })).toHaveClass('font-display', 'text-[2rem]')
+    expect(screen.getByText('Sign in to access your AI document workspace.')).toHaveClass('text-base')
+    expect(screen.getByLabelText('Email')).toHaveClass('min-h-12', 'auth-input')
+    expect(screen.getByLabelText('Password')).toHaveClass('min-h-12', 'auth-input')
+    expect(screen.getByLabelText('Email').parentElement).toHaveClass('auth-field-control', 'focus-within:border-focus')
+    expect(screen.getByRole('button', { name: 'Sign in' })).toHaveClass('min-h-12', 'rounded-[2px]')
 
     expect(stylesheet).toMatch(/\.auth-input:focus-visible\s*{\s*outline:\s*none;/)
     expect(stylesheet).toMatch(/@media\s*\(forced-colors:\s*active\)[\s\S]*\.auth-field-control:focus-within\s*{[\s\S]*outline:/)
@@ -267,29 +267,26 @@ describe('shared visual system', () => {
     expect(passwordToggle.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
   })
 
-  it('keeps Sign Up responsive, touch-friendly, and decorative artwork silent', () => {
+  it('keeps Create account responsive and touch-friendly without decorative artwork', () => {
     const { container } = renderApp({ route: '/signup', authenticated: false })
     const authCard = screen.getByRole('region', { name: 'Create account workspace' })
 
-    expect(authCard).toHaveClass('grid-cols-1', 'lg:grid-cols-[1.4fr_1fr]')
-    expect(screen.getByRole('heading', { name: 'Create your account' })).toHaveClass('text-3xl', 'sm:text-4xl')
-    expect(screen.getByLabelText('Full Name')).toHaveClass('min-h-11')
-    expect(screen.getByLabelText('Email')).toHaveClass('min-h-11')
-    expect(screen.getByLabelText('Password')).toHaveClass('min-h-11')
-    expect(screen.getByLabelText('Confirm Password')).toHaveClass('min-h-11')
-    for (const label of ['Full Name', 'Email', 'Password', 'Confirm Password']) {
+    expect(authCard).toHaveClass('grid-cols-1', 'lg:grid-cols-[1fr_1px_1fr]')
+    expect(screen.getByRole('heading', { name: 'Create your account' })).toHaveClass('font-display', 'text-[2rem]')
+    expect(screen.getByLabelText('Full name')).toHaveClass('min-h-12')
+    expect(screen.getByLabelText('Email')).toHaveClass('min-h-12')
+    expect(screen.getByLabelText('Password')).toHaveClass('min-h-12')
+    expect(screen.getByLabelText('Confirm password')).toHaveClass('min-h-12')
+    for (const label of ['Full name', 'Email', 'Password', 'Confirm password']) {
       const input = screen.getByLabelText(label)
       expect(input).toHaveClass('auth-input')
-      expect(input.parentElement).toHaveClass('auth-field-control', 'focus-within:border-primary-border')
+      expect(input.parentElement).toHaveClass('auth-field-control', 'focus-within:border-focus')
     }
-    expect(screen.getByRole('button', { name: 'Create Account' })).toHaveClass('min-h-12')
+    expect(screen.getByRole('button', { name: 'Create account' })).toHaveClass('min-h-12')
     expect(screen.getByRole('button', { name: 'Show password' })).toHaveClass('size-11')
     expect(screen.getByRole('button', { name: 'Show confirm password' })).toHaveClass('size-11')
 
-    const decorativeCircles = container.querySelectorAll('[aria-hidden="true"].pointer-events-none')
-    expect(decorativeCircles).toHaveLength(2)
-    const logos = [...container.querySelectorAll('img')]
-    expect(logos.length).toBeGreaterThan(0)
-    expect(logos.every((logo) => logo.getAttribute('alt') === '')).toBe(true)
+    expect(container.querySelectorAll('[aria-hidden="true"].pointer-events-none')).toHaveLength(0)
+    expect(container.querySelectorAll('img')).toHaveLength(0)
   })
 })

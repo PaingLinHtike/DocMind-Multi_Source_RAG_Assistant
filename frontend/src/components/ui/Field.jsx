@@ -1,7 +1,7 @@
 import { cloneElement, isValidElement } from 'react'
 import Icon from './Icon.jsx'
 
-export default function Field({ id, label, error, helperText, leadingIcon, trailingControl, className = '', labelClassName = '', controlClassName = '', ...inputProps }) {
+export default function Field({ id, label, error, helperText, leadingIcon, trailingControl, className = '', labelClassName = '', controlClassName = '', inputClassName = '', ...inputProps }) {
   const descriptionId = error ? `${id}-error` : helperText ? `${id}-helper` : undefined
   const leading = typeof leadingIcon === 'string' ? <Icon name={leadingIcon} /> : leadingIcon
   const trailing = isValidElement(trailingControl)
@@ -13,7 +13,7 @@ export default function Field({ id, label, error, helperText, leadingIcon, trail
       <label className={`mb-1.5 block text-sm font-semibold text-text ${labelClassName}`} htmlFor={id}>{label}</label>
       <div className={`field-control flex min-h-11 min-w-0 items-center rounded-[2px] border bg-surface transition-colors focus-within:border-focus focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus ${error ? 'border-danger' : 'border-border-strong'} ${controlClassName}`}>
         {leading && <span className="ml-3 grid size-5 shrink-0 place-items-center text-text-muted">{leading}</span>}
-        <input aria-describedby={descriptionId} aria-invalid={Boolean(error)} className="min-h-11 min-w-0 flex-1 bg-transparent px-3 text-base text-text outline-none placeholder:text-text-muted" id={id} {...inputProps} />
+        <input aria-describedby={descriptionId} aria-invalid={Boolean(error)} className={`min-h-11 min-w-0 flex-1 bg-transparent px-3 text-base text-text outline-none placeholder:text-text-muted ${inputClassName}`} id={id} {...inputProps} />
         {trailing}
       </div>
       {helperText && !error && <p className="mt-1.5 text-sm text-text-muted" id={`${id}-helper`}>{helperText}</p>}

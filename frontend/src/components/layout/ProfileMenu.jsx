@@ -1,48 +1,28 @@
 import { Link, useNavigate } from 'react-router-dom'
-import profileAvatar from '../../assets/figma/profile-avatar.svg'
-import profileSettings from '../../assets/figma/profile-settings.svg'
-import profileUpload from '../../assets/figma/profile-upload.svg'
 import { useAuth } from '../../auth/authSessionStore.js'
 import Icon from '../ui/Icon.jsx'
 
-const menuRow = 'flex min-h-11 items-center gap-3 rounded-lg px-2.5 text-sm font-medium text-heading no-underline transition-colors hover:bg-white/5'
+const menuRow = 'flex min-h-11 items-center gap-3 rounded-[2px] px-3 text-sm font-medium text-text no-underline transition-colors hover:bg-surface-muted'
 
 export default function ProfileMenu({ onClose }) {
   const navigate = useNavigate()
   const { logout } = useAuth()
 
   function handleLogout() {
-    onClose()
-    logout()
-    navigate('/signin', { replace: true })
+    onClose(); logout(); navigate('/signin', { replace: true })
   }
 
   return (
-    <div className="menu-enter absolute right-0 top-14 z-50 flex w-72 flex-col rounded-xl border border-[#806ac9] bg-surface p-3 shadow-2xl" role="menu">
-      <div className="flex items-center gap-3 border-b border-border px-1 pb-3">
-        <span className="relative grid size-10 shrink-0 place-items-center text-base font-semibold">
-          <img alt="" className="absolute inset-0 size-full" src={profileAvatar} />
-          <span className="relative">A</span>
-        </span>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-heading">Aung</p>
-          <p className="truncate text-xs text-muted">aung@example.com</p>
-        </div>
+    <div className="menu-enter absolute right-0 top-14 z-50 flex w-72 flex-col rounded-[2px] border border-border-strong bg-surface p-2 lg:bottom-14 lg:left-0 lg:right-auto lg:top-auto" role="menu">
+      <div className="flex items-center gap-3 border-b border-border px-2 pb-3 pt-1">
+        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-accent text-sm font-semibold text-white">A</span>
+        <div className="min-w-0"><p className="truncate text-sm font-semibold text-text">Aung</p><p className="truncate text-xs text-text-muted">aung@example.com</p></div>
       </div>
-      <div className="mt-2 space-y-0.5">
-        <Link className={menuRow} onClick={onClose} to="/upload">
-          <span className="grid size-[18px] shrink-0 place-items-center"><img alt="" className="size-full" src={profileUpload} /></span>
-          <span>Upload Document</span>
-        </Link>
-        <Link className={menuRow} onClick={onClose} to="/settings">
-          <span className="grid size-[18px] shrink-0 place-items-center"><img alt="" className="size-full" src={profileSettings} /></span>
-          <span>Settings</span>
-        </Link>
+      <div className="mt-2">
+        <Link className={menuRow} onClick={onClose} to="/upload"><Icon name="upload" size={18} /><span>Upload document</span></Link>
+        <Link className={menuRow} onClick={onClose} to="/settings"><Icon name="settings" size={18} /><span>Settings</span></Link>
       </div>
-      <button className="mt-2 flex min-h-11 w-full items-center gap-3 rounded-lg bg-red-500/10 px-2.5 text-sm font-medium text-red-200 transition-colors hover:bg-red-500/15" onClick={handleLogout} type="button">
-        <span className="grid size-[18px] shrink-0 place-items-center"><Icon name="logout" size={18} /></span>
-        <span>Log Out</span>
-      </button>
+      <button className="mt-2 flex min-h-11 w-full items-center gap-3 rounded-[2px] bg-danger-soft px-3 text-sm font-medium text-danger transition-colors hover:bg-danger-soft-hover" onClick={handleLogout} type="button"><Icon name="logout" size={18} /><span>Log out</span></button>
     </div>
   )
 }

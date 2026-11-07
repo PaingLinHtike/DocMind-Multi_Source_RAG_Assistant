@@ -8,12 +8,16 @@ describe('DocMind application shell', () => {
     renderApp()
 
     expect(screen.getByText('DocMind')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/dashboard')
+    expect(screen.getByRole('link', { name: 'Overview' })).toHaveAttribute('href', '/dashboard')
     expect(screen.getByRole('link', { name: 'DocMind' })).toHaveAttribute('href', '/dashboard')
     expect(screen.getByRole('link', { name: 'Chat' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Documents' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Upload' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Open profile menu' })).toBeInTheDocument()
+    expect(screen.getByRole('banner', { name: 'Application shell' })).toHaveClass('lg:w-60', 'lg:h-screen')
+    expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toHaveClass('hidden', 'lg:flex')
+    expect(screen.getByRole('button', { name: 'Open navigation' })).toHaveClass('lg:hidden')
   })
 
   it('opens the account menu and closes it with Escape', async () => {
@@ -21,11 +25,12 @@ describe('DocMind application shell', () => {
     renderApp()
 
     await user.click(screen.getByRole('button', { name: 'Open profile menu' }))
-    expect(screen.getByText('Aung')).toBeInTheDocument()
-    expect(screen.getByText('aung@example.com')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Upload Document' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Log Out' })).toBeInTheDocument()
+    const menu = screen.getByRole('menu')
+    expect(within(menu).getByText('Aung')).toBeInTheDocument()
+    expect(within(menu).getByText('aung@example.com')).toBeInTheDocument()
+    expect(within(menu).getByRole('link', { name: 'Upload document' })).toBeInTheDocument()
+    expect(within(menu).getByRole('link', { name: 'Settings' })).toBeInTheDocument()
+    expect(within(menu).getByRole('button', { name: 'Log out' })).toBeInTheDocument()
 
     await user.keyboard('{Escape}')
     expect(screen.queryByText('aung@example.com')).not.toBeInTheDocument()

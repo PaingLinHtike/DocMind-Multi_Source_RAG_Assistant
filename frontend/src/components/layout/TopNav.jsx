@@ -1,32 +1,30 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import avatarBackground from '../../assets/figma/avatar-background.svg'
-import avatarChevron from '../../assets/figma/avatar-chevron.svg'
-import docMindIcon from '../../assets/figma/docmind-icon.svg'
+import BrandMark from '../ui/BrandMark.jsx'
 import Icon from '../ui/Icon.jsx'
 import ProfileMenu from './ProfileMenu.jsx'
 
-const navItems = [{ label: 'Dashboard', to: '/dashboard' }, { label: 'Chat', to: '/chat' }, { label: 'Documents', to: '/documents' }]
+const navItems = [
+  { label: 'Overview', to: '/dashboard', icon: 'dashboard' },
+  { label: 'Chat', to: '/chat', icon: 'chat' },
+  { label: 'Documents', to: '/documents', icon: 'documents' },
+  { label: 'Upload', to: '/upload', icon: 'upload' },
+  { label: 'Settings', to: '/settings', icon: 'settings' },
+]
 
-const desktopLink = ({ isActive }) => `inline-flex h-11 items-center rounded-lg px-4 text-sm font-medium no-underline transition-colors ${isActive ? 'bg-primary text-heading' : 'text-muted hover:bg-white/5 hover:text-heading'}`
-
-const mobileLink = ({ isActive }) => `flex min-h-11 items-center rounded-lg px-3 text-sm font-medium no-underline transition-colors ${isActive ? 'bg-primary text-heading' : 'text-muted hover:bg-white/5 hover:text-heading'}`
+const navLink = ({ isActive }) => `flex min-h-11 items-center gap-3 rounded-[2px] border-l-2 px-3 text-sm font-medium no-underline transition-colors ${isActive ? 'border-accent bg-surface-muted text-text' : 'border-transparent text-text-secondary hover:bg-surface-muted hover:text-text'}`
 
 export default function TopNav() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [navigationOpen, setNavigationOpen] = useState(false)
-  const profileRef = useRef(null)
-  const navigationRef = useRef(null)
+  const shellRef = useRef(null)
+
   useEffect(() => {
-    const closeOnEscape = (event) => {
-      if (event.key === 'Escape') {
-        setProfileOpen(false)
-        setNavigationOpen(false)
-      }
+    function closeOnEscape(event) {
+      if (event.key === 'Escape') { setProfileOpen(false); setNavigationOpen(false) }
     }
-    const closeOnOutsideClick = (event) => {
-      if (profileRef.current && !profileRef.current.contains(event.target)) setProfileOpen(false)
-      if (navigationRef.current && !navigationRef.current.contains(event.target)) setNavigationOpen(false)
+    function closeOnOutsideClick(event) {
+      if (shellRef.current && !shellRef.current.contains(event.target)) { setProfileOpen(false); setNavigationOpen(false) }
     }
     document.addEventListener('keydown', closeOnEscape)
     document.addEventListener('pointerdown', closeOnOutsideClick)
@@ -35,41 +33,33 @@ export default function TopNav() {
       document.removeEventListener('pointerdown', closeOnOutsideClick)
     }
   }, [])
+
   return (
-    <header className="h-20 px-5 sm:px-8 lg:px-12">
-      <div className="relative mx-auto flex h-full max-w-[1344px] items-center justify-between">
-        <NavLink className="flex min-h-11 items-center gap-2.5 text-xl font-bold text-heading no-underline sm:text-2xl" to="/dashboard"><img alt="" src={docMindIcon} /><span>DocMind</span></NavLink>
-        <nav aria-label="Primary navigation" className="hidden items-center gap-1 sm:flex">
-          {navItems.map((item) => <NavLink className={desktopLink} end={item.to === '/dashboard'} key={item.to} to={item.to}>{item.label}</NavLink>)}
-        </nav>
-        <div className="relative ml-auto mr-3 sm:hidden" ref={navigationRef}>
-          <button
-            aria-expanded={navigationOpen}
-            aria-label="Open navigation"
-            className="grid size-11 place-items-center rounded-lg border border-border bg-surface text-heading transition-colors hover:bg-white/5"
-            onClick={() => { setNavigationOpen((open) => !open); setProfileOpen(false) }}
-            type="button"
-          >
-            <Icon name="menu" size={20} />
-          </button>
-          {navigationOpen && (
-            <nav aria-label="Mobile navigation" className="absolute right-0 top-14 z-50 w-52 rounded-xl border border-border bg-surface p-1.5 shadow-2xl">
-              {navItems.map((item) => <NavLink className={mobileLink} end={item.to === '/dashboard'} key={item.to} onClick={() => setNavigationOpen(false)} to={item.to}>{item.label}</NavLink>)}
-            </nav>
-          )}
-        </div>
-        <div className="relative" ref={profileRef}>
-          <button aria-expanded={profileOpen} aria-haspopup="menu" aria-label="Open profile menu" className="flex h-11 items-center gap-1 rounded-full text-heading" onClick={() => { setProfileOpen((open) => !open); setNavigationOpen(false) }} type="button">
-            <span className="relative grid size-9 shrink-0 place-items-center text-base font-semibold">
-              <img alt="" className="absolute inset-0 size-full" src={avatarBackground} />
-              <span className="relative">A</span>
-            </span>
-            <span className={`grid size-6 shrink-0 place-items-center transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''}`}>
-              <img alt="" className="size-full" src={avatarChevron} />
-            </span>
-          </button>
-          {profileOpen && <ProfileMenu onClose={() => setProfileOpen(false)} />}
-        </div>
+    <header aria-label="Application shell" className="fixed inset-x-0 top-0 z-50 flex h-16 items-center border-b border-border bg-canvas px-6 lg:inset-y-0 lg:right-auto lg:h-screen lg:w-60 lg:flex-col lg:items-stretch lg:border-b-0 lg:border-r lg:py-6" ref={shellRef}>
+      <NavLink className="flex min-h-11 items-center gap-3 text-xl font-semibold text-text no-underline" to="/dashboard">
+        <BrandMark className="text-accent" size={24} /><span>DocMind</span>
+      </NavLink>
+
+      <nav aria-label="Primary navigation" className="mt-10 hidden flex-col gap-1 lg:flex">
+        {navItems.map((item) => <NavLink className={navLink} end={item.to === '/dashboard'} key={item.to} to={item.to}><Icon name={item.icon} /><span>{item.label}</span></NavLink>)}
+      </nav>
+
+      <div className="relative ml-auto lg:ml-0 lg:mt-auto">
+        <button aria-expanded={navigationOpen} aria-label="Open navigation" className="mr-2 grid size-11 place-items-center rounded-[2px] border border-border-strong bg-surface text-text lg:hidden" onClick={() => { setNavigationOpen((open) => !open); setProfileOpen(false) }} type="button"><Icon name="menu" /></button>
+        {navigationOpen && (
+          <nav aria-label="Mobile navigation" className="menu-enter absolute right-14 top-0 z-50 w-56 rounded-[2px] border border-border-strong bg-surface p-2 lg:hidden">
+            {navItems.map((item) => <NavLink className={navLink} end={item.to === '/dashboard'} key={item.to} onClick={() => setNavigationOpen(false)} to={item.to}><Icon name={item.icon} /><span>{item.label}</span></NavLink>)}
+          </nav>
+        )}
+      </div>
+
+      <div className="relative ml-0">
+        <button aria-expanded={profileOpen} aria-haspopup="menu" aria-label="Open profile menu" className="flex min-h-11 items-center gap-2 rounded-[2px] text-text lg:w-full lg:px-2" onClick={() => { setProfileOpen((open) => !open); setNavigationOpen(false) }} type="button">
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent text-sm font-semibold text-white">A</span>
+          <span className="hidden min-w-0 flex-1 text-left text-sm font-medium lg:block">Aung</span>
+          <span className={`grid size-6 place-items-center transition-transform ${profileOpen ? 'rotate-180' : ''}`}><Icon name="chevronDown" size={16} /></span>
+        </button>
+        {profileOpen && <ProfileMenu onClose={() => setProfileOpen(false)} />}
       </div>
     </header>
   )

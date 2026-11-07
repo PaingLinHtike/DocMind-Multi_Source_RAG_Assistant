@@ -2,8 +2,6 @@ import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import attachIcon from '../assets/figma/attach.svg'
-import assistantBook from '../assets/figma/chat-assistant-book.svg'
 import Button from '../components/ui/Button.jsx'
 import { buttonClasses } from '../components/ui/buttonStyles.js'
 import Icon from '../components/ui/Icon.jsx'
@@ -178,12 +176,12 @@ describe('shared visual system', () => {
 
   it('keeps the chat composer free of attachment controls', () => {
     const { container } = render(<ChatPage />)
-    const attachment = [...container.querySelectorAll('img')].find((image) => image.getAttribute('src') === attachIcon)
     const input = screen.getByPlaceholderText('Ask a question about your documents...')
 
-    expect(attachment).toBeUndefined()
+    expect(screen.queryByRole('button', { name: /attach/i })).not.toBeInTheDocument()
     expect(input).toHaveClass('chat-input')
-    expect(input.closest('form')).toHaveClass('chat-composer')
+    expect(input.closest('form')).toHaveClass('chat-composer', 'bg-surface', 'rounded-[2px]')
+    expect(container.querySelectorAll('img')).toHaveLength(0)
   })
 
   it('contains desktop Chat within the viewport and assigns overflow to the message thread', () => {
@@ -192,20 +190,18 @@ describe('shared visual system', () => {
     const panel = container.querySelector('.chat-panel')
     const thread = container.querySelector('.chat-thread')
 
-    expect(page).toHaveClass('min-h-[732px]', 'lg:h-[calc(100dvh-5rem)]', 'lg:min-h-0', 'lg:overflow-hidden')
-    expect(page).not.toHaveClass('h-[calc(100dvh-5rem)]', 'overflow-hidden')
+    expect(page).toHaveClass('min-h-[732px]', 'lg:h-[calc(100dvh-4rem)]', 'lg:min-h-0', 'lg:overflow-hidden')
+    expect(page).not.toHaveClass('h-[calc(100dvh-4rem)]', 'overflow-hidden')
     expect(panel).toHaveClass('flex', 'flex-col', 'lg:min-h-0')
-    expect(thread).toHaveClass('min-h-[450px]', 'lg:min-h-0', 'flex-1', 'overflow-y-auto')
+    expect(thread).toHaveClass('min-h-[450px]', 'lg:min-h-0', 'flex-1', 'lg:overflow-y-auto')
+    expect(thread).not.toHaveClass('overflow-y-auto')
   })
 
-  it('centers the assistant book inside its circular badge', () => {
-    const { container } = render(<ChatPage />)
-    const book = [...container.querySelectorAll('img')].find((image) => image.getAttribute('src') === assistantBook)
-
-    expect(book).toBeInTheDocument()
-    expect(book.parentElement).toHaveClass('grid')
-    expect(book.parentElement).toHaveClass('place-items-center')
-    expect(book.parentElement).not.toHaveClass('absolute')
+  it('uses paper message surfaces without legacy chat bubbles', () => {
+    render(<ChatPage />)
+    expect(screen.getByText('How many annual leave days do employees get?')).toHaveClass('bg-surface-muted', 'border-accent')
+    expect(screen.getByText('Employees receive 20 days of paid annual leave every year. [1]')).toHaveClass('bg-transparent')
+    expect(screen.getByText('Employee Handbook.pdf').closest('button')).toHaveClass('bg-surface', 'shadow-none')
   })
 
   it('uses compact unified document rows and status badges', () => {

@@ -42,4 +42,10 @@ describe('Paper & Ink brand assets', () => {
     expect(container.querySelectorAll('img')).toHaveLength(0)
     expect(container.querySelectorAll('svg').length).toBeGreaterThan(3)
   })
+
+  it('uses unified inline icons throughout Chat', () => {
+    const { container } = renderApp({ route: '/chat' })
+    expect(container.querySelectorAll('img')).toHaveLength(0)
+    expect(container.querySelectorAll('svg').length).toBeGreaterThan(10)
+  })
 })

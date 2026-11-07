@@ -5,19 +5,27 @@ import { renderApp } from './renderApp.jsx'
 
 describe('Chat prototype', () => {
   it('shows the designed conversation and cited answer', () => {
-    renderApp({ route: '/chat' })
+    const { container } = renderApp({ route: '/chat' })
 
     for (const title of ['Annual leave policy', 'Working hours', 'Company benefits', 'IT policy', 'Employee handbook']) {
       expect(screen.getByRole('button', { name: title })).toBeInTheDocument()
     }
     expect(screen.getByRole('heading', { name: 'Annual leave policy' })).toHaveClass('text-2xl')
-    expect(screen.getByText('How many annual leave days do employees get?')).toHaveClass('text-base')
-    expect(screen.getByText('How many annual leave days do employees get?')).toBeInTheDocument()
-    expect(screen.getByText('How many annual leave days do employees get?')).toBeInTheDocument()
-    expect(screen.getByText('Employees receive 20 days of paid annual leave every year. [1]')).toBeInTheDocument()
+    const question = screen.getByText('How many annual leave days do employees get?')
+    expect(question).toHaveClass('bg-surface-muted', 'border-l-2', 'border-accent', 'rounded-[2px]')
+    const answer = screen.getByText('Employees receive 20 days of paid annual leave every year. [1]')
+    expect(answer).toHaveClass('bg-transparent', 'max-w-[760px]')
     expect(screen.getByText('Sources (1)')).toBeInTheDocument()
-    expect(screen.getByText('Employee Handbook.pdf')).toBeInTheDocument()
+    const source = screen.getByText('Employee Handbook.pdf')
+    expect(source.closest('button')).toHaveClass('bg-surface', 'border-y', 'border-border', 'rounded-[2px]')
     expect(screen.getByText('Page 17')).toBeInTheDocument()
+    expect(container.querySelectorAll('img')).toHaveLength(0)
+
+    const activeConversation = screen.getByRole('button', { name: 'Annual leave policy' })
+    expect(activeConversation.parentElement).toHaveClass('border-l-2', 'border-accent')
+    expect(activeConversation.querySelector('svg')).toHaveClass('text-accent')
+    expect(screen.getByRole('button', { name: 'Working hours' }).querySelector('svg')).toHaveClass('text-text-secondary')
+    expect(activeConversation.querySelector('[data-conversation-index]')).toHaveTextContent('01')
   })
 
   it('selects another conversation and creates a blank new chat', async () => {
@@ -153,6 +161,23 @@ describe('Chat prototype', () => {
 
     await user.keyboard('{Escape}')
     expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+  })
+
+  it('contains long conversation titles and source filenames locally', async () => {
+    const user = userEvent.setup()
+    renderApp({ route: '/chat' })
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Annual leave policy' }))
+    await user.click(screen.getByRole('menuitem', { name: 'Rename' }))
+    const input = screen.getByRole('textbox', { name: 'Rename Annual leave policy' })
+    const longTitle = 'Annual leave policy for international employees working across multiple regional offices'
+    await user.clear(input)
+    await user.type(input, `${longTitle}{Enter}`)
+
+    const conversation = screen.getByRole('button', { name: longTitle })
+    expect(conversation).toHaveClass('min-w-0')
+    expect(conversation.querySelector('[data-conversation-title]')).toHaveClass('min-w-0', 'truncate')
+    expect(screen.getByText('Employee Handbook.pdf')).toHaveClass('min-w-0', 'break-words')
   })
 
   it('ignores whitespace and appends a cited simulated response to valid questions', async () => {

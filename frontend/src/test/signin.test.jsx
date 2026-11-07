@@ -61,6 +61,7 @@ describe('Sign In', () => {
 
   it('does not render the create-account password checklist', () => {
     renderApp({ route: '/signin', authenticated: false })
-    expect(screen.queryByRole('list', { name: 'Password requirements' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Password requirements')).not.toBeInTheDocument()
+    expect(document.getElementById('signin-password-description')).not.toBeInTheDocument()
   })
 })

@@ -86,10 +86,12 @@ describe('Sign Up', () => {
   it('shows every password requirement unmet and links the list to the password field', () => {
     renderApp({ route: '/signup', authenticated: false })
 
-    const list = screen.getByRole('list', { name: 'Password requirements' })
+    const list = screen.getByRole('list')
     const items = within(list).getAllByRole('listitem')
+    const description = document.getElementById('signup-password-description')
 
     expect(items).toHaveLength(5)
+    expect(description).toHaveTextContent('Password requirements')
     for (const label of [
       'At least 8 characters',
       'One uppercase letter',
@@ -98,10 +100,11 @@ describe('Sign Up', () => {
       'One symbol',
     ]) {
       expect(within(list).getByText(label)).toBeInTheDocument()
+      expect(description).toHaveTextContent(label)
     }
     expect(within(list).getAllByText('Not met:')).toHaveLength(5)
     expect(screen.getByLabelText('Password')).toHaveAttribute('aria-describedby', 'signup-password-description')
-    expect(document.getElementById('signup-password-description')).toContainElement(list)
+    expect(description).toContainElement(list)
     expect(list).toHaveAttribute('aria-live', 'polite')
     expect(list).toHaveAttribute('aria-atomic', 'false')
     expect(screen.getByLabelText('Confirm password')).not.toHaveAttribute('aria-describedby')
@@ -123,7 +126,7 @@ describe('Sign Up', () => {
     renderApp({ route: '/signup', authenticated: false })
     if (password) await user.type(screen.getByLabelText('Password'), password)
 
-    const list = screen.getByRole('list', { name: 'Password requirements' })
+    const list = screen.getByRole('list')
     const items = within(list).getAllByRole('listitem')
 
     items.forEach((item, index) => {
@@ -149,6 +152,21 @@ describe('Sign Up', () => {
       'aria-describedby',
       'signup-password-error signup-password-description',
     )
+
+    const list = screen.getByRole('list')
+    const description = document.getElementById('signup-password-description')
+    expect(within(list).getAllByRole('listitem')).toHaveLength(5)
+    expect(description).toContainElement(list)
+    expect(description).toHaveTextContent('Password requirements')
+    for (const label of [
+      'At least 8 characters',
+      'One uppercase letter',
+      'One lowercase letter',
+      'One number',
+      'One symbol',
+    ]) {
+      expect(description).toHaveTextContent(label)
+    }
   })
 
   it('keeps requirement state when password visibility is toggled', async () => {
@@ -156,7 +174,7 @@ describe('Sign Up', () => {
     renderApp({ route: '/signup', authenticated: false })
     await user.type(screen.getByLabelText('Password'), 'Aa1!aaaa')
 
-    const list = screen.getByRole('list', { name: 'Password requirements' })
+    const list = screen.getByRole('list')
     expect(within(list).getAllByText('Met:')).toHaveLength(5)
 
     await user.click(screen.getByRole('button', { name: 'Show password' }))

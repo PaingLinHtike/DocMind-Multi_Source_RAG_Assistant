@@ -28,7 +28,7 @@ const iconNames = [
   'mail', 'lock', 'user', 'messageCircle', 'layers', 'fileText', 'bookOpen',
   'dashboard', 'chat', 'documents', 'upload', 'settings', 'search', 'file',
   'link', 'externalLink', 'download', 'refresh', 'edit', 'trash',
-  'chevronRight', 'arrowRight',
+  'chevronRight', 'arrowRight', 'check', 'circle',
 ]
 
 function relativeLuminance(hex) {

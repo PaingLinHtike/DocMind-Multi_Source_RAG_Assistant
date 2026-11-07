@@ -1,58 +1,83 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# DocMind Laravel API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 13 REST backend for DocMind. It provides Sanctum cookie authentication, account management, private document storage, conversations, pending questions, citations, and dashboard aggregates. Actual RAG processing remains deferred behind the `RagGateway` contract until the FastAPI service is implemented.
 
-## About Laravel
+## Prerequisites
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP 8.3 or newer with PostgreSQL and file-info extensions
+- Composer
+- PostgreSQL
+- An existing or new PostgreSQL database named `docmind_db`
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Local setup
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+From `backend/`:
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+cp .env.example .env
+php artisan key:generate
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Create `docmind_db` in PostgreSQL, then set your local credentials in `.env`:
 
-## Contributing
+```env
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=docmind_db
+DB_USERNAME=postgres
+DB_PASSWORD=your-local-password
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Apply migrations and start the API:
 
-## Code of Conduct
+```bash
+php artisan migrate
+php artisan serve
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+The default API URL is `http://localhost:8000`; application routes are under `/api/v1`.
 
-## Security Vulnerabilities
+> The migrations adopt and extend manually managed DocMind tables. Do not use `migrate:fresh`, `db:wipe`, or destructive reset commands against a database containing data.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## SPA cookie authentication
 
-## License
+The React client must send credentialed requests and use the same host style consistently (`localhost` or `127.0.0.1`):
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+1. Request `GET /sanctum/csrf-cookie` with credentials enabled.
+2. Send registration or login to `/api/v1/auth/register` or `/api/v1/auth/login` with credentials enabled.
+3. Continue sending credentials on authenticated API requests.
+4. Send `POST /api/v1/auth/logout` to invalidate the session.
+
+The allowed frontend origins and stateful domains are configured through `FRONTEND_URL`, `CORS_ALLOWED_ORIGINS`, and `SANCTUM_STATEFUL_DOMAINS`.
+
+## Documents and storage
+
+Uploads accept PDF, DOCX, and TXT files up to `DOCMIND_UPLOAD_MAX_KB`. Files are written to Laravel's private `local` disk under `storage/app/private/documents/...`; they are never exposed by a public storage link. Authorized content and download endpoints stream files through Laravel.
+
+New uploads and user questions remain `pending`. The backend does not fabricate assistant answers while RAG processing is unavailable.
+
+## Deferred FastAPI integration
+
+`PendingRagGateway` is the current `RagGateway` implementation. A future FastAPI adapter can use:
+
+```env
+FASTAPI_BASE_URL=http://127.0.0.1:8001
+FASTAPI_TIMEOUT=30
+```
+
+Replacing the gateway binding will not require changing the React-facing conversation or message resources.
+
+## Tests and inspection
+
+Tests use an isolated in-memory SQLite database and fake private storage where needed:
+
+```bash
+php artisan test
+vendor/bin/pint --format agent
+php artisan route:list --path=api/v1 --except-vendor
+php artisan migrate:status --database=pgsql
+```
+
+For password-reset development, the default `log` mailer writes reset messages to the application log. Configure a production mail transport through environment variables when deploying.

@@ -7,9 +7,11 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File as FileSystem;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
+use ZipArchive;
 
 class DocumentTest extends TestCase
 {
@@ -46,7 +48,6 @@ class DocumentTest extends TestCase
     {
         return [
             'PDF' => ['report.pdf', 'application/pdf', 'PDF'],
-            'DOCX' => ['notes.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'DOCX'],
             'TXT' => ['plain.txt', 'text/plain', 'TXT'],
         ];
     }
@@ -70,6 +71,43 @@ class DocumentTest extends TestCase
             'filename' => $filename,
             'source_type' => strtolower($expectedType),
         ]);
+    }
+
+    public function test_upload_accepts_valid_docx_detected_as_zip(): void
+    {
+        Storage::fake('local');
+        $user = User::factory()->create();
+        $this->actingAs($user, 'web');
+        $document = $this->createDocxUpload();
+
+        $response = $this->postJson('/api/v1/documents', ['document' => $document]);
+
+        $response
+            ->assertCreated()
+            ->assertJsonPath('data.type', 'DOCX');
+        $this->assertDatabaseHas('documents', [
+            'user_id' => $user->id,
+            'filename' => 'valid.docx',
+            'source_type' => 'docx',
+        ]);
+        FileSystem::delete($document->getPathname());
+    }
+
+    public function test_upload_rejects_zip_renamed_as_docx_without_ooxml_structure(): void
+    {
+        Storage::fake('local');
+        $user = User::factory()->create();
+        $this->actingAs($user, 'web');
+        $document = $this->createDocxUpload(false);
+
+        $response = $this->postJson('/api/v1/documents', ['document' => $document]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['document']);
+        $this->assertDatabaseCount('documents', 0);
+        Storage::disk('local')->assertEmpty();
+        FileSystem::delete($document->getPathname());
     }
 
     public function test_upload_rejects_unsupported_extension(): void
@@ -372,5 +410,29 @@ class DocumentTest extends TestCase
         $response->assertNotFound();
         $this->assertDatabaseHas('documents', ['id' => $document->id]);
         Storage::disk('local')->assertExists($document->storage_key);
+    }
+
+    private function createDocxUpload(bool $includeOoxmlStructure = true): UploadedFile
+    {
+        $directory = storage_path('framework/testing');
+        FileSystem::ensureDirectoryExists($directory);
+        $path = $directory.'/'.fake()->uuid().'.docx';
+        $archive = new ZipArchive;
+        $archive->open($path, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+        if ($includeOoxmlStructure) {
+            $archive->addFromString('[Content_Types].xml', '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>');
+            $archive->addFromString('word/document.xml', '<?xml version="1.0"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"/>');
+        } else {
+            $archive->addFromString('payload.txt', 'Not a DOCX document.');
+        }
+        $archive->close();
+
+        return new class($path, 'valid.docx', 'application/zip', null, true) extends UploadedFile
+        {
+            public function getMimeType(): ?string
+            {
+                return 'application/zip';
+            }
+        };
     }
 }

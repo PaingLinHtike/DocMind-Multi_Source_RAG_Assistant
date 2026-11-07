@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Validation\Rules\File;
+use ZipArchive;
 
 class StoreDocumentRequest extends FormRequest
 {
@@ -28,8 +28,8 @@ class StoreDocumentRequest extends FormRequest
         return [
             'document' => [
                 'required',
-                File::types(['pdf', 'docx', 'txt'])
-                    ->max((int) config('docmind.upload_max_kb')),
+                'file',
+                'max:'.(int) config('docmind.upload_max_kb'),
                 'extensions:pdf,docx,txt',
                 function (string $attribute, mixed $value, Closure $fail): void {
                     if (! $value instanceof UploadedFile) {
@@ -38,10 +38,24 @@ class StoreDocumentRequest extends FormRequest
 
                     $allowedMimeTypes = [
                         'pdf' => ['application/pdf'],
-                        'docx' => ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
                         'txt' => ['text/plain'],
                     ];
                     $extension = strtolower($value->getClientOriginalExtension());
+
+                    if ($extension === 'docx') {
+                        $docxMimeTypes = [
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                            'application/zip',
+                            'application/x-zip-compressed',
+                        ];
+
+                        if (! in_array($value->getMimeType(), $docxMimeTypes, true)
+                            || ! $this->hasDocxStructure($value)) {
+                            $fail('The document is not a valid DOCX file.');
+                        }
+
+                        return;
+                    }
 
                     if (! in_array($value->getMimeType(), $allowedMimeTypes[$extension] ?? [], true)) {
                         $fail('The document extension does not match its content type.');
@@ -49,5 +63,20 @@ class StoreDocumentRequest extends FormRequest
                 },
             ],
         ];
+    }
+
+    private function hasDocxStructure(UploadedFile $file): bool
+    {
+        $archive = new ZipArchive;
+
+        if ($archive->open($file->getRealPath()) !== true) {
+            return false;
+        }
+
+        $hasRequiredEntries = $archive->locateName('[Content_Types].xml') !== false
+            && $archive->locateName('word/document.xml') !== false;
+        $archive->close();
+
+        return $hasRequiredEntries;
     }
 }

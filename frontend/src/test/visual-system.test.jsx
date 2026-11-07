@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import attachIcon from '../assets/figma/attach.svg'
 import assistantBook from '../assets/figma/chat-assistant-book.svg'
@@ -9,7 +9,6 @@ import { buttonClasses } from '../components/ui/buttonStyles.js'
 import Icon from '../components/ui/Icon.jsx'
 import PageHeading from '../components/ui/PageHeading.jsx'
 import StatusBadge from '../components/ui/StatusBadge.jsx'
-import DashboardPage from '../pages/DashboardPage.jsx'
 import ChatPage from '../pages/ChatPage.jsx'
 import { renderApp } from './renderApp.jsx'
 
@@ -137,13 +136,15 @@ describe('shared visual system', () => {
     expect(badge).toHaveClass('h-6', 'font-mono', 'text-xs', 'font-medium', 'rounded-[2px]')
   })
 
-  it('uses the dashboard typographic hierarchy', () => {
-    render(<DashboardPage />)
+  it('uses one ruled Overview data strip instead of four metric cards', () => {
+    renderApp()
 
-    expect(screen.getByText('Documents')).toHaveClass('text-sm')
-    expect(screen.getByText('12')).toHaveClass('text-3xl')
-    expect(screen.getByRole('heading', { name: 'Chat Activity' })).toHaveClass('text-xl')
-    expect(screen.getByRole('heading', { name: 'Recent Chats' })).toHaveClass('text-xl')
+    const strip = screen.getByRole('list', { name: 'Library statistics' })
+    expect(strip).toHaveClass('border-y', 'border-border')
+    expect(within(strip).getAllByRole('listitem')).toHaveLength(4)
+    expect(within(strip).getByText('12')).toHaveClass('font-mono')
+    expect(screen.getByRole('heading', { name: 'Recent conversations' })).toHaveClass('font-display')
+    expect(screen.queryByRole('heading', { name: 'Chat Activity' })).not.toBeInTheDocument()
   })
 
   it('uses the chat icon sizes and heading scale', () => {

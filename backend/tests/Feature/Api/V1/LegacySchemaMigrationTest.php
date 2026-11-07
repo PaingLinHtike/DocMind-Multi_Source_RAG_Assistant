@@ -34,6 +34,12 @@ class LegacySchemaMigrationTest extends TestCase
             'email' => 'existing@example.com',
             'password_hash' => 'preserved-hash',
         ]);
+        $this->assertTrue(Schema::hasColumns('users', [
+            'name',
+            'email_verified_at',
+            'remember_token',
+            'updated_at',
+        ]));
         $this->assertTrue(Schema::hasColumns('sessions', ['id', 'user_id', 'payload', 'last_activity']));
         $this->assertTrue(Schema::hasTable('password_reset_tokens'));
         $this->assertTrue(Schema::hasTable('cache'));

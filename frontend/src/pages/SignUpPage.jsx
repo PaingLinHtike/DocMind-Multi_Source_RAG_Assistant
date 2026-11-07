@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { getPasswordValidation } from '../auth/auth.js'
 import AuthField from '../components/auth/AuthField.jsx'
 import AuthLayout from '../components/auth/AuthLayout.jsx'
+import PasswordRequirements from '../components/auth/PasswordRequirements.jsx'
 import Button from '../components/ui/Button.jsx'
 import Icon from '../components/ui/Icon.jsx'
 
@@ -62,7 +63,7 @@ export default function SignUpPage() {
       <form className="mt-5 space-y-3" noValidate onSubmit={handleSubmit}>
         <AuthField autoComplete="name" error={errors.name} id="signup-name" icon="user" label="Full name" onChange={(event) => updateField('name', event.target.value)} placeholder="Full name" type="text" value={form.name} />
         <AuthField autoComplete="email" error={errors.email} id="signup-email" icon="mail" label="Email" onChange={(event) => updateField('email', event.target.value)} placeholder="Email" type="email" value={form.email} />
-        <AuthField autoComplete="new-password" error={errors.password} id="signup-password" icon="lock" label="Password" onChange={(event) => updateField('password', event.target.value)} placeholder="Password" trailingControl={visibilityToggle('password')} type={passwordVisible ? 'text' : 'password'} value={form.password} />
+        <AuthField autoComplete="new-password" description={<PasswordRequirements password={form.password} />} error={errors.password} id="signup-password" icon="lock" label="Password" onChange={(event) => updateField('password', event.target.value)} placeholder="Password" trailingControl={visibilityToggle('password')} type={passwordVisible ? 'text' : 'password'} value={form.password} />
         <AuthField autoComplete="new-password" error={errors.confirmation} id="signup-confirm-password" icon="lock" label="Confirm password" onChange={(event) => updateField('confirmation', event.target.value)} placeholder="Confirm password" trailingControl={visibilityToggle('confirmation')} type={confirmationVisible ? 'text' : 'password'} value={form.confirmation} />
 
         <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm text-text-secondary">

@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { renderApp } from './renderApp.jsx'
@@ -81,6 +81,86 @@ describe('Sign Up', () => {
     await user.click(screen.getByRole('button', { name: 'Show confirm password' }))
     expect(confirmation).toHaveAttribute('type', 'text')
     expect(confirmation).toHaveValue('Aa1!aaaa')
+  })
+
+  it('shows every password requirement unmet and links the list to the password field', () => {
+    renderApp({ route: '/signup', authenticated: false })
+
+    const list = screen.getByRole('list', { name: 'Password requirements' })
+    const items = within(list).getAllByRole('listitem')
+
+    expect(items).toHaveLength(5)
+    for (const label of [
+      'At least 8 characters',
+      'One uppercase letter',
+      'One lowercase letter',
+      'One number',
+      'One symbol',
+    ]) {
+      expect(within(list).getByText(label)).toBeInTheDocument()
+    }
+    expect(within(list).getAllByText('Not met:')).toHaveLength(5)
+    expect(screen.getByLabelText('Password')).toHaveAttribute('aria-describedby', 'signup-password-description')
+    expect(document.getElementById('signup-password-description')).toContainElement(list)
+    expect(list).toHaveAttribute('aria-live', 'polite')
+    expect(list).toHaveAttribute('aria-atomic', 'false')
+    expect(screen.getByLabelText('Confirm password')).not.toHaveAttribute('aria-describedby')
+  })
+
+  it.each([
+    ['', [false, false, false, false, false]],
+    ['Aa1!aaa', [false, true, true, true, true]],
+    ['aa1!aaaa', [true, false, true, true, true]],
+    ['AA1!AAAA', [true, true, false, true, true]],
+    ['Aa!!aaaa', [true, true, true, false, true]],
+    ['Aa11aaaa', [true, true, true, true, false]],
+    ['Aa1!aaaa', [true, true, true, true, true]],
+    ['Ää1!AAAA', [true, true, false, true, true]],
+    ['ÄÄ1!aaaa', [true, false, true, true, true]],
+    ['Aa1 aaaa', [true, true, true, true, true]],
+  ])('marks requirements for %j', async (password, states) => {
+    const user = userEvent.setup()
+    renderApp({ route: '/signup', authenticated: false })
+    if (password) await user.type(screen.getByLabelText('Password'), password)
+
+    const list = screen.getByRole('list', { name: 'Password requirements' })
+    const items = within(list).getAllByRole('listitem')
+
+    items.forEach((item, index) => {
+      expect(item).toHaveClass(states[index] ? 'text-success' : 'text-text-muted')
+      expect(within(item).getByText(states[index] ? 'Met:' : 'Not met:')).toBeInTheDocument()
+
+      const icon = item.querySelector('svg')
+      expect(icon).toHaveAttribute('width', '16')
+      expect(icon).toHaveAttribute('aria-hidden', 'true')
+      if (states[index]) expect(icon.querySelector('path')).not.toBeNull()
+      else expect(icon.querySelector('circle')).not.toBeNull()
+    })
+  })
+
+  it('keeps the checklist linked when the password error appears', async () => {
+    const user = userEvent.setup()
+    renderApp({ route: '/signup', authenticated: false })
+    await user.type(screen.getByLabelText('Password'), 'short')
+    await user.click(screen.getByRole('button', { name: 'Create account' }))
+
+    expect(screen.getByText('Use 8+ characters with uppercase, lowercase, number, and symbol.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Password')).toHaveAttribute(
+      'aria-describedby',
+      'signup-password-error signup-password-description',
+    )
+  })
+
+  it('keeps requirement state when password visibility is toggled', async () => {
+    const user = userEvent.setup()
+    renderApp({ route: '/signup', authenticated: false })
+    await user.type(screen.getByLabelText('Password'), 'Aa1!aaaa')
+
+    const list = screen.getByRole('list', { name: 'Password requirements' })
+    expect(within(list).getAllByText('Met:')).toHaveLength(5)
+
+    await user.click(screen.getByRole('button', { name: 'Show password' }))
+    expect(within(list).getAllByText('Met:')).toHaveLength(5)
   })
 
   it('accepts an eight-character compliant password and redirects with success feedback', async () => {

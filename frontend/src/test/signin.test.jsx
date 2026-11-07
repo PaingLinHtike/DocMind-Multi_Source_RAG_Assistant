@@ -58,4 +58,9 @@ describe('Sign In', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent('Sign-up complete. This demo does not create accounts; use the demo credentials to sign in.')
   })
+
+  it('does not render the create-account password checklist', () => {
+    renderApp({ route: '/signin', authenticated: false })
+    expect(screen.queryByRole('list', { name: 'Password requirements' })).not.toBeInTheDocument()
+  })
 })

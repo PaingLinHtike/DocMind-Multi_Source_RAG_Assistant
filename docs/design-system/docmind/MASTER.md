@@ -358,6 +358,7 @@ Create a shared field primitive for text, email, password, search, and composer 
 - Optional leading icon: 20px; trailing action: 44px hit area.
 - Focus: border oxide plus visible 2px ring; never remove focus without replacing it.
 - Error: red border, error icon/text, `aria-invalid`, and linked description.
+- A field may carry a persistent description block below the control, linked after any error or helper ID through `aria-describedby`; use it for rules that stay visible while typing.
 - Disabled/read-only states must be visibly distinct and semantically native.
 
 ### 9.3 Surface
@@ -449,6 +450,8 @@ Approved right-side copy:
 - Feature rows may retain the current three feature meanings, rewritten in sentence case without new product claims.
 
 Keep the current field meanings, validation, password toggles, route-state success message, demo credential behavior, and minimum 44px actions. Change visible labels and buttons to the approved sentence-case policy and update accessible-name tests accordingly.
+
+The Password field carries an always-visible five-rule checklist: at least 8 characters, one uppercase letter, one lowercase letter, one number, and one symbol. Each rule switches from a hollow circle with `Not met` to a check mark with `Met` as it becomes true; the list is the field's description and never replaces the existing validation message.
 
 ### 10.3 Overview dashboard
 

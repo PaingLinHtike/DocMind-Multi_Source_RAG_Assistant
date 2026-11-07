@@ -4,6 +4,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import Button from '../components/ui/Button.jsx'
 import { buttonClasses } from '../components/ui/buttonStyles.js'
+import Field from '../components/ui/Field.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import PageHeading from '../components/ui/PageHeading.jsx'
 import StatusBadge from '../components/ui/StatusBadge.jsx'
@@ -146,6 +147,26 @@ describe('shared visual system', () => {
     expect(screen.getByRole('button', { name: 'Clear' })).toHaveClass('min-h-11', 'min-w-11')
     expect(container.querySelector('[data-surface]')).toHaveClass('rounded-[2px]', 'p-4')
     expect(container.querySelector('hr')).toHaveClass('border-border')
+  })
+
+  it('links a persistent field description alongside errors and helpers', () => {
+    const { rerender } = render(
+      <Field description={<p>At least 8 characters</p>} id="query" label="Search" onChange={() => {}} value="" />,
+    )
+
+    expect(screen.getByLabelText('Search')).toHaveAttribute('aria-describedby', 'query-description')
+    expect(document.getElementById('query-description')).toHaveTextContent('At least 8 characters')
+
+    rerender(
+      <Field description={<p>At least 8 characters</p>} error="Required" id="query" label="Search" onChange={() => {}} value="" />,
+    )
+    expect(screen.getByLabelText('Search')).toHaveAttribute('aria-describedby', 'query-error query-description')
+    expect(document.getElementById('query-description')).toHaveTextContent('At least 8 characters')
+
+    rerender(
+      <Field description={<p>At least 8 characters</p>} helperText="Searches titles and text." id="query" label="Search" onChange={() => {}} value="" />,
+    )
+    expect(screen.getByLabelText('Search')).toHaveAttribute('aria-describedby', 'query-helper query-description')
   })
 
   it('normalizes page heading typography for desktop and mobile', () => {

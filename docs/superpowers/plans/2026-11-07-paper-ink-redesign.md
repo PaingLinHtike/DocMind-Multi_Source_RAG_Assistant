@@ -4,13 +4,15 @@
 
 **Goal:** Redesign the complete DocMind frontend as a calm Paper & Ink document workspace while preserving every tested route, interaction, and prototype behavior.
 
-**Architecture:** Build a three-layer token system and small shared UI primitives first, then migrate the responsive shell and each screen in dependency order. React state/hooks and React Router behavior remain unchanged; visual code moves from raw Tailwind hex values and Figma SVGs to semantic tokens, shared components, one icon family, and a current-color brand mark.
+**Architecture:** Build a three-layer token system and small shared UI primitives first, then migrate the responsive shell and each screen in dependency order. The approved 2026-11-07 amendment replaces the interim desktop sidebar with one horizontal header. React state/hooks and React Router behavior remain unchanged; visual code moves from raw Tailwind hex values and Figma SVGs to semantic tokens, shared components, one icon family, and a current-color brand mark.
 
 **Tech Stack:** React 19, React Router 7, Tailwind CSS 4, Vite 8, Vitest 5, Testing Library
 
 **Spec:** `docs/design-system/docmind/MASTER.md`
 
 ## Execution Preflight
+
+**Execution status:** Tasks 1–5 are complete in commits `83a426a`, `c3a18f4`, `3ce12d8`, `98176de`, and `5dd4ecd`. The sidebar clauses recorded in completed Task 2 are historical and are explicitly superseded by the approved Task 6 header amendment. Resume execution at Task 6; only Tasks 6–9 remain active.
 
 - Execute from an isolated project-local worktree created from `feature/frontend`; do not implement directly in the current working tree.
 - Before Task 1, confirm the worktree starts from the commit containing this plan and `MASTER.md`.
@@ -46,7 +48,9 @@ Then perform the task's browser checks before committing. Do not claim a task is
 - Use 2px control/surface radius, 1px rules, no gradients, glow, glass blur, or elevation shadows.
 - Use one inline, current-color icon family in `Icon.jsx`; add no icon or UI dependency.
 - Minimum interactive size is 44px; auth controls are 48px.
-- Desktop sidebar begins at 1024px; compact top bar is used below 1024px; mobile gutters are 24px.
+- At 1024px and wider, use a horizontal header with DocMind left, Overview/Chat/Documents navigation, and profile right; below 1024px collapse those three links into the existing menu button. Upload and Settings remain in the profile menu only.
+- Fields and the Chat composer use `#FFFDF7`; Chat questions use `#ECE7DA` plus an oxide rule; assistant answers are transparent; citation rows use warm-white `#FFFDF7`.
+- Icons are ink gray by default and oxide `#B23A2B` when active/selected; no white or purple conversation icons.
 - Use approved sentence case: `Sign in`, `Create account`, `Full name`, `Upload document`, `Change password`, `Save changes`, `Log out`.
 - Preserve routes, auth/session behavior, hooks, test IDs, menu dismissal, chat behavior, document behavior, upload behavior, Settings storage key, and live feedback.
 - Keep intentional Documents horizontal scrolling and Chat desktop thread scrolling; do not create other nested scrolling regions.
@@ -92,10 +96,10 @@ Task 1 must produce these APIs for all later tasks:
 ## Review Focus
 
 - **Font/network failure:** system fallbacks must preserve readable hierarchy when Google Fonts are unavailable; Task 1 pins all three fallback stacks.
-- **Effective narrow width/200% zoom:** shell must switch to the compact top bar and never clip navigation or focus; Task 2 pins breakpoint classes and Task 8 manually verifies zoom.
-- **Long names and citations:** long document names, chat titles, storage paths, and source filenames must wrap/truncate locally without page overflow; Tasks 4 and 6 retain/add long-value contracts.
-- **Empty and failure states:** no documents, no chats, failed documents, invalid uploads, storage failures, and deleted/not-found documents must remain explicit; Tasks 4–7 pin their owning states.
-- **Visual-system drift:** retired SVG imports, raw JSX hex values, purple/glow classes, gradients, and fake-chart labels must not re-enter production code; Task 8 performs static checks.
+- **Effective narrow width/200% zoom:** shell must collapse primary links into the compact menu and never clip navigation or focus; Task 6 pins breakpoint classes and Task 9 manually verifies zoom.
+- **Long names and citations:** long document names, chat titles, storage paths, and source filenames must wrap/truncate locally without page overflow; Tasks 4 and 7 retain/add long-value contracts.
+- **Empty and failure states:** no documents, no chats, failed documents, invalid uploads, storage failures, and deleted/not-found documents must remain explicit; Tasks 4–8 pin their owning states.
+- **Visual-system drift:** retired SVG imports, raw JSX hex values, purple/glow classes, gradients, and fake-chart labels must not re-enter production code; Task 9 performs static checks.
 
 ---
 
@@ -390,7 +394,60 @@ git commit -m "feat(frontend): redesign Paper and Ink upload"
 
 ---
 
-### Task 6: Redesign Chat as an index and reading pane
+### Task 6: Replace the interim sidebar with the approved horizontal header
+
+**Files:**
+- Modify: `frontend/src/components/layout/AppLayout.jsx`
+- Modify: `frontend/src/components/layout/TopNav.jsx`
+- Modify: `frontend/src/components/layout/ProfileMenu.jsx`
+- Modify: `frontend/src/test/shell.test.jsx`
+- Modify: `frontend/src/test/visual-system.test.jsx`
+
+**Interfaces:**
+- Consumes: BrandMark, Icon, ProfileMenu, semantic Paper & Ink tokens, existing route and menu state.
+- Produces: a 64px horizontal header at every width; desktop primary navigation at `lg`/1024+; existing menu-button navigation below `lg`; unchanged profile-menu routes and logout behavior.
+
+- [ ] **Step 1: Write failing horizontal-header contracts**
+
+In `shell.test.jsx`, replace sidebar assertions with exact contracts:
+
+- the banner is horizontal and 64px high, uses a bottom rule, and has no desktop width/fixed-sidebar class;
+- DocMind links to `/dashboard`; desktop primary navigation contains only Overview, Chat, and Documents;
+- Upload and Settings are absent from primary navigation and remain available in the profile menu as Upload document and Settings;
+- desktop links are hidden below `lg`; the existing menu button is hidden at `lg` and its popover contains only Overview, Chat, and Documents;
+- active navigation uses an oxide bottom rule/icon rather than a left rule, filled pill, white icon, or purple icon;
+- menu selection, Escape dismissal, outside-click dismissal, profile navigation, and Log out still work.
+
+Update `visual-system.test.jsx` to assert `AppLayout` reserves 64px above main content at all widths and no longer reserves `lg:pl-60`.
+
+- [ ] **Step 2: Run focused tests and verify RED**
+
+Run: `npm test -- --run src/test/shell.test.jsx src/test/visual-system.test.jsx`
+
+Expected: FAIL because the current desktop shell is a fixed 240px sidebar and exposes Upload/Settings as primary links.
+
+- [ ] **Step 3: Implement the header without changing behavior**
+
+Refactor `TopNav.jsx` in place. Keep its existing state, Escape listener, outside-click handling, `NavLink` routes, and `ProfileMenu` composition. Render BrandMark/DocMind left, Overview/Chat/Documents horizontally at `lg` and wider, and profile right. Below `lg`, retain the existing menu button and anchored panel for those same three links. Use ink-gray icons by default and oxide icons/underline for the active route. Remove Upload/Settings from `navItems`.
+
+Update `ProfileMenu.jsx` positioning for a top-right header anchor at every width; retain Upload document, Settings, and Log out. Update `AppLayout.jsx` from sidebar offset to a consistent 64px header offset.
+
+- [ ] **Step 4: Run focused and full verification**
+
+Run the focused command from Step 2, then the **Standard Verification Gate**. Expected: PASS.
+
+- [ ] **Step 5: Browser-check and commit**
+
+Verify 375, 768, 1024, and 1440px plus 200% zoom: correct breakpoint switch, no overlap/overflow, visible focus, active state, both menus above content, and profile actions reachable.
+
+```bash
+git add frontend/src/components/layout/AppLayout.jsx frontend/src/components/layout/TopNav.jsx frontend/src/components/layout/ProfileMenu.jsx frontend/src/test/shell.test.jsx frontend/src/test/visual-system.test.jsx
+git commit -m "feat(frontend): add horizontal application header"
+```
+
+---
+
+### Task 7: Redesign Chat as an index and reading pane
 
 **Files:**
 - Modify: `frontend/src/pages/ChatPage.jsx`
@@ -399,28 +456,30 @@ git commit -m "feat(frontend): redesign Paper and Ink upload"
 - Modify: `frontend/src/test/visual-system.test.jsx`
 
 **Interfaces:**
-- Consumes: Button, Field styling, Icon, Rule, Surface, menu tokens.
-- Produces: Paper & Ink conversation index, reading pane, footnote citations; `useChatPrototype` interface unchanged.
+- Consumes: Button/buttonClasses, Icon, Rule, semantic field/menu tokens.
+- Produces: Paper & Ink conversation index, transparent reading pane, paper question/composer surfaces, ruled citations; `useChatPrototype` interface unchanged.
 
-- [ ] **Step 1: Write failing Chat visual contracts**
+- [ ] **Step 1: Write failing Chat visual and color contracts**
 
-Update tests to assert numbered/index conversation rows, slim oxide active rule, no bubble/Figma avatar/assistant artwork, readable assistant answer measure, user question paper inset, footnote-style citation number/file/page, standard menu icons, and unchanged composer/source disclosure semantics.
+Update tests to assert numbered conversation rows, a slim oxide active rule/icon, ink-gray inactive icons, and no Figma conversation/avatar/assistant/source/action artwork. Assert user questions use `bg-surface-muted` (`#ECE7DA`) with an oxide left border, assistant answer text has a transparent background and readable maximum measure, citation rows use `bg-surface` (`#FFFDF7`) plus rules, and the composer uses `bg-surface`. Assert no navy, purple, white conversation icon, rounded bubble, gradient, glass, or decorative-shadow classes remain.
 
-- [ ] **Step 2: Add long-value and overflow contracts**
+- [ ] **Step 2: Preserve behavior, long-value, and overflow contracts**
 
-Add a long conversation/source assertion that title/source containers use `min-w-0` plus truncate/wrap behavior. Preserve exact desktop `chat-page`/`chat-panel`/`chat-thread` overflow ownership and mobile page-scroll contract.
+Keep all current select/create/rename/delete/Escape/whitespace/send/independent-disclosure tests. Add a long conversation/source assertion proving `min-w-0` plus truncate/wrap behavior. Update the desktop height contract for the new 64px header while preserving `chat-page`/`chat-panel`/`chat-thread` overflow ownership and mobile native page scrolling.
 
 - [ ] **Step 3: Run focused tests and verify RED**
 
 Run: `npm test -- --run src/test/chat.test.jsx src/test/assets.test.jsx src/test/visual-system.test.jsx`
 
+Expected: FAIL on legacy Figma artwork, raw navy/purple values, dark message/citation/composer surfaces, and old bubble styling.
+
 - [ ] **Step 4: Implement Chat migration**
 
-Change markup/styling/assets in `ChatPage.jsx` only. Preserve every handler and state transition: select, create, rename Enter/blur/Escape, delete fallback, menu Escape, whitespace rejection, question/answer append, independent citation disclosure.
+Change composition/styling/assets in `ChatPage.jsx` only. Use shared `Icon` glyphs for conversation, edit, delete, source, external-link, and controls. Preserve every handler and state transition: select, create, rename Enter/blur/Escape, delete fallback, action-menu Escape, whitespace rejection, question/answer append, and independent citation disclosure.
 
 - [ ] **Step 5: Run focused/full tests, lint, build, and browser checks**
 
-Run the focused command from Step 3, then the **Standard Verification Gate**. Verify long threads and scrollbars, 375px native page scroll, 1024px internal thread scroll, keyboard rename/menu/source behavior, and citation readability.
+Run the focused command from Step 3, then the **Standard Verification Gate**. Verify long threads and scrollbars, 375px native page scroll, 1024px internal thread scroll below the header, keyboard rename/menu/source behavior, long values, active icon color, and citation readability.
 
 - [ ] **Step 6: Commit**
 
@@ -431,7 +490,7 @@ git commit -m "feat(frontend): redesign Paper and Ink chat"
 
 ---
 
-### Task 7: Redesign Settings without changing persistence
+### Task 8: Redesign Settings without changing persistence
 
 **Files:**
 - Modify: `frontend/src/pages/SettingsPage.jsx`
@@ -440,27 +499,29 @@ git commit -m "feat(frontend): redesign Paper and Ink chat"
 
 **Interfaces:**
 - Consumes: Button, Field, Icon, Rule, status tokens.
-- Produces: ruled account section; storage key and reader/save behavior unchanged.
+- Produces: ruled account section with paper fields; storage key and reader/save behavior unchanged.
 
 - [ ] **Step 1: Write failing Settings visual contracts**
 
-Assert sentence-case `Change password` and `Save changes`, shared Field/Button/Icon use, 480px desktop control column, full-width 320/375 controls, no dark Surface card, and 44px controls.
+Assert sentence-case `Change password` and `Save changes`, shared Field/Button/Icon use, paper-0 field backgrounds (`bg-surface`), ink-gray default icons with oxide focus/active treatment, 480px desktop control column, full-width 320/375 controls, no dark Surface card/navy button, and 44px controls.
 
 - [ ] **Step 2: Keep persistence/accessibility contracts intact**
 
-Do not weaken tests for all-field persistence, malformed/partial/unreadable storage, write failure/retry, Enter submit, persistent live status, stale-feedback clearing, password visibility, or Change password feedback. Update only visible label casing.
+Do not weaken tests for all-field persistence, malformed/partial/unreadable storage, write failure/retry, Enter submit, persistent live status, stale-feedback clearing, password visibility, or Change password feedback. Update only visible label casing and visual assertions.
 
 - [ ] **Step 3: Run focused tests and verify RED**
 
 Run: `npm test -- --run src/test/upload-settings.test.jsx src/test/visual-system.test.jsx`
 
+Expected: FAIL on raw navy fields/buttons, legacy classes, and title-case actions.
+
 - [ ] **Step 4: Implement Settings migration**
 
-Use a ruled section with shared fields/buttons/status styling. Keep `SETTINGS_STORAGE_KEY`, `DEFAULT_ACCOUNT`, `readAccountSettings`, state, handlers, and live-region lifecycle unchanged.
+Use a ruled section with shared fields/buttons/status styling. Keep `SETTINGS_STORAGE_KEY`, `DEFAULT_ACCOUNT`, `readAccountSettings`, state, handlers, storage error handling, and live-region lifecycle unchanged.
 
 - [ ] **Step 5: Run focused/full tests, lint, build, and browser checks**
 
-Run the focused command from Step 3, then the **Standard Verification Gate**. Verify persistence after reload, success/failure announcements, password toggle, 480px desktop controls, full-width 320/375 controls, and no overflow.
+Run the focused command from Step 3, then the **Standard Verification Gate**. Verify persistence after reload, success/failure announcements, password toggle, Enter submission, 480px desktop controls, full-width 320/375 controls, long values, and no overflow.
 
 - [ ] **Step 6: Commit**
 
@@ -471,7 +532,7 @@ git commit -m "feat(frontend): redesign Paper and Ink settings"
 
 ---
 
-### Task 8: Remove legacy visual drift and complete QA
+### Task 9: Remove legacy visual drift and complete QA
 
 **Files:**
 - Modify: any production/test file still importing retired `frontend/src/assets/figma/*.svg`
@@ -489,11 +550,13 @@ git commit -m "feat(frontend): redesign Paper and Ink settings"
 Add filesystem-backed tests that scan production `.jsx` files and assert:
 
 - no raw six-digit hex values;
-- no `bg-gradient`, `shadow-2xl`, ambient SVG import, or retired Figma UI SVG import;
+- no navy/blue/purple palette value, `bg-gradient`, `shadow-2xl`, glass/blur treatment, ambient SVG import, or retired Figma UI SVG import;
 - no `Chat Activity`, weekday chart labels, or mock percentage deltas;
 - no old purple palette values in `index.css`, `index.html`, or favicon;
 - Button is imported/used outside its own file;
 - reduced-motion and forced-colors rules remain.
+
+Also assert primary navigation contains only Overview/Chat/Documents, Upload/Settings remain in the profile menu, fields/composer/citations use paper surfaces, questions use muted paper plus oxide rule, assistant answers are transparent, and default/active icon colors follow ink/oxide policy.
 
 - [ ] **Step 2: Run static tests and verify RED if drift remains**
 
@@ -521,7 +584,7 @@ Expected: all tests pass, lint reports no errors, production build succeeds.
 
 Create `docs/design-system/docmind/QA.md` with pass/fail notes for:
 
-- 375, 768, 1024, 1440px on every route;
+- 375, 768, 1024, 1440px on every route, including the header breakpoint and profile-only Upload/Settings access;
 - 200% browser zoom;
 - keyboard-only navigation and visible/non-obscured focus;
 - reduced-motion emulation;

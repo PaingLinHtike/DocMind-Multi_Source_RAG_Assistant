@@ -1,10 +1,11 @@
 const tones = {
-  success: 'bg-success/20 text-heading',
-  info: 'bg-primary/60 text-heading',
-  danger: 'bg-red-500/20 text-red-200',
-  neutral: 'bg-white/8 text-muted',
+  success: 'bg-success-soft text-success',
+  warning: 'bg-warning-soft text-warning',
+  danger: 'bg-danger-soft text-danger',
+  neutral: 'bg-surface-muted text-text-secondary',
+  info: 'bg-accent-soft text-accent-hover',
 }
 
 export default function StatusBadge({ children, tone = 'neutral' }) {
-  return <span className={`inline-flex min-h-6 items-center justify-center rounded-md px-2 text-xs font-medium ${tones[tone]}`}>{children}</span>
+  return <span className={`inline-flex h-6 items-center justify-center rounded-[2px] px-2 font-mono text-xs font-medium ${tones[tone] ?? tones.neutral}`}>{children}</span>
 }

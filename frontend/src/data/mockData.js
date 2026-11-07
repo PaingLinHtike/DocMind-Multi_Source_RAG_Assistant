@@ -1,7 +1,7 @@
 export const dashboardMetrics = [
-  { label: 'Documents', value: '12', change: '↑ +20%' },
-  { label: 'Chats', value: '28', change: '↑ +17%' },
-  { label: 'Messages', value: '146', change: '↑ +32%' },
+  { label: 'Documents', value: '12' },
+  { label: 'Chats', value: '28' },
+  { label: 'Messages', value: '146' },
   { label: 'Storage', value: '82 MB' },
 ]
 

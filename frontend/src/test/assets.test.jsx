@@ -36,4 +36,10 @@ describe('Paper & Ink brand assets', () => {
     const detail = renderApp({ route: '/documents/doc-123' })
     expect(detail.container.querySelectorAll('img')).toHaveLength(0)
   })
+
+  it('uses unified inline icons throughout Upload', () => {
+    const { container } = renderApp({ route: '/upload' })
+    expect(container.querySelectorAll('img')).toHaveLength(0)
+    expect(container.querySelectorAll('svg').length).toBeGreaterThan(3)
+  })
 })

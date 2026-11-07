@@ -225,6 +225,14 @@ describe('shared visual system', () => {
     expect(stylesheet).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*transition-duration:\s*0\.01ms !important;/)
   })
 
+  it('styles Upload as a paper inbox and ruled list', () => {
+    renderApp({ route: '/upload' })
+    const dropArea = screen.getByTestId('upload-drop-area')
+    expect(dropArea).toHaveClass('border-dashed', 'border-border-strong', 'rounded-[2px]')
+    expect(screen.getByRole('heading', { name: 'Recent uploads' })).toHaveClass('font-display')
+    expect(screen.getByTestId('recent-upload-Employee Handbook.pdf')).toHaveClass('border-b')
+  })
+
   it('pins long-value safety in settings', () => {
     renderApp({ route: '/settings' })
 

@@ -5,18 +5,18 @@ import { renderApp } from './renderApp.jsx'
 
 const SETTINGS_STORAGE_KEY = 'docmind.account-settings.v1'
 
-describe('Upload Document', () => {
+describe('Upload document', () => {
   it('validates missing and unsupported files without adding an upload', () => {
     renderApp({ route: '/upload' })
-    const input = screen.getByLabelText('Choose File')
+    const input = screen.getByLabelText('Choose file')
     const picker = input.closest('label')
     expect(picker).toHaveClass('focus-within:outline-2')
     expect(picker).toHaveClass('focus-within:outline-focus')
 
-    const heading = screen.getByRole('heading', { name: 'Upload Document' })
-    expect(heading).toHaveClass('text-3xl')
-    expect(heading).toHaveClass('sm:text-4xl')
-    expect(screen.getByText('Choose File')).toHaveClass('h-11')
+    const heading = screen.getByRole('heading', { name: 'Upload document' })
+    expect(heading).toHaveClass('font-display', 'text-[2rem]')
+    expect(screen.getByText('Choose file')).toHaveClass('min-h-11')
+    expect(screen.getByTestId('upload-drop-area')).toHaveClass('border-dashed', 'border-border-strong')
     expect(screen.getByText('Employee Handbook.pdf')).toBeInTheDocument()
     expect(screen.getAllByText('Ready').length).toBeGreaterThan(0)
     expect(screen.getByText('Supported: PDF • DOCX • TXT')).toBeInTheDocument()
@@ -31,14 +31,14 @@ describe('Upload Document', () => {
 
   it('accepts a PDF and simulates Processing to Ready in Recent Uploads', async () => {
     renderApp({ route: '/upload' })
-    const input = screen.getByLabelText('Choose File')
+    const input = screen.getByLabelText('Choose file')
     const pdf = new File(['policy'], 'Remote Work Policy.pdf', { type: 'application/pdf' })
 
     fireEvent.change(input, { target: { files: [pdf] } })
     const upload = screen.getByTestId('recent-upload-Remote Work Policy.pdf')
-    expect(within(upload).getByText('Processing')).toBeInTheDocument()
+    expect(within(upload).getByText('Processing')).toHaveClass('h-6', 'font-mono')
 
-    await waitFor(() => expect(within(upload).getByText('Ready')).toBeInTheDocument())
+    await waitFor(() => expect(within(upload).getByText('Ready')).toHaveClass('h-6', 'font-mono'))
   })
 })
 

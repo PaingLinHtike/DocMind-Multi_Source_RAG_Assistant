@@ -48,7 +48,7 @@ describe('Dashboard', () => {
 
     await user.click(screen.getByRole('button', { name: 'Open profile menu' }))
     await user.click(within(screen.getByRole('menu')).getByRole('link', { name: 'Upload document' }))
-    expect(screen.getByRole('heading', { name: 'Upload Document' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Upload document' })).toBeInTheDocument()
   })
 
   it('closes the profile menu when clicking outside', async () => {

@@ -147,6 +147,14 @@ describe('shared visual system', () => {
     expect(screen.queryByRole('heading', { name: 'Chat Activity' })).not.toBeInTheDocument()
   })
 
+  it('reserves one 64px header row instead of a desktop sidebar', () => {
+    const { container } = renderApp()
+    const main = container.querySelector('main')
+
+    expect(main).toHaveClass('min-h-screen', 'pt-16')
+    expect(main).not.toHaveClass('lg:pl-60', 'lg:pt-0')
+  })
+
   it('uses the chat icon sizes and heading scale', () => {
     render(<ChatPage />)
 

@@ -5,7 +5,7 @@ export default function AppLayout() {
   return (
     <div className="min-h-screen bg-canvas text-text">
       <TopNav />
-      <main className="min-h-screen pt-16 lg:pl-60 lg:pt-0"><Outlet /></main>
+      <main className="min-h-screen pt-16"><Outlet /></main>
     </div>
   )
 }

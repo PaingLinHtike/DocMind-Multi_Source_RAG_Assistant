@@ -13,7 +13,7 @@ export default function ProfileMenu({ onClose }) {
   }
 
   return (
-    <div className="menu-enter absolute right-0 top-14 z-50 flex w-72 flex-col rounded-[2px] border border-border-strong bg-surface p-2 lg:bottom-14 lg:left-0 lg:right-auto lg:top-auto" role="menu">
+    <div className="menu-enter absolute right-0 top-14 z-50 flex w-72 flex-col rounded-[2px] border border-border-strong bg-surface p-2" role="menu">
       <div className="flex items-center gap-3 border-b border-border px-2 pb-3 pt-1">
         <span className="grid size-10 shrink-0 place-items-center rounded-full bg-accent text-sm font-semibold text-white">A</span>
         <div className="min-w-0"><p className="truncate text-sm font-semibold text-text">Aung</p><p className="truncate text-xs text-text-muted">aung@example.com</p></div>

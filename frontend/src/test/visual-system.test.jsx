@@ -185,8 +185,9 @@ describe('shared visual system', () => {
     expect(badge).toHaveClass('h-6', 'font-mono', 'text-xs', 'font-medium', 'rounded-[2px]')
   })
 
-  it('uses one ruled Overview data strip instead of four metric cards', () => {
+  it('uses one ruled Overview data strip instead of four metric cards', async () => {
     renderApp()
+    await screen.findByRole('heading', { name: 'Good morning, Aung' })
 
     const strip = screen.getByRole('list', { name: 'Library statistics' })
     expect(strip).toHaveClass('border-y', 'border-border')

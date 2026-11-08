@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { authenticatedUser, renderApp } from './renderApp.jsx'
+import { authenticatedUser, defaultDashboard, renderApp } from './renderApp.jsx'
 
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -13,7 +13,9 @@ function jsonResponse(body, status = 200) {
 describe('authentication session routing', () => {
   it('waits for session hydration before protecting a route', async () => {
     let resolveSession
-    vi.stubGlobal('fetch', vi.fn(() => new Promise((resolve) => { resolveSession = resolve })))
+    vi.stubGlobal('fetch', vi.fn((url) => url.endsWith('/api/v1/auth/user')
+      ? new Promise((resolve) => { resolveSession = resolve })
+      : Promise.resolve(jsonResponse({ data: defaultDashboard }))))
 
     renderApp({ route: '/dashboard', hydrateSession: true })
 
@@ -33,7 +35,9 @@ describe('authentication session routing', () => {
   })
 
   it.each(['/signin', '/signup'])('redirects a hydrated user away from %s', async (route) => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ data: authenticatedUser })))
+    vi.stubGlobal('fetch', vi.fn((url) => Promise.resolve(jsonResponse({
+      data: url.endsWith('/api/v1/auth/user') ? authenticatedUser : defaultDashboard,
+    }))))
 
     renderApp({ route, hydrateSession: true })
 

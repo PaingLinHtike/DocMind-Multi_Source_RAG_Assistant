@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { authenticatedUser, renderApp } from './renderApp.jsx'
+import { authenticatedUser, defaultDashboard, renderApp } from './renderApp.jsx'
 
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -26,7 +26,8 @@ describe('Sign In', () => {
     document.cookie = 'XSRF-TOKEN=csrf-token; path=/'
     vi.stubGlobal('fetch', vi.fn()
       .mockResolvedValueOnce(new Response(null, { status: 204 }))
-      .mockResolvedValueOnce(jsonResponse({ data: authenticatedUser })))
+      .mockResolvedValueOnce(jsonResponse({ data: authenticatedUser }))
+      .mockResolvedValueOnce(jsonResponse({ data: defaultDashboard })))
     renderApp({ route: '/signin', authenticated: false })
 
     await user.type(screen.getByLabelText('Email'), '  USER@EXAMPLE.COM ')
@@ -34,7 +35,7 @@ describe('Sign In', () => {
     await user.click(screen.getByRole('button', { name: 'Sign in' }))
 
     expect(await screen.findByRole('heading', { name: 'Good morning, Aung' })).toBeInTheDocument()
-    expect(fetch).toHaveBeenLastCalledWith(expect.stringContaining('/api/v1/auth/login'), expect.objectContaining({
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/api/v1/auth/login'), expect.objectContaining({
       body: JSON.stringify({ email: 'user@example.com', password: 'Strong1!' }),
       method: 'POST',
     }))

@@ -120,14 +120,17 @@ describe('Chat', () => {
     expect(screen.queryByRole('button', { name: 'Vacation policy' })).not.toBeInTheDocument()
   })
 
-  it('retains the prior UI when a rename mutation fails', async () => {
+  it('keeps a failed rename draft open and associates validation with the title field', async () => {
     const user = userEvent.setup()
     document.cookie = 'XSRF-TOKEN=csrf-token; path=/'
     vi.stubGlobal('fetch', vi.fn()
       .mockResolvedValueOnce(conversationList())
       .mockResolvedValueOnce(jsonResponse({ data: firstThread }))
       .mockResolvedValueOnce(new Response(null, { status: 204 }))
-      .mockResolvedValueOnce(jsonResponse({ message: 'Rename failed.' }, 500)))
+      .mockResolvedValueOnce(jsonResponse({
+        message: 'The title field must not be greater than 255 characters.',
+        errors: { title: ['The title field must not be greater than 255 characters.'] },
+      }, 422)))
     renderApp({ route: '/chat' })
     await loadFirstThread()
 
@@ -137,9 +140,10 @@ describe('Chat', () => {
     await user.clear(input)
     await user.type(input, 'Vacation policy{Enter}')
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Rename failed.')
-    expect(screen.getByRole('heading', { name: 'Annual leave policy' })).toBeInTheDocument()
+    expect(await screen.findByText('The title field must not be greater than 255 characters.')).toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: 'Rename Annual leave policy' })).toHaveValue('Vacation policy')
+    expect(screen.getByRole('textbox', { name: 'Rename Annual leave policy' })).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByRole('heading', { name: 'Annual leave policy' })).toBeInTheDocument()
   })
 
   it('renders exactly one pending user message and never synthesizes an assistant answer', async () => {
@@ -175,8 +179,10 @@ describe('Chat', () => {
     const panel = document.getElementById(sources.getAttribute('aria-controls'))
     expect(within(panel).getByText('Employee Handbook.pdf')).toBeInTheDocument()
     expect(within(panel).getByText('Page 17')).toBeInTheDocument()
+    expect(within(panel).getByText('Employees receive 20 days.')).toBeInTheDocument()
     expect(within(panel).getByText('Leave Policy.pdf')).toBeInTheDocument()
     expect(within(panel).getByText('Page 4')).toBeInTheDocument()
+    expect(within(panel).getByText('Annual leave entitlement.')).toBeInTheDocument()
   })
 
   it('expires the session when conversation loading returns 401', async () => {

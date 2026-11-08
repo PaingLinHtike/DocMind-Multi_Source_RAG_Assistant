@@ -19,6 +19,7 @@ export default function useConversations() {
   const [submitting, setSubmitting] = useState(false)
   const [mutating, setMutating] = useState(false)
   const [error, setError] = useState('')
+  const [renameError, setRenameError] = useState('')
   const selectionRequest = useRef({ id: 0, controller: null })
 
   const selectConversation = useCallback(async (id) => {
@@ -89,16 +90,24 @@ export default function useConversations() {
 
   async function renameConversation(id, title) {
     const nextTitle = title.trim()
-    if (!nextTitle) return false
+    if (!nextTitle) {
+      setRenameError('Enter a conversation title.')
+      return false
+    }
     setMutating(true)
     setError('')
+    setRenameError('')
     try {
       const updated = await renameConversationRequest(id, nextTitle)
       setConversations((current) => current.map((conversation) => conversation.id === id ? updated : conversation))
       setActiveConversation((current) => current?.id === id ? { ...current, ...updated, messages: current.messages } : current)
       return true
     } catch (requestError) {
-      if (!handleUnauthorized(requestError)) setError(requestError.message)
+      if (!handleUnauthorized(requestError)) {
+        const titleError = requestError.errors?.title?.[0]
+        if (titleError) setRenameError(titleError)
+        else setError(requestError.message)
+      }
       return false
     } finally {
       setMutating(false)
@@ -159,6 +168,8 @@ export default function useConversations() {
     submitting,
     mutating,
     error,
+    renameError,
+    clearRenameError: () => setRenameError(''),
     selectConversation,
     createConversation,
     renameConversation,

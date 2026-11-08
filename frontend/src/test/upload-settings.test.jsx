@@ -222,7 +222,7 @@ describe('Settings', () => {
     document.cookie = 'XSRF-TOKEN=csrf-token; path=/'
     vi.stubGlobal('fetch', vi.fn()
       .mockResolvedValueOnce(new Response(null, { status: 204 }))
-      .mockResolvedValueOnce(jsonResponse({ message: 'Password updated.' })))
+      .mockResolvedValueOnce(new Response(null, { status: 204 })))
     renderApp({ route: '/settings' })
 
     await user.type(screen.getByLabelText('Current Password'), 'OldPassword123!')

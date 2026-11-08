@@ -24,7 +24,7 @@ function Citations({ citations, messageId }) {
               <Icon className="shrink-0 text-text-secondary" name="file" size={18} />
               <span className="min-w-0 flex-1">
                 <span className="block break-words text-sm text-text">{citation.document_name}</span>
-                {citation.snippet && <span className="mt-1 block break-words text-xs text-text-muted">{citation.snippet}</span>}
+                {citation.snippet && <span className="mt-1 block break-words text-xs leading-relaxed text-text-muted">{citation.snippet}</span>}
               </span>
               <span className="shrink-0 font-mono text-xs text-text-muted">{citation.page_number ? `Page ${citation.page_number}` : 'Source'}</span>
             </div>
@@ -51,8 +51,8 @@ function messageTime(value) {
 
 export default function ChatPage() {
   const {
-    conversations, activeId, activeConversation, loading, loadingThread, submitting, mutating, error,
-    selectConversation, createConversation, renameConversation, deleteConversation, sendQuestion,
+    conversations, activeId, activeConversation, loading, loadingThread, submitting, mutating, error, renameError,
+    selectConversation, createConversation, renameConversation, deleteConversation, sendQuestion, clearRenameError,
   } = useConversations()
   const [question, setQuestion] = useState('')
   const [openActionsId, setOpenActionsId] = useState(null)
@@ -79,16 +79,30 @@ export default function ChatPage() {
   }
 
   function toggleActions(id) { setOpenActionsId((current) => current === id ? null : id) }
-  function startRename(conversation) { setOpenActionsId(null); setRenamingId(conversation.id); setRenameDraft(conversation.title) }
+  function startRename(conversation) {
+    setOpenActionsId(null)
+    clearRenameError()
+    setRenamingId(conversation.id)
+    setRenameDraft(conversation.title)
+  }
+
   async function finishRename(conversationId) {
     if (await renameConversation(conversationId, renameDraft)) {
       setRenamingId(null)
       setRenameDraft('')
     }
   }
+
   function handleRenameKeyDown(event, conversationId) {
-    if (event.key === 'Enter') { event.preventDefault(); finishRename(conversationId) }
-    else if (event.key === 'Escape') { event.preventDefault(); setRenamingId(null); setRenameDraft('') }
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      finishRename(conversationId)
+    } else if (event.key === 'Escape') {
+      event.preventDefault()
+      setRenamingId(null)
+      setRenameDraft('')
+      clearRenameError()
+    }
   }
   async function handleDelete(conversationId) { setOpenActionsId(null); await deleteConversation(conversationId) }
 
@@ -106,10 +120,13 @@ export default function ChatPage() {
             return (
               <div className={`relative flex items-center rounded-[2px] border-l-2 transition-colors ${isActive ? 'border-accent bg-surface-muted' : 'border-transparent hover:bg-surface-muted'}`} key={conversation.id}>
                 {renamingId === conversation.id ? (
-                  <div className="flex min-h-11 w-full items-center gap-3 px-3">
-                    <span aria-hidden="true" className="font-mono text-xs text-text-muted">{String(index + 1).padStart(2, '0')}</span>
-                    <Icon className={isActive ? 'text-accent' : 'text-text-secondary'} name="chat" size={18} />
-                    <input aria-label={`Rename ${conversation.title}`} className="min-h-11 min-w-0 flex-1 rounded-[2px] border border-border-strong bg-surface px-2 text-sm text-text outline-none focus:border-focus" onBlur={() => finishRename(conversation.id)} onChange={(event) => setRenameDraft(event.target.value)} onKeyDown={(event) => handleRenameKeyDown(event, conversation.id)} ref={renameInputRef} value={renameDraft} />
+                  <div className="flex min-h-11 w-full items-start gap-3 px-3">
+                    <span aria-hidden="true" className="mt-3 font-mono text-xs text-text-muted">{String(index + 1).padStart(2, '0')}</span>
+                    <Icon className={`mt-3 ${isActive ? 'text-accent' : 'text-text-secondary'}`} name="chat" size={18} />
+                    <span className="min-w-0 flex-1">
+                      <input aria-describedby={renameError ? `rename-error-${conversation.id}` : undefined} aria-invalid={Boolean(renameError)} aria-label={`Rename ${conversation.title}`} className="min-h-11 w-full min-w-0 rounded-[2px] border border-border-strong bg-surface px-2 text-sm text-text outline-none focus:border-focus" onBlur={() => finishRename(conversation.id)} onChange={(event) => { setRenameDraft(event.target.value); clearRenameError() }} onKeyDown={(event) => handleRenameKeyDown(event, conversation.id)} ref={renameInputRef} value={renameDraft} />
+                      {renameError && <span className="mt-1 block text-xs text-danger" id={`rename-error-${conversation.id}`}>{renameError}</span>}
+                    </span>
                   </div>
                 ) : (
                   <>

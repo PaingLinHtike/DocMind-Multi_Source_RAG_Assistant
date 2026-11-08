@@ -57,9 +57,9 @@ export default function SettingsPage() {
     event.preventDefault()
     setPasswordPending(true); setPasswordErrors({}); setPasswordFeedback('')
     try {
-      const response = await updatePassword(password)
+      await updatePassword(password)
       setPassword(emptyPassword)
-      setPasswordFeedback(response?.message || 'Password updated.')
+      setPasswordFeedback('Password updated.')
     } catch (requestError) {
       if (!handleUnauthorized(requestError)) {
         const errors = firstErrors(requestError.errors, { current_password: 'currentPassword', password_confirmation: 'passwordConfirmation' })

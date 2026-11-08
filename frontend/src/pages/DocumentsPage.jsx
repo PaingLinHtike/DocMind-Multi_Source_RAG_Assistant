@@ -4,10 +4,21 @@ import Field from '../components/ui/Field.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import PageHeading from '../components/ui/PageHeading.jsx'
 import { buttonClasses } from '../components/ui/buttonStyles.js'
-import useDocumentsPrototype from '../hooks/useDocumentsPrototype.js'
+import useDocuments from '../hooks/useDocuments.js'
 
 export default function DocumentsPage() {
-  const { query, setQuery, filteredDocuments } = useDocumentsPrototype()
+  const { documents, error, filteredDocuments, loading, query, refetch, setQuery } = useDocuments()
+
+  if (loading) return <p className="px-6 py-16 text-center text-sm text-text-muted" role="status">Loading documents…</p>
+
+  if (error) {
+    return (
+      <section className="mx-auto max-w-xl px-6 py-16 text-center">
+        <p className="text-danger" role="alert">{error}</p>
+        <button className="mt-5 min-h-11 rounded-[2px] bg-accent px-5 text-sm font-semibold text-white" onClick={refetch} type="button">Try again</button>
+      </section>
+    )
+  }
   return (
     <section className="mx-auto w-full max-w-[1360px] px-6 pb-16 pt-10 lg:px-8 lg:pt-12 xl:px-12">
       <PageHeading title="Documents" subtitle="Manage your uploaded files and knowledge sources." />
@@ -24,7 +35,11 @@ export default function DocumentsPage() {
             {filteredDocuments.map((document) => <DocumentRow document={document} key={document.id} />)}
           </div>
         </div>
-      ) : <p className="border-y border-border py-16 text-center text-sm text-text-muted">No documents match “{query.trim()}”.</p>}
+      ) : documents.length === 0 ? (
+        <p className="border-y border-border py-16 text-center text-sm text-text-muted">No documents uploaded yet.</p>
+      ) : (
+        <p className="border-y border-border py-16 text-center text-sm text-text-muted">No documents match “{query.trim()}”.</p>
+      )}
     </section>
   )
 }

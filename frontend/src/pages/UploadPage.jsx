@@ -2,15 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import Icon from '../components/ui/Icon.jsx'
 import PageHeading from '../components/ui/PageHeading.jsx'
 import StatusBadge from '../components/ui/StatusBadge.jsx'
-import useDocumentsPrototype from '../hooks/useDocumentsPrototype.js'
 
 const initialUploads = [{ name: 'Employee Handbook.pdf', date: 'Nov 5, 2026', status: 'Ready' }, { name: 'Company Policies.docx', date: 'Nov 4, 2026', status: 'Ready' }, { name: 'Benefits Guide.pdf', date: 'Nov 3, 2026', status: 'Ready' }]
 const supportedExtensions = ['pdf', 'docx', 'txt']
 
 export default function UploadPage() {
-  const { addUpload } = useDocumentsPrototype(); const [recentUploads, setRecentUploads] = useState(initialUploads); const [error, setError] = useState(''); const [dragActive, setDragActive] = useState(false); const completionTimer = useRef(null)
+  const [recentUploads, setRecentUploads] = useState(initialUploads); const [error, setError] = useState(''); const [dragActive, setDragActive] = useState(false); const completionTimer = useRef(null)
   useEffect(() => () => clearTimeout(completionTimer.current), [])
-  function processFile(file) { if (!file) { setError('Choose a file first.'); return } const extension = file.name.split('.').pop()?.toLocaleLowerCase(); if (!supportedExtensions.includes(extension)) { setError('PDF, DOCX, and TXT files only.'); return } setError(''); addUpload(file); setRecentUploads((current) => [{ name: file.name, date: 'Just now', status: 'Processing' }, ...current]); completionTimer.current = setTimeout(() => setRecentUploads((current) => current.map((upload) => upload.name === file.name ? { ...upload, status: 'Ready' } : upload)), 75) }
+  function processFile(file) { if (!file) { setError('Choose a file first.'); return } const extension = file.name.split('.').pop()?.toLocaleLowerCase(); if (!supportedExtensions.includes(extension)) { setError('PDF, DOCX, and TXT files only.'); return } setError(''); setRecentUploads((current) => [{ name: file.name, date: 'Just now', status: 'Processing' }, ...current]); completionTimer.current = setTimeout(() => setRecentUploads((current) => current.map((upload) => upload.name === file.name ? { ...upload, status: 'Ready' } : upload)), 75) }
   function handleDrop(event) { event.preventDefault(); setDragActive(false); processFile(event.dataTransfer.files?.[0]) }
   return <section className="mx-auto w-full max-w-[1200px] px-6 pb-16 pt-10 lg:px-8 lg:pt-12 xl:px-12">
     <PageHeading title="Upload document" subtitle="Add knowledge files for DocMind to read, understand, and answer questions from." />

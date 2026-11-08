@@ -72,7 +72,7 @@ describe('DocMind application shell', () => {
     expect(screen.getByRole('heading', { name: 'Annual leave policy' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('link', { name: 'Documents' }))
-    expect(screen.getByRole('heading', { name: 'Documents' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Documents' })).toBeInTheDocument()
   })
 
   it('provides an operable mobile navigation menu', async () => {

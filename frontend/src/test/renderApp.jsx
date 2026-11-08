@@ -28,11 +28,47 @@ export const defaultDashboard = {
   recent_uploads: [],
 }
 
+export const defaultDocuments = [
+  {
+    id: 'doc-123', name: 'Employee Handbook.pdf', type: 'PDF', status: 'ready', status_label: 'Ready',
+    chunks: 120, uploaded_at: '2026-11-05T10:24:00Z', size_bytes: 2516582, size: '2.4 MB',
+    source: 'Upload', storage: 'documents/user-1/doc-123.pdf',
+  },
+  {
+    id: 'doc-web', name: 'Company Website', type: 'WEB', status: 'processing', status_label: 'Processing',
+    chunks: null, uploaded_at: '2026-11-04T11:02:00Z', size_bytes: 0, size: '0 B',
+    source: 'Web', storage: 'https://example.com',
+  },
+  {
+    id: 'doc-failed', name: 'Benefits Guide.pdf', type: 'PDF', status: 'failed', status_label: 'Failed',
+    chunks: null, uploaded_at: '2026-11-03T18:45:00Z', size_bytes: 1048576, size: '1 MB',
+    source: 'Upload', storage: 'documents/user-1/doc-failed.pdf',
+  },
+]
+
+function jsonResponse(body, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  })
+}
+
+function defaultFetch(url) {
+  if (url.endsWith('/api/v1/dashboard')) return Promise.resolve(jsonResponse({ data: defaultDashboard }))
+  if (url.endsWith('/api/v1/documents')) {
+    return Promise.resolve(jsonResponse({ data: defaultDocuments, meta: { current_page: 1, total: defaultDocuments.length } }))
+  }
+  const detailMatch = url.match(/\/api\/v1\/documents\/([^/]+)$/)
+  if (detailMatch) {
+    const document = defaultDocuments.find((candidate) => candidate.id === detailMatch[1]) || defaultDocuments[0]
+    return Promise.resolve(jsonResponse({ data: document }))
+  }
+  return Promise.resolve(jsonResponse({ data: authenticatedUser }))
+}
+
 export function renderApp({ route = '/dashboard', authenticated = true, hydrateSession = false } = {}) {
   if (!vi.isMockFunction(globalThis.fetch)) {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ data: defaultDashboard }), {
-      headers: { 'Content-Type': 'application/json' },
-    })))
+    vi.stubGlobal('fetch', vi.fn(defaultFetch))
   }
 
   return render(

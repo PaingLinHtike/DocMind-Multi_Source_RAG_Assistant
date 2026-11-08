@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { authenticatedUser, defaultDashboard, renderApp } from './renderApp.jsx'
+import { authenticatedUser, defaultDashboard, defaultDocuments, renderApp } from './renderApp.jsx'
 
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -48,6 +48,7 @@ describe('authentication session routing', () => {
     const user = userEvent.setup()
     document.cookie = 'XSRF-TOKEN=csrf-token; path=/'
     vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ data: defaultDocuments, meta: { current_page: 1, total: defaultDocuments.length } }))
       .mockResolvedValueOnce(new Response(null, { status: 204 }))
       .mockResolvedValueOnce(new Response(null, { status: 204 })))
     renderApp({ route: '/documents' })

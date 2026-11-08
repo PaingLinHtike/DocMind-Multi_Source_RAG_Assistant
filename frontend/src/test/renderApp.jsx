@@ -51,6 +51,22 @@ export const defaultDocuments = [
   },
 ]
 
+export const defaultConversations = [
+  { id: 'conversation-1', title: 'Annual leave policy', created_at: '2026-11-07T10:00:00Z', updated_at: '2026-11-08T10:00:00Z' },
+  { id: 'conversation-2', title: 'Working hours', created_at: '2026-11-06T10:00:00Z', updated_at: '2026-11-07T10:00:00Z' },
+]
+
+export const defaultConversationThread = {
+  ...defaultConversations[0],
+  messages: [
+    { id: 'message-user', role: 'user', content: 'How many annual leave days do employees get?', status: 'completed', failure_reason: null, created_at: '2026-11-08T10:01:00Z', citations: [] },
+    {
+      id: 'message-assistant', role: 'assistant', content: 'Employees receive 20 days of paid annual leave every year. [1]', status: 'completed', failure_reason: null, created_at: '2026-11-08T10:02:00Z',
+      citations: [{ id: 'citation-1', document_id: 'doc-123', document_name: 'Employee Handbook.pdf', chunk_id: 'chunk-1', page_number: 17, citation_number: 1, snippet: 'Employees receive 20 days.' }],
+    },
+  ],
+}
+
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -60,6 +76,15 @@ function jsonResponse(body, status = 200) {
 
 function defaultFetch(url) {
   if (url.endsWith('/api/v1/dashboard')) return Promise.resolve(jsonResponse({ data: defaultDashboard }))
+  if (url.endsWith('/api/v1/conversations')) {
+    return Promise.resolve(jsonResponse({ data: defaultConversations, meta: { current_page: 1, total: defaultConversations.length } }))
+  }
+  const conversationMatch = url.match(/\/api\/v1\/conversations\/([^/]+)$/)
+  if (conversationMatch) {
+    const summary = defaultConversations.find((conversation) => conversation.id === conversationMatch[1]) || defaultConversations[0]
+    const thread = summary.id === defaultConversationThread.id ? defaultConversationThread : { ...summary, messages: [] }
+    return Promise.resolve(jsonResponse({ data: thread }))
+  }
   if (url.endsWith('/api/v1/uploads/recent')) return Promise.resolve(jsonResponse({ data: defaultDocuments }))
   if (url.endsWith('/api/v1/documents')) {
     return Promise.resolve(jsonResponse({ data: defaultDocuments, meta: { current_page: 1, total: defaultDocuments.length } }))

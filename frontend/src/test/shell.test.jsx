@@ -69,7 +69,7 @@ describe('DocMind application shell', () => {
     renderApp()
 
     await user.click(screen.getByRole('link', { name: 'Chat' }))
-    expect(screen.getByRole('heading', { name: 'Annual leave policy' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Annual leave policy' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('link', { name: 'Documents' }))
     expect(await screen.findByRole('heading', { name: 'Documents' })).toBeInTheDocument()
@@ -89,7 +89,7 @@ describe('DocMind application shell', () => {
     expect(within(mobileNav).queryByRole('link', { name: 'Settings' })).not.toBeInTheDocument()
 
     await user.click(within(mobileNav).getByRole('link', { name: 'Chat' }))
-    expect(screen.getByRole('heading', { name: 'Annual leave policy' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Annual leave policy' })).toBeInTheDocument()
     expect(screen.queryByRole('navigation', { name: 'Mobile navigation' })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Open navigation' }))

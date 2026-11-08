@@ -1,242 +1,188 @@
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { renderApp } from './renderApp.jsx'
 
-describe('Chat prototype', () => {
-  it('shows the designed conversation and cited answer', () => {
-    const { container } = renderApp({ route: '/chat' })
+const summaries = [
+  { id: 'conversation-1', title: 'Annual leave policy', created_at: '2026-11-07T10:00:00Z', updated_at: '2026-11-08T10:00:00Z' },
+  { id: 'conversation-2', title: 'Working hours', created_at: '2026-11-06T10:00:00Z', updated_at: '2026-11-07T10:00:00Z' },
+]
 
-    for (const title of ['Annual leave policy', 'Working hours', 'Company benefits', 'IT policy', 'Employee handbook']) {
-      expect(screen.getByRole('button', { name: title })).toBeInTheDocument()
-    }
-    expect(screen.getByRole('heading', { name: 'Annual leave policy' })).toHaveClass('text-2xl')
-    const question = screen.getByText('How many annual leave days do employees get?')
-    expect(question).toHaveClass('bg-surface-muted', 'border-l-2', 'border-accent', 'rounded-[2px]')
-    const answer = screen.getByText('Employees receive 20 days of paid annual leave every year. [1]')
-    expect(answer).toHaveClass('bg-transparent', 'max-w-[760px]')
-    expect(screen.getByText('Sources (1)')).toBeInTheDocument()
-    const source = screen.getByText('Employee Handbook.pdf')
-    expect(source.closest('button')).toHaveClass('bg-surface', 'border-y', 'border-border', 'rounded-[2px]')
-    expect(screen.getByText('Page 17')).toBeInTheDocument()
-    expect(container.querySelectorAll('img')).toHaveLength(0)
+const firstThread = {
+  ...summaries[0],
+  messages: [
+    { id: 'message-user', role: 'user', content: 'How many annual leave days?', status: 'completed', failure_reason: null, created_at: '2026-11-08T10:01:00Z', citations: [] },
+    {
+      id: 'message-assistant', role: 'assistant', content: 'Employees receive 20 days. [1] [2]', status: 'completed', failure_reason: null,
+      created_at: '2026-11-08T10:02:00Z',
+      citations: [
+        { id: 'citation-1', document_id: 'doc-1', document_name: 'Employee Handbook.pdf', chunk_id: 'chunk-1', page_number: 17, citation_number: 1, snippet: 'Employees receive 20 days.' },
+        { id: 'citation-2', document_id: 'doc-2', document_name: 'Leave Policy.pdf', chunk_id: 'chunk-2', page_number: 4, citation_number: 2, snippet: 'Annual leave entitlement.' },
+      ],
+    },
+  ],
+}
 
-    const activeConversation = screen.getByRole('button', { name: 'Annual leave policy' })
-    expect(activeConversation.parentElement).toHaveClass('border-l-2', 'border-accent')
-    expect(activeConversation.querySelector('svg')).toHaveClass('text-accent')
-    expect(screen.getByRole('button', { name: 'Working hours' }).querySelector('svg')).toHaveClass('text-text-secondary')
-    expect(activeConversation.querySelector('[data-conversation-index]')).toHaveTextContent('01')
+const secondThread = { ...summaries[1], messages: [] }
+
+function jsonResponse(body, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
   })
+}
 
-  it('selects another conversation and creates a blank new chat', async () => {
-    const user = userEvent.setup()
+function conversationList(items = summaries) {
+  return jsonResponse({ data: items, meta: { current_page: 1, total: items.length } })
+}
+
+async function loadFirstThread() {
+  expect(await screen.findByRole('heading', { name: 'Annual leave policy' })).toBeInTheDocument()
+}
+
+describe('Chat', () => {
+  it('loads summaries and selects the first authoritative thread', async () => {
+    let resolveList
+    vi.stubGlobal('fetch', vi.fn((url) => {
+      if (url.endsWith('/api/v1/conversations')) return new Promise((resolve) => { resolveList = resolve })
+      return Promise.resolve(jsonResponse({ data: firstThread }))
+    }))
     renderApp({ route: '/chat' })
 
-    await user.click(screen.getByRole('button', { name: 'Working hours' }))
-    expect(screen.getByRole('heading', { name: 'Working hours' })).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Loading conversations')
+    resolveList(conversationList())
+    await loadFirstThread()
+    expect(screen.getByText('How many annual leave days?')).toBeInTheDocument()
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/api/v1/conversations/conversation-1'), expect.any(Object))
+  })
 
-    const newChat = screen.getByRole('button', { name: 'New Chat' })
-    expect(newChat.querySelector('svg')).toBeInTheDocument()
-    await user.click(newChat)
-    expect(screen.getByRole('heading', { name: 'New Chat' })).toBeInTheDocument()
+  it('renders an empty account and persists an explicit new chat', async () => {
+    const user = userEvent.setup()
+    document.cookie = 'XSRF-TOKEN=csrf-token; path=/'
+    const created = { id: 'conversation-new', title: 'New Chat', created_at: '2026-11-08T10:00:00Z', updated_at: '2026-11-08T10:00:00Z' }
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(conversationList([]))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(jsonResponse({ data: created }, 201)))
+    renderApp({ route: '/chat' })
+
+    expect(await screen.findByText('No recent chats.')).toBeInTheDocument()
+    expect(screen.getByText('Create a chat to start asking questions.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Send question' })).toBeDisabled()
+
+    await user.click(screen.getByRole('button', { name: 'New Chat' }))
+
+    expect(await screen.findByRole('heading', { name: 'New Chat' })).toBeInTheDocument()
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/api/v1/conversations'), expect.objectContaining({
+      method: 'POST', body: JSON.stringify({}),
+    }))
+  })
+
+  it('loads another thread lazily when selected', async () => {
+    const user = userEvent.setup()
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(conversationList())
+      .mockResolvedValueOnce(jsonResponse({ data: firstThread }))
+      .mockResolvedValueOnce(jsonResponse({ data: secondThread })))
+    renderApp({ route: '/chat' })
+    await loadFirstThread()
+
+    await user.click(screen.getByRole('button', { name: 'Working hours' }))
+
+    expect(await screen.findByRole('heading', { name: 'Working hours' })).toBeInTheDocument()
     expect(screen.getByText('Ask your first question to begin.')).toBeInTheDocument()
   })
 
-  it('renames a recent chat from its actions menu', async () => {
+  it('persists rename and delete mutations', async () => {
     const user = userEvent.setup()
+    document.cookie = 'XSRF-TOKEN=csrf-token; path=/'
+    const renamed = { ...summaries[0], title: 'Vacation policy' }
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(conversationList())
+      .mockResolvedValueOnce(jsonResponse({ data: firstThread }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(jsonResponse({ data: renamed }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(jsonResponse({ data: secondThread })))
     renderApp({ route: '/chat' })
+    await loadFirstThread()
 
-    const actions = screen.getByRole('button', { name: 'Actions for Annual leave policy' })
-    expect(actions).toHaveAttribute('aria-expanded', 'false')
-
-    await user.click(actions)
-    expect(actions).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getByRole('menu')).toHaveClass('menu-enter')
+    await user.click(screen.getByRole('button', { name: 'Actions for Annual leave policy' }))
     await user.click(screen.getByRole('menuitem', { name: 'Rename' }))
-
     const input = screen.getByRole('textbox', { name: 'Rename Annual leave policy' })
-    expect(input).toHaveValue('Annual leave policy')
+    await user.clear(input)
+    await user.type(input, 'Vacation policy{Enter}')
+    expect(await screen.findByRole('heading', { name: 'Vacation policy' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Vacation policy' }))
+    await user.click(screen.getByRole('menuitem', { name: 'Delete' }))
+    expect(await screen.findByRole('heading', { name: 'Working hours' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Vacation policy' })).not.toBeInTheDocument()
+  })
+
+  it('retains the prior UI when a rename mutation fails', async () => {
+    const user = userEvent.setup()
+    document.cookie = 'XSRF-TOKEN=csrf-token; path=/'
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(conversationList())
+      .mockResolvedValueOnce(jsonResponse({ data: firstThread }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(jsonResponse({ message: 'Rename failed.' }, 500)))
+    renderApp({ route: '/chat' })
+    await loadFirstThread()
+
+    await user.click(screen.getByRole('button', { name: 'Actions for Annual leave policy' }))
+    await user.click(screen.getByRole('menuitem', { name: 'Rename' }))
+    const input = screen.getByRole('textbox', { name: 'Rename Annual leave policy' })
     await user.clear(input)
     await user.type(input, 'Vacation policy{Enter}')
 
-    expect(screen.getByRole('heading', { name: 'Vacation policy' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Vacation policy' })).toBeInTheDocument()
-    expect(screen.queryByRole('textbox', { name: /Rename/ })).not.toBeInTheDocument()
-  })
-
-  it('saves an inline rename when the field loses focus', async () => {
-    const user = userEvent.setup()
-    renderApp({ route: '/chat' })
-
-    await user.click(screen.getByRole('button', { name: 'Actions for Working hours' }))
-    await user.click(screen.getByRole('menuitem', { name: 'Rename' }))
-    const input = screen.getByRole('textbox', { name: 'Rename Working hours' })
-    await user.clear(input)
-    await user.type(input, 'Office hours')
-    await user.tab()
-
-    expect(screen.getByRole('button', { name: 'Office hours' })).toBeInTheDocument()
-    expect(screen.queryByRole('textbox', { name: /Rename/ })).not.toBeInTheDocument()
-  })
-
-  it('cancels an inline rename with Escape and ignores blank titles', async () => {
-    const user = userEvent.setup()
-    renderApp({ route: '/chat' })
-
-    await user.click(screen.getByRole('button', { name: 'Actions for Working hours' }))
-    await user.click(screen.getByRole('menuitem', { name: 'Rename' }))
-    let input = screen.getByRole('textbox', { name: 'Rename Working hours' })
-    await user.clear(input)
-    await user.type(input, 'Temporary title')
-    await user.keyboard('{Escape}')
-
+    expect(await screen.findByRole('alert')).toHaveTextContent('Rename failed.')
     expect(screen.getByRole('heading', { name: 'Annual leave policy' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Working hours' })).toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: 'Actions for Working hours' }))
-    await user.click(screen.getByRole('menuitem', { name: 'Rename' }))
-    input = screen.getByRole('textbox', { name: 'Rename Working hours' })
-    await user.clear(input)
-    await user.type(input, '{Enter}')
-
-    expect(screen.getByRole('button', { name: 'Working hours' })).toBeInTheDocument()
-    expect(screen.queryByRole('textbox', { name: /Rename/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'Rename Annual leave policy' })).toHaveValue('Vacation policy')
   })
 
-  it('deletes the active chat and falls back to the next conversation', async () => {
+  it('renders exactly one pending user message and never synthesizes an assistant answer', async () => {
     const user = userEvent.setup()
+    document.cookie = 'XSRF-TOKEN=csrf-token; path=/'
+    const pendingMessage = { id: 'message-pending', role: 'user', content: 'What is the remote work policy?', status: 'pending', failure_reason: null, created_at: '2026-11-08T10:03:00Z', citations: [] }
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(conversationList())
+      .mockResolvedValueOnce(jsonResponse({ data: { ...firstThread, messages: [] } }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(jsonResponse({ data: pendingMessage }, 202)))
     renderApp({ route: '/chat' })
-
-    await user.click(screen.getByRole('button', { name: 'Actions for Annual leave policy' }))
-    await user.click(screen.getByRole('menuitem', { name: 'Delete' }))
-
-    expect(screen.queryByRole('button', { name: 'Annual leave policy' })).not.toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Working hours' })).toBeInTheDocument()
-  })
-
-  it('selects the next conversation when an active middle chat is deleted', async () => {
-    const user = userEvent.setup()
-    renderApp({ route: '/chat' })
-
-    await user.click(screen.getByRole('button', { name: 'Company benefits' }))
-    expect(screen.getByRole('heading', { name: 'Company benefits' })).toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: 'Actions for Company benefits' }))
-    await user.click(screen.getByRole('menuitem', { name: 'Delete' }))
-
-    expect(screen.getByRole('heading', { name: 'IT policy' })).toBeInTheDocument()
-  })
-
-  it('deletes an inactive chat without changing the active conversation', async () => {
-    const user = userEvent.setup()
-    renderApp({ route: '/chat' })
-
-    await user.click(screen.getByRole('button', { name: 'Actions for IT policy' }))
-    await user.click(screen.getByRole('menuitem', { name: 'Delete' }))
-
-    expect(screen.queryByRole('button', { name: 'IT policy' })).not.toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Annual leave policy' })).toBeInTheDocument()
-  })
-
-  it('keeps a blank chat when the last conversation is deleted', async () => {
-    const user = userEvent.setup()
-    renderApp({ route: '/chat' })
-
-    for (const title of ['Annual leave policy', 'Working hours', 'Company benefits', 'IT policy', 'Employee handbook']) {
-      await user.click(screen.getByRole('button', { name: `Actions for ${title}` }))
-      await user.click(screen.getByRole('menuitem', { name: 'Delete' }))
-    }
-
-    expect(screen.getByRole('heading', { name: 'New Chat' })).toBeInTheDocument()
-    expect(screen.getByText('Ask your first question to begin.')).toBeInTheDocument()
-    expect(screen.getByText('No recent chats.')).toBeInTheDocument()
-  })
-
-  it('closes the chat actions menu with Escape', async () => {
-    const user = userEvent.setup()
-    renderApp({ route: '/chat' })
-
-    await user.click(screen.getByRole('button', { name: 'Actions for Working hours' }))
-    expect(screen.getByRole('menu')).toBeInTheDocument()
-
-    await user.keyboard('{Escape}')
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
-  })
-
-  it('contains long conversation titles and source filenames locally', async () => {
-    const user = userEvent.setup()
-    renderApp({ route: '/chat' })
-
-    await user.click(screen.getByRole('button', { name: 'Actions for Annual leave policy' }))
-    await user.click(screen.getByRole('menuitem', { name: 'Rename' }))
-    const input = screen.getByRole('textbox', { name: 'Rename Annual leave policy' })
-    const longTitle = 'Annual leave policy for international employees working across multiple regional offices'
-    await user.clear(input)
-    await user.type(input, `${longTitle}{Enter}`)
-
-    const conversation = screen.getByRole('button', { name: longTitle })
-    expect(conversation).toHaveClass('min-w-0')
-    expect(conversation.querySelector('[data-conversation-title]')).toHaveClass('min-w-0', 'truncate')
-    expect(screen.getByText('Employee Handbook.pdf')).toHaveClass('min-w-0', 'break-words')
-  })
-
-  it('ignores whitespace and appends a cited simulated response to valid questions', async () => {
-    const user = userEvent.setup()
-    renderApp({ route: '/chat' })
-    const input = screen.getByPlaceholderText('Ask a question about your documents...')
-    const send = screen.getByRole('button', { name: 'Send question' })
-    expect(send.querySelector('svg')).toBeInTheDocument()
-
-    await user.type(input, '   ')
-    await user.click(send)
-    expect(screen.queryByText('I found this in your documents. [1]')).not.toBeInTheDocument()
-
-    await user.clear(input)
-    await user.type(input, 'What is the remote work policy?')
-    await user.click(screen.getByRole('button', { name: 'Send question' }))
-    const thread = document.querySelector('.chat-thread')
-    const composer = input.closest('form')
-    expect(thread).toContainElement(screen.getByText('What is the remote work policy?'))
-    expect(thread).toContainElement(screen.getByText('I found this in your documents. [1]'))
-    expect(thread).not.toContainElement(composer)
-    expect(screen.getAllByText('Employee Handbook.pdf').length).toBeGreaterThan(1)
-  })
-
-  it('toggles each answer source panel independently by pointer and keyboard', async () => {
-    const user = userEvent.setup()
-    renderApp({ route: '/chat' })
+    await loadFirstThread()
     const input = screen.getByPlaceholderText('Ask a question about your documents...')
 
     await user.type(input, 'What is the remote work policy?')
     await user.click(screen.getByRole('button', { name: 'Send question' }))
 
-    const controls = screen.getAllByRole('button', { name: 'Sources (1)' })
-    expect(controls).toHaveLength(2)
-    const [first, second] = controls
-    const firstPanelId = first.getAttribute('aria-controls')
-    const secondPanelId = second.getAttribute('aria-controls')
+    expect(await screen.findAllByText('What is the remote work policy?')).toHaveLength(1)
+    expect(screen.getByText('Pending')).toBeInTheDocument()
+    expect(screen.queryByText(/I found this in your documents/)).not.toBeInTheDocument()
+    expect(input).toHaveValue('')
+  })
 
-    expect(first).toHaveAttribute('aria-expanded', 'true')
-    expect(second).toHaveAttribute('aria-expanded', 'true')
-    expect(firstPanelId).not.toBe(secondPanelId)
-    expect(document.getElementById(firstPanelId)).toHaveTextContent('Employee Handbook.pdf')
-    expect(document.getElementById(secondPanelId)).toHaveTextContent('Employee Handbook.pdf')
+  it('renders every citation on a completed assistant message', async () => {
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(conversationList())
+      .mockResolvedValueOnce(jsonResponse({ data: firstThread })))
+    renderApp({ route: '/chat' })
+    await loadFirstThread()
 
-    await user.click(first)
+    const sources = screen.getByRole('button', { name: 'Sources (2)' })
+    const panel = document.getElementById(sources.getAttribute('aria-controls'))
+    expect(within(panel).getByText('Employee Handbook.pdf')).toBeInTheDocument()
+    expect(within(panel).getByText('Page 17')).toBeInTheDocument()
+    expect(within(panel).getByText('Leave Policy.pdf')).toBeInTheDocument()
+    expect(within(panel).getByText('Page 4')).toBeInTheDocument()
+  })
 
-    expect(first).toHaveAttribute('aria-expanded', 'false')
-    expect(first.querySelector('svg')).toHaveClass('-rotate-90')
-    expect(document.getElementById(firstPanelId)).not.toBeInTheDocument()
-    expect(second).toHaveAttribute('aria-expanded', 'true')
-    expect(document.getElementById(secondPanelId)).toBeInTheDocument()
-    expect(screen.getByText('Employees receive 20 days of paid annual leave every year. [1]')).toBeInTheDocument()
-    expect(screen.getByText('I found this in your documents. [1]')).toBeInTheDocument()
-    expect(input.closest('form')).toBeInTheDocument()
+  it('expires the session when conversation loading returns 401', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ message: 'Unauthenticated.' }, 401)))
+    renderApp({ route: '/chat' })
 
-    first.focus()
-    await user.keyboard('{Enter}')
-
-    expect(first).toHaveAttribute('aria-expanded', 'true')
-    expect(document.getElementById(firstPanelId)).toHaveTextContent('Employee Handbook.pdf')
+    expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
   })
 })

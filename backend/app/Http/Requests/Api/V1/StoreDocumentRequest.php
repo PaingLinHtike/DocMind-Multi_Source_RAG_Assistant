@@ -65,6 +65,18 @@ class StoreDocumentRequest extends FormRequest
         ];
     }
 
+    /**
+     * Get the validation error messages.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'document.uploaded' => 'The document could not be uploaded because it exceeds the server upload limit.',
+        ];
+    }
+
     private function hasDocxStructure(UploadedFile $file): bool
     {
         $archive = new ZipArchive;

@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Foundation\DevCommands;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -21,6 +22,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        DevCommands::register(
+            'php -d upload_max_filesize=20M -d post_max_size=21M artisan serve',
+            'server',
+        );
+
         ResetPassword::createUrlUsing(function (User $user, string $token): string {
             $query = http_build_query([
                 'token' => $token,

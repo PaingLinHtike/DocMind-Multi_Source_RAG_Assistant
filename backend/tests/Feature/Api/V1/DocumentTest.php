@@ -8,8 +8,8 @@ use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File as FileSystem;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 use ZipArchive;
@@ -166,6 +166,34 @@ class DocumentTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['document']);
         $this->assertDatabaseCount('documents', 0);
+    }
+
+    public function test_upload_reports_when_php_rejected_the_file_before_validation(): void
+    {
+        Storage::fake('local');
+        $user = User::factory()->create();
+        $this->actingAs($user, 'web');
+        $path = tempnam(sys_get_temp_dir(), 'docmind-upload-');
+        file_put_contents($path, '%PDF-1.7');
+        $document = new UploadedFile(
+            $path,
+            'large.pdf',
+            'application/pdf',
+            UPLOAD_ERR_INI_SIZE,
+            true,
+        );
+
+        $response = $this->postJson('/api/v1/documents', ['document' => $document]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonPath(
+                'errors.document.0',
+                'The document could not be uploaded because it exceeds the server upload limit.',
+            );
+        $this->assertDatabaseCount('documents', 0);
+        Storage::disk('local')->assertDirectoryEmpty('/');
+        FileSystem::delete($path);
     }
 
     public function test_guest_upload_returns_401(): void

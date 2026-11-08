@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { deleteDocument, downloadDocument, getDocument, getDocumentContent, reindexDocument, renameDocument } from '../api/documents.js'
+import { deleteDocument, downloadDocument, getDocument, getDocumentContent, indexDocument, renameDocument, stopDocumentIndex } from '../api/documents.js'
 import { useAuth } from '../auth/authSessionStore.js'
 import DocumentActions from '../components/documents/DocumentActions.jsx'
 import Button from '../components/ui/Button.jsx'
@@ -70,7 +70,8 @@ export default function DocumentDetailsPage() {
     } finally { setMutating(false) }
   }
 
-  function handleReindex() { return runMutation(() => reindexDocument(activeDocument.id), 'Reindexing started.') }
+  function handleIndex() { return runMutation(() => indexDocument(activeDocument.id), 'Indexing started.') }
+  function handleStop() { return runMutation(() => stopDocumentIndex(activeDocument.id), 'Indexing stopped.') }
   function handleRename() { return runMutation(() => renameDocument(activeDocument.id, renamedFile(activeDocument.name)), 'Document renamed.') }
   async function handleDelete() { if (await runMutation(() => deleteDocument(activeDocument.id))) navigate('/documents', { replace: true }) }
   async function handleView() {
@@ -96,13 +97,13 @@ export default function DocumentDetailsPage() {
   if (notFound) return <section className="mx-auto max-w-[1120px] px-6 py-16 lg:px-8"><h1 className="font-display text-3xl font-medium">Document not found</h1><Link className={returnLink} to="/documents">Return to documents</Link></section>
   if (!activeDocument) return error ? <p className="px-6 py-16 text-center text-danger" role="alert">{error}</p> : null
 
-  const statusTone = activeDocument.status === 'Ready' ? 'success' : activeDocument.status === 'Failed' ? 'danger' : 'warning'
+  const statusTone = activeDocument.status === 'Ready' ? 'success' : activeDocument.status === 'Failed' ? 'danger' : ['Pending', 'Processing'].includes(activeDocument.status) ? 'warning' : 'neutral'
   return (
     <section className="mx-auto w-full max-w-[1200px] px-6 pb-16 pt-8 lg:px-8 lg:pt-10 xl:px-12">
       <nav aria-label="Breadcrumb" className="flex min-h-11 flex-wrap items-center gap-2 font-mono text-xs text-text-muted"><Link className="inline-flex min-h-11 items-center text-text-secondary no-underline hover:text-accent" to="/documents">Documents</Link><Icon name="chevronRight" size={14} /><span className="min-w-0 break-all">{activeDocument.name}</span></nav>
       <header className="mt-7 flex flex-col justify-between gap-6 border-y border-border-strong py-6 sm:flex-row sm:items-center">
         <div className="flex min-w-0 items-start gap-4"><Icon className="mt-1 shrink-0 text-accent" name="file" size={32} /><div className="min-w-0"><h1 className="break-words font-display text-3xl font-medium leading-tight text-text lg:text-[2.5rem]">{activeDocument.name}</h1><div className="mt-3 flex flex-wrap items-center gap-3"><StatusBadge tone={statusTone}>{activeDocument.status}</StatusBadge><span className="font-mono text-xs text-text-muted">Uploaded {activeDocument.uploadedAt}</span></div></div></div>
-        <div className="relative self-start" ref={menuRef}><Button aria-expanded={menuOpen} aria-haspopup="menu" aria-label="Actions" disabled={mutating} onClick={() => setMenuOpen((open) => !open)} variant="secondary"><span>Actions</span><Icon name="chevronDown" size={16} /></Button>{menuOpen && <DocumentActions document={activeDocument} onClose={() => setMenuOpen(false)} onDelete={handleDelete} onDownload={handleDownload} onReindex={handleReindex} onRename={handleRename} onView={handleView} />}</div>
+        <div className="relative self-start" ref={menuRef}><Button aria-expanded={menuOpen} aria-haspopup="menu" aria-label="Actions" disabled={mutating} onClick={() => setMenuOpen((open) => !open)} variant="secondary"><span>Actions</span><Icon name="chevronDown" size={16} /></Button>{menuOpen && <DocumentActions document={activeDocument} onClose={() => setMenuOpen(false)} onDelete={handleDelete} onDownload={handleDownload} onIndex={handleIndex} onRename={handleRename} onStop={handleStop} onView={handleView} />}</div>
       </header>
       {error && <p aria-live="polite" className="mt-4 border-l-2 border-danger bg-danger-soft px-4 py-3 text-sm text-danger" role="alert">{error}</p>}
       {feedback && <p aria-live="polite" className="mt-4 border-l-2 border-accent bg-surface px-4 py-3 text-sm text-text">{feedback}</p>}

@@ -7,7 +7,6 @@ use App\Http\Requests\Api\V1\StoreDocumentRequest;
 use App\Http\Requests\Api\V1\UpdateDocumentRequest;
 use App\Http\Resources\Api\V1\DocumentResource;
 use App\Jobs\DeleteDocumentIndex;
-use App\Jobs\IndexDocument;
 use App\Models\Document;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -76,17 +75,16 @@ class DocumentController extends Controller
                 'storage_disk' => 'local',
                 'storage_key' => $storagePath,
                 'checksum' => hash_file('sha256', $file->getRealPath()),
-                'status' => Document::StatusPending,
+                'status' => Document::StatusUploaded,
                 'chunk_count' => 0,
                 'size_bytes' => (int) $file->getSize(),
+                'rag_stage' => 'uploaded',
             ]);
         } catch (Throwable $exception) {
             Storage::disk('local')->delete($storagePath);
 
             throw $exception;
         }
-
-        IndexDocument::dispatch($document->id)->afterCommit();
 
         return (new DocumentResource($document))
             ->response()

@@ -10,8 +10,8 @@ describe('Upload Document', () => {
     source: 'Upload', storage: 'documents/user-1/doc-existing.pdf',
   }
 
-  const pendingUpload = {
-    id: 'doc-new', name: 'Remote Work Policy.pdf', type: 'PDF', status: 'pending', status_label: 'Pending',
+  const uploadedDocument = {
+    id: 'doc-new', name: 'Remote Work Policy.pdf', type: 'PDF', status: 'uploaded', status_label: 'Uploaded',
     chunks: 0, uploaded_at: '2026-11-08T10:24:00Z', size_bytes: 6, size: '6 B',
     source: 'Upload', storage: 'documents/user-1/doc-new.pdf',
   }
@@ -62,9 +62,9 @@ describe('Upload Document', () => {
     ['PDF', 'Remote Work Policy.pdf', 'application/pdf'],
     ['DOCX', 'Remote Work Policy.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
     ['TXT', 'Remote Work Policy.txt', 'text/plain'],
-  ])('posts a valid %s as FormData and displays the created pending document', async (_type, filename, mimeType) => {
+  ])('posts a valid %s as FormData and displays the created uploaded document', async (_type, filename, mimeType) => {
     document.cookie = 'XSRF-TOKEN=csrf-token; path=/'
-    const created = { ...pendingUpload, name: filename, type: filename.split('.').pop().toLocaleUpperCase() }
+    const created = { ...uploadedDocument, name: filename, type: filename.split('.').pop().toLocaleUpperCase() }
     vi.stubGlobal('fetch', vi.fn()
       .mockResolvedValueOnce(jsonResponse({ data: [recentUpload] }))
       .mockResolvedValueOnce(new Response(null, { status: 204 }))
@@ -77,7 +77,7 @@ describe('Upload Document', () => {
     fireEvent.change(input, { target: { files: [file] } })
 
     const upload = await screen.findByTestId(`recent-upload-${filename}`)
-    expect(within(upload).getByText('Pending')).toBeInTheDocument()
+    expect(within(upload).getByText('Uploaded')).toBeInTheDocument()
     const uploadCall = fetch.mock.calls.find(([url]) => url.endsWith('/api/v1/documents'))
     expect(uploadCall[1].method).toBe('POST')
     expect(uploadCall[1].body).toBeInstanceOf(FormData)
@@ -102,7 +102,7 @@ describe('Upload Document', () => {
     expect(screen.getByText('Uploading…')).toBeInTheDocument()
     await vi.waitFor(() => expect(fetch.mock.calls.filter(([url]) => url.endsWith('/api/v1/documents'))).toHaveLength(1))
 
-    resolveUpload(jsonResponse({ data: pendingUpload }, 201))
+    resolveUpload(jsonResponse({ data: uploadedDocument }, 201))
     expect(await screen.findByTestId('recent-upload-Remote Work Policy.pdf')).toBeInTheDocument()
     expect(input).not.toBeDisabled()
   })

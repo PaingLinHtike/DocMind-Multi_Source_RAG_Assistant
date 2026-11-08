@@ -11,8 +11,8 @@ use App\Http\Controllers\Api\V1\ConversationMessageController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\DocumentContentController;
 use App\Http\Controllers\Api\V1\DocumentController;
+use App\Http\Controllers\Api\V1\DocumentIndexController;
 use App\Http\Controllers\Api\V1\RecentUploadController;
-use App\Http\Controllers\Api\V1\ReindexDocumentController;
 use App\Http\Resources\Api\V1\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -67,8 +67,10 @@ Route::prefix('v1')->group(function (): void {
             ->name('api.v1.documents.content');
         Route::get('/documents/{document}/download', [DocumentContentController::class, 'download'])
             ->name('api.v1.documents.download');
-        Route::post('/documents/{document}/reindex', ReindexDocumentController::class)
-            ->name('api.v1.documents.reindex');
+        Route::post('/documents/{document}/index', [DocumentIndexController::class, 'store'])
+            ->name('api.v1.documents.index.store');
+        Route::delete('/documents/{document}/index', [DocumentIndexController::class, 'destroy'])
+            ->name('api.v1.documents.index.destroy');
         Route::get('/uploads/recent', RecentUploadController::class)
             ->name('api.v1.uploads.recent');
     });

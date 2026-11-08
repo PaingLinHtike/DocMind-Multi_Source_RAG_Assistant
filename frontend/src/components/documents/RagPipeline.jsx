@@ -1,5 +1,6 @@
 const stages = [
-  ['queued', 'Uploaded'],
+  ['uploaded', 'Uploaded'],
+  ['queued', 'Queued'],
   ['parsing', 'Parsing'],
   ['preprocessing', 'Preprocessing'],
   ['chunking', 'Chunking'],
@@ -25,7 +26,7 @@ export default function RagPipeline({ document }) {
         </p>
       </div>
 
-      <ol className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-7">
+      <ol className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-8">
         {stages.map(([key, label], index) => {
           const complete = ready || index < currentIndex
           const active = !failed && index === currentIndex

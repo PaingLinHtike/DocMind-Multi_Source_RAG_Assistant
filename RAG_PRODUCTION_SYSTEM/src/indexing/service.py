@@ -22,6 +22,10 @@ class IndexResult:
     embedding_model: str
 
 
+class IndexingCancelled(RuntimeError):
+    pass
+
+
 class IndexingService:
     def __init__(self, repository, embedder, chunk_size: int = 512, chunk_overlap: int = 64):
         self.repository = repository
@@ -29,18 +33,31 @@ class IndexingService:
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
 
-    def index(self, command: IndexDocumentCommand, progress: Callable[[str], None] = lambda _: None) -> IndexResult:
+    def index(
+        self, command: IndexDocumentCommand, progress: Callable[[str], None] = lambda _: None,
+        is_cancelled: Callable[[], bool] = lambda: False,
+    ) -> IndexResult:
+        self._raise_if_cancelled(is_cancelled)
         progress("parsing")
         pages = load_document(command.content, command.extension, command.filename)
+        self._raise_if_cancelled(is_cancelled)
         progress("preprocessing")
         sections = clean_sections(pages)
+        self._raise_if_cancelled(is_cancelled)
         progress("chunking")
         chunks = chunk_sections(
             sections, user_id=command.user_id, document_id=command.document_id, filename=command.filename,
             chunk_size=self.chunk_size, overlap=self.chunk_overlap,
         )
+        self._raise_if_cancelled(is_cancelled)
         progress("embedding")
         vectors = self.embedder.embed_passages([chunk.text for chunk in chunks])
+        self._raise_if_cancelled(is_cancelled)
         progress("storing")
         count = self.repository.replace_document(command.user_id, command.document_id, chunks, vectors)
         return IndexResult(count, self.repository.collection_name, self.embedder.model_name)
+
+    @staticmethod
+    def _raise_if_cancelled(is_cancelled: Callable[[], bool]) -> None:
+        if is_cancelled():
+            raise IndexingCancelled("Indexing was stopped")

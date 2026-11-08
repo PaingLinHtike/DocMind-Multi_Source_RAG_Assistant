@@ -2,14 +2,17 @@
 
 namespace Tests\Feature\Api\V1;
 
+use App\Jobs\IndexDocument;
 use App\Models\Document;
 use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File as FileSystem;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 use ZipArchive;
@@ -24,7 +27,7 @@ class DocumentTest extends TestCase
         Queue::fake();
     }
 
-    public function test_authenticated_user_uploads_pdf_as_pending(): void
+    public function test_authenticated_user_uploads_pdf_without_starting_indexing(): void
     {
         Storage::fake('local');
         $user = User::factory()->create();
@@ -38,14 +41,16 @@ class DocumentTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('data.name', 'research.pdf')
             ->assertJsonPath('data.type', 'PDF')
-            ->assertJsonPath('data.status', 'pending');
+            ->assertJsonPath('data.status', 'uploaded')
+            ->assertJsonPath('data.rag_stage', 'uploaded');
 
         $document = DB::table('documents')->where('user_id', $user->id)->first();
         $this->assertNotNull($document);
-        $this->assertSame('PENDING', $document->status);
+        $this->assertSame('UPLOADED', $document->status);
         $this->assertStringStartsWith("documents/{$user->id}/", $document->storage_key);
         Storage::disk('local')->assertExists($document->storage_key);
         Storage::disk('public')->assertMissing($document->storage_key);
+        Queue::assertNothingPushed();
     }
 
     /**
@@ -388,7 +393,7 @@ class DocumentTest extends TestCase
             ->assertJsonMissing(['name' => 'hidden.pdf']);
     }
 
-    public function test_reindex_resets_processing_metadata(): void
+    public function test_index_starts_a_fresh_pending_run(): void
     {
         $user = User::factory()->create();
         $document = Document::factory()->for($user)->create([
@@ -399,7 +404,7 @@ class DocumentTest extends TestCase
         ]);
         $this->actingAs($user, 'web');
 
-        $response = $this->postJson("/api/v1/documents/{$document->id}/reindex");
+        $response = $this->postJson("/api/v1/documents/{$document->id}/index");
 
         $response
             ->assertAccepted()
@@ -407,9 +412,93 @@ class DocumentTest extends TestCase
             ->assertJsonPath('data.chunks', null);
         $document->refresh();
         $this->assertSame(Document::StatusPending, $document->status);
+        $this->assertSame('queued', $document->rag_stage);
+        $this->assertNotNull($document->index_run_id);
         $this->assertSame(0, $document->chunk_count);
         $this->assertNull($document->failure_reason);
         $this->assertNull($document->indexed_at);
+        Queue::assertPushed(IndexDocument::class, fn (IndexDocument $job): bool => $job->documentId === $document->id
+            && $job->runId === $document->index_run_id);
+    }
+
+    public function test_index_rejects_a_document_that_is_already_active(): void
+    {
+        $user = User::factory()->create();
+        $document = Document::factory()->for($user)->create([
+            'status' => Document::StatusPending,
+            'rag_stage' => 'queued',
+            'index_run_id' => (string) Str::uuid(),
+        ]);
+        $this->actingAs($user, 'web');
+
+        $this->postJson("/api/v1/documents/{$document->id}/index")
+            ->assertConflict()
+            ->assertJsonPath('message', 'This document is already being indexed.');
+
+        Queue::assertNothingPushed();
+    }
+
+    public function test_stop_returns_an_active_document_to_uploaded(): void
+    {
+        config(['docmind.fastapi.internal_token' => 'test-token']);
+        Http::preventStrayRequests();
+        Http::fake(['*/internal/v1/index-runs/*/cancel' => Http::response(null, 202)]);
+        $user = User::factory()->create();
+        $runId = (string) Str::uuid();
+        $document = Document::factory()->for($user)->create([
+            'status' => Document::StatusProcessing,
+            'rag_stage' => 'embedding',
+            'index_run_id' => $runId,
+            'chunk_count' => 8,
+        ]);
+        $this->actingAs($user, 'web');
+
+        $response = $this->deleteJson("/api/v1/documents/{$document->id}/index");
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('data.status', 'uploaded')
+            ->assertJsonPath('data.rag_stage', 'uploaded');
+        $document->refresh();
+        $this->assertSame(Document::StatusUploaded, $document->status);
+        $this->assertSame('uploaded', $document->rag_stage);
+        $this->assertNull($document->index_run_id);
+        $this->assertSame(0, $document->chunk_count);
+        Http::assertSent(fn ($request): bool => $request->method() === 'POST'
+            && str_ends_with($request->url(), "/internal/v1/index-runs/{$runId}/cancel"));
+    }
+
+    public function test_stop_rejects_a_document_that_is_not_active(): void
+    {
+        $user = User::factory()->create();
+        $document = Document::factory()->for($user)->create([
+            'status' => Document::StatusReady,
+            'rag_stage' => 'ready',
+        ]);
+        $this->actingAs($user, 'web');
+
+        $this->deleteJson("/api/v1/documents/{$document->id}/index")
+            ->assertConflict()
+            ->assertJsonPath('message', 'This document is not being indexed.');
+    }
+
+    public function test_stop_does_not_contact_fastapi_when_indexing_is_only_queued(): void
+    {
+        config(['docmind.fastapi.internal_token' => 'test-token']);
+        Http::preventStrayRequests();
+        $user = User::factory()->create();
+        $document = Document::factory()->for($user)->create([
+            'status' => Document::StatusPending,
+            'rag_stage' => 'queued',
+            'index_run_id' => (string) Str::uuid(),
+        ]);
+        $this->actingAs($user, 'web');
+
+        $this->deleteJson("/api/v1/documents/{$document->id}/index")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'uploaded');
+
+        Http::assertNothingSent();
     }
 
     /**
@@ -422,7 +511,8 @@ class DocumentTest extends TestCase
             'rename' => ['PATCH', '', ['name' => 'stolen.pdf']],
             'content' => ['GET', '/content', []],
             'download' => ['GET', '/download', []],
-            'reindex' => ['POST', '/reindex', []],
+            'index' => ['POST', '/index', []],
+            'stop indexing' => ['DELETE', '/index', []],
             'delete' => ['DELETE', '', []],
         ];
     }

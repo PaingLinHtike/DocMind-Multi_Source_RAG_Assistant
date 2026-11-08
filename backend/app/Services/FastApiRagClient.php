@@ -12,7 +12,7 @@ use RuntimeException;
 class FastApiRagClient
 {
     /** @return array{chunk_count: int, collection: string, embedding_model: string} */
-    public function index(Document $document): array
+    public function index(Document $document, string $runId): array
     {
         $contents = Storage::disk($document->storage_disk)->get($document->storage_key);
         $response = $this->request()->attach('file', $contents, $document->filename)
@@ -21,6 +21,7 @@ class FastApiRagClient
                 'document_id' => (string) $document->id,
                 'filename' => $document->filename,
                 'extension' => $document->extension,
+                'run_id' => $runId,
             ])->throw();
 
         /** @var array{chunk_count: int, collection: string, embedding_model: string} $result */
@@ -32,6 +33,13 @@ class FastApiRagClient
     public function deleteIndex(string $userId, string $documentId): void
     {
         $this->request()->delete("/internal/v1/documents/{$documentId}", ['user_id' => $userId])->throw();
+    }
+
+    public function cancelIndex(string $runId): void
+    {
+        $this->request(timeout: 3, retry: false)
+            ->post("/internal/v1/index-runs/{$runId}/cancel")
+            ->throw();
     }
 
     /** @return array{answer: string, citations: list<array{number: int, document_id: string, document_name: string, page_number: int|null, chunk_id: string, snippet: string}>} */
@@ -56,16 +64,17 @@ class FastApiRagClient
         return $result;
     }
 
-    private function request(): PendingRequest
+    private function request(?int $timeout = null, bool $retry = true): PendingRequest
     {
         $token = (string) config('docmind.fastapi.internal_token');
         if ($token === '') {
             throw new RuntimeException('FastAPI internal token is not configured.');
         }
 
-        return Http::baseUrl((string) config('docmind.fastapi.base_url'))
+        $request = Http::baseUrl((string) config('docmind.fastapi.base_url'))
             ->withHeader('X-Internal-Token', $token)
-            ->timeout((int) config('docmind.fastapi.timeout'))
-            ->retry(2, 250);
+            ->timeout($timeout ?? (int) config('docmind.fastapi.timeout'));
+
+        return $retry ? $request->retry(2, 250) : $request;
     }
 }

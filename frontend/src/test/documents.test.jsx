@@ -108,16 +108,16 @@ describe('Documents', () => {
     expect(await screen.findByRole('heading', { name: 'Document not found' })).toBeInTheDocument()
   })
 
-  it('persists rename and reindex actions before updating the detail', async () => {
+  it('persists rename and index actions before updating the detail', async () => {
     const user = userEvent.setup()
     document.cookie = 'XSRF-TOKEN=csrf-token; path=/'
     const renamed = { ...handbook, name: 'Employee Handbook (Renamed).pdf' }
-    const reindexing = { ...renamed, status: 'pending', status_label: 'Pending', chunks: null }
+    const indexing = { ...renamed, status: 'pending', status_label: 'Pending', rag_stage: 'queued', chunks: null }
     vi.stubGlobal('fetch', vi.fn()
       .mockResolvedValueOnce(jsonResponse({ data: handbook }))
       .mockResolvedValueOnce(new Response(null, { status: 204 }))
       .mockResolvedValueOnce(jsonResponse({ data: renamed }))
-      .mockResolvedValueOnce(jsonResponse({ data: reindexing }, 202)))
+      .mockResolvedValueOnce(jsonResponse({ data: indexing }, 202)))
     renderApp({ route: '/documents/doc-123' })
     await screen.findByRole('heading', { name: 'Employee Handbook.pdf' })
 
@@ -130,9 +130,52 @@ describe('Documents', () => {
     }))
 
     await openActions(user)
-    await user.click(screen.getByRole('button', { name: 'Reindex' }))
-    expect(await screen.findByText('Reindexing started.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Index' }))
+    expect(await screen.findByText('Indexing started.')).toBeInTheDocument()
     expect(screen.getByText('Pending')).toBeInTheDocument()
+    expect(fetch).toHaveBeenLastCalledWith(expect.stringContaining('/api/v1/documents/doc-123/index'), expect.objectContaining({ method: 'POST' }))
+  })
+
+  it('offers Stop for an active run and returns the document to Uploaded', async () => {
+    const user = userEvent.setup()
+    document.cookie = 'XSRF-TOKEN=csrf-token; path=/'
+    const pending = { ...handbook, status: 'pending', status_label: 'Pending', rag_stage: 'queued', chunks: null }
+    const uploaded = { ...pending, status: 'uploaded', status_label: 'Uploaded', rag_stage: 'uploaded' }
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ data: pending }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(jsonResponse({ data: uploaded })))
+    renderApp({ route: '/documents/doc-123' })
+    await screen.findByRole('heading', { name: 'Employee Handbook.pdf' })
+
+    await openActions(user)
+    expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Index' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Stop' }))
+
+    expect(await screen.findByText('Indexing stopped.')).toBeInTheDocument()
+    expect(screen.getAllByText('Uploaded').length).toBeGreaterThan(0)
+    expect(fetch).toHaveBeenLastCalledWith(expect.stringContaining('/api/v1/documents/doc-123/index'), expect.objectContaining({ method: 'DELETE' }))
+  })
+
+  it('shows Ready after completed indexing and a readable reason after failure', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(jsonResponse({ data: handbook })))
+    const ready = renderApp({ route: '/documents/doc-123' })
+    expect(await screen.findByText('Ready for semantic search')).toBeInTheDocument()
+    expect(screen.getAllByText('Ready').length).toBeGreaterThan(0)
+    ready.unmount()
+
+    const failed = {
+      ...handbook,
+      status: 'failed',
+      status_label: 'Failed',
+      rag_stage: 'failed',
+      failure_reason: 'This document could not be read. It may be empty, damaged, or unsupported.',
+    }
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(jsonResponse({ data: failed })))
+    renderApp({ route: '/documents/doc-123' })
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('This document could not be read')
   })
 
   it('retains the prior document when a mutation fails', async () => {

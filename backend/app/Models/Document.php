@@ -30,6 +30,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'rag_stage',
     'embedding_model',
     'vector_collection',
+    'index_run_id',
 ])]
 class Document extends Model
 {

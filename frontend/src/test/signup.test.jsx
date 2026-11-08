@@ -1,19 +1,27 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
-import { renderApp } from './renderApp.jsx'
+import { describe, expect, it, vi } from 'vitest'
+import { authenticatedUser, renderApp } from './renderApp.jsx'
 
-async function fillValidIdentity(user, password) {
+function jsonResponse(body, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  })
+}
+
+async function fillValidForm(user) {
   await user.type(screen.getByLabelText('Full name'), 'Test User')
-  await user.type(screen.getByLabelText('Email'), 'test@example.com')
-  await user.type(screen.getByLabelText('Password'), password)
-  await user.type(screen.getByLabelText('Confirm password'), password)
-  await user.click(screen.getByRole('checkbox', { name: /I agree to the Terms and Privacy Policy/i }))
+  await user.type(screen.getByLabelText('Email'), 'TEST@EXAMPLE.COM')
+  await user.type(screen.getByLabelText('Password'), 'Strong1!')
+  await user.type(screen.getByLabelText('Confirm password'), 'Strong1!')
+  await user.click(screen.getByRole('checkbox', { name: /I agree/i }))
 }
 
 describe('Sign Up', () => {
-  it('reports required and malformed fields while retaining entered values', async () => {
+  it('reports required fields without sending a request', async () => {
     const user = userEvent.setup()
+    vi.stubGlobal('fetch', vi.fn())
     renderApp({ route: '/signup', authenticated: false })
 
     await user.click(screen.getByRole('button', { name: 'Create account' }))
@@ -46,23 +54,65 @@ describe('Sign Up', () => {
     expect(email).toHaveValue('invalid-email')
     expect(password).toHaveValue('abcdefg')
     expect(confirmation).toHaveValue('different')
+    expect(fetch).not.toHaveBeenCalled()
   })
 
-  it.each([
-    ['fewer than eight characters', 'Aa1!aaa'],
-    ['no uppercase letter', 'aa1!aaaa'],
-    ['no lowercase letter', 'AA1!AAAA'],
-    ['no number', 'Aa!!aaaa'],
-    ['no symbol', 'Aa11aaaa'],
-  ])('rejects a password with %s', async (_case, invalidPassword) => {
+  it('registers with Laravel field names and enters the authenticated app', async () => {
     const user = userEvent.setup()
+    document.cookie = 'XSRF-TOKEN=csrf-token; path=/'
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(jsonResponse({ data: { ...authenticatedUser, name: 'Test User', email: 'test@example.com' } }, 201)))
     renderApp({ route: '/signup', authenticated: false })
-    await fillValidIdentity(user, invalidPassword)
+    await fillValidForm(user)
+
+    await user.click(screen.getByRole('button', { name: 'Create account' }))
+
+    expect(await screen.findByRole('heading', { name: 'Good morning, Aung' })).toBeInTheDocument()
+    expect(fetch).toHaveBeenLastCalledWith(expect.stringContaining('/api/v1/auth/register'), expect.objectContaining({
+      body: JSON.stringify({
+        name: 'Test User',
+        email: 'test@example.com',
+        password: 'Strong1!',
+        password_confirmation: 'Strong1!',
+        terms_accepted: true,
+      }),
+    }))
+  })
+
+  it('maps Laravel registration errors to their fields', async () => {
+    const user = userEvent.setup()
+    document.cookie = 'XSRF-TOKEN=csrf-token; path=/'
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(jsonResponse({
+        message: 'The email has already been taken.',
+        errors: { email: ['The email has already been taken.'] },
+      }, 422)))
+    renderApp({ route: '/signup', authenticated: false })
+    await fillValidForm(user)
+
+    await user.click(screen.getByRole('button', { name: 'Create account' }))
+
+    expect(await screen.findByText('The email has already been taken.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Email')).toHaveAttribute('aria-invalid', 'true')
+  })
+
+  it('still enforces the password checklist before contacting Laravel', async () => {
+    const user = userEvent.setup()
+    vi.stubGlobal('fetch', vi.fn())
+    renderApp({ route: '/signup', authenticated: false })
+    await user.type(screen.getByLabelText('Full name'), 'Test User')
+    await user.type(screen.getByLabelText('Email'), 'test@example.com')
+    await user.type(screen.getByLabelText('Password'), 'weak')
+    await user.type(screen.getByLabelText('Confirm password'), 'weak')
+    await user.click(screen.getByRole('checkbox', { name: /I agree/i }))
 
     await user.click(screen.getByRole('button', { name: 'Create account' }))
 
     expect(screen.getByText('Use 8+ characters with uppercase, lowercase, number, and symbol.')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Create your account' })).toBeInTheDocument()
+    expect(fetch).not.toHaveBeenCalled()
   })
 
   it('toggles both password fields independently without changing their values', async () => {
@@ -181,14 +231,4 @@ describe('Sign Up', () => {
     expect(within(list).getAllByText('Met:')).toHaveLength(5)
   })
 
-  it('accepts an eight-character compliant password and redirects with success feedback', async () => {
-    const user = userEvent.setup()
-    renderApp({ route: '/signup', authenticated: false })
-    await fillValidIdentity(user, 'Aa1!aaaa')
-
-    await user.click(screen.getByRole('button', { name: 'Create account' }))
-
-    expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
-    expect(screen.getByRole('status')).toHaveTextContent('Sign-up complete. This demo does not create accounts; use the demo credentials to sign in.')
-  })
 })

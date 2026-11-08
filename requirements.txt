@@ -44,3 +44,5 @@ pytest
 # DOCUMENT LOADING
 # ==================================
 pypdf
+python-docx
+python-multipart

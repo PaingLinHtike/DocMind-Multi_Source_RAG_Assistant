@@ -1,8 +1,10 @@
 from fastapi import Depends, FastAPI
 
 from .security import require_internal_token
+from .indexing import router as indexing_router
 
 app = FastAPI(title="DocMind RAG")
+app.include_router(indexing_router)
 
 
 @app.get("/health")

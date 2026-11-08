@@ -299,11 +299,11 @@ describe('shared visual system', () => {
   it('pins long-value safety in settings', () => {
     renderApp({ route: '/settings' })
 
-    const password = screen.getByLabelText('Password')
+    const password = screen.getByLabelText('New Password')
     expect(password).toHaveClass('min-w-0')
     expect(password.parentElement).toHaveClass('min-w-0')
 
-    const toggle = screen.getByRole('button', { name: 'Show password' })
+    const toggle = screen.getByRole('button', { name: 'Show passwords' })
     expect(toggle.querySelector('svg')).toHaveAttribute('width', '18')
     expect(toggle).toHaveClass('size-11')
   })

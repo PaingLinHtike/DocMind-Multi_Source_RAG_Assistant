@@ -3,8 +3,6 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { renderApp } from './renderApp.jsx'
 
-const SETTINGS_STORAGE_KEY = 'docmind.account-settings.v1'
-
 describe('Upload Document', () => {
   const recentUpload = {
     id: 'doc-existing', name: 'Employee Handbook.pdf', type: 'PDF', status: 'ready', status_label: 'Ready',
@@ -155,199 +153,147 @@ describe('Upload Document', () => {
 })
 
 describe('Settings', () => {
-  it('edits account fields locally and toggles password visibility', async () => {
-    const user = userEvent.setup()
-    renderApp({ route: '/settings' })
-    const name = screen.getByLabelText('Name')
-    const email = screen.getByLabelText('Email')
-    const password = screen.getByLabelText('Password')
-
-    expect(name).toHaveValue('Aung')
-    expect(email).toHaveValue('aung@example.com')
-    expect(password).toHaveAttribute('type', 'password')
-    expect(screen.getByRole('heading', { name: 'Account' })).toHaveClass('text-2xl')
-    for (const field of [name, email, password]) expect(field).toHaveClass('h-11')
-
-    await user.clear(name)
-    await user.type(name, 'Aung Min')
-    await user.clear(email)
-    await user.type(email, 'aung.min@example.com')
-    expect(name).toHaveValue('Aung Min')
-    expect(email).toHaveValue('aung.min@example.com')
-
-    const showPassword = screen.getByRole('button', { name: 'Show password' })
-    expect(showPassword.querySelector('svg')).toBeInTheDocument()
-    await user.click(showPassword)
-    expect(password).toHaveAttribute('type', 'text')
-    expect(screen.getByRole('button', { name: 'Hide password' })).toBeInTheDocument()
-  })
-
-  it('simulates Change Password feedback locally', async () => {
-    const user = userEvent.setup()
-    renderApp({ route: '/settings' })
-
-    await user.click(screen.getByRole('button', { name: 'Change Password' }))
-    expect(screen.getByText('Password change link sent to aung@example.com.')).toBeInTheDocument()
-  })
-
-  it('wraps long account feedback values', async () => {
-    const user = userEvent.setup()
-    renderApp({ route: '/settings' })
-    const email = screen.getByLabelText('Email')
-
-    await user.clear(email)
-    await user.type(email, 'aung.min.with.an.extremely.long.account.address.for.testing@example-docmind-domain.com')
-    await user.click(screen.getByRole('button', { name: 'Change Password' }))
-    expect(screen.getByText(/^Password change link sent/)).toHaveClass('break-all')
-  })
-
-  it('saves all account fields locally and restores them after remount', async () => {
-    const user = userEvent.setup()
-    const first = renderApp({ route: '/settings' })
-    const name = screen.getByLabelText('Name')
-    const email = screen.getByLabelText('Email')
-    const password = screen.getByLabelText('Password')
-
-    await user.clear(name)
-    await user.type(name, 'Aung Min')
-    await user.clear(email)
-    await user.type(email, 'aung.min@example.com')
-    await user.clear(password)
-    await user.type(password, 'new-secret')
-
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
-
-    expect(screen.getByText('Account changes saved.')).toBeInTheDocument()
-    expect(JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY))).toEqual({
-      name: 'Aung Min',
-      email: 'aung.min@example.com',
-      password: 'new-secret',
+  function jsonResponse(body, status = 200) {
+    return new Response(JSON.stringify(body), {
+      status,
+      headers: { 'Content-Type': 'application/json' },
     })
+  }
 
-    first.unmount()
-    renderApp({ route: '/settings' })
-
-    expect(screen.getByLabelText('Name')).toHaveValue('Aung Min')
-    expect(screen.getByLabelText('Email')).toHaveValue('aung.min@example.com')
-    expect(screen.getByLabelText('Password')).toHaveValue('new-secret')
-  })
-
-  it('falls back to defaults for broken or incomplete stored settings', () => {
-    window.localStorage.setItem(SETTINGS_STORAGE_KEY, '{broken')
-    const first = renderApp({ route: '/settings' })
-
-    expect(screen.getByLabelText('Name')).toHaveValue('Aung')
-    expect(screen.getByLabelText('Email')).toHaveValue('aung@example.com')
-    expect(screen.getByLabelText('Password')).toHaveValue('docmind123')
-
-    first.unmount()
-    window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({ name: 'Stored Name' }))
-    renderApp({ route: '/settings' })
-
-    expect(screen.getByLabelText('Name')).toHaveValue('Stored Name')
-    expect(screen.getByLabelText('Email')).toHaveValue('aung@example.com')
-    expect(screen.getByLabelText('Password')).toHaveValue('docmind123')
-  })
-
-  it('keeps the form usable and reports failure when storage rejects a save', async () => {
-    const user = userEvent.setup()
-    renderApp({ route: '/settings' })
-    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new Error('Storage blocked')
-    })
-
-    try {
-      await user.click(screen.getByRole('button', { name: 'Save Changes' }))
-    } finally {
-      setItem.mockRestore()
-    }
-
-    expect(screen.getByText('Unable to save changes in this browser.')).toBeInTheDocument()
-    expect(screen.getByLabelText('Email')).toHaveValue('aung@example.com')
-  })
-
-  it('submits the account form with Enter from a field', async () => {
-    const user = userEvent.setup()
-    renderApp({ route: '/settings' })
-    const email = screen.getByLabelText('Email')
-
-    await user.clear(email)
-    await user.type(email, 'keyboard@example.com{Enter}')
-
-    expect(screen.getByText('Account changes saved.')).toBeInTheDocument()
-    expect(JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY)).email).toBe('keyboard@example.com')
-  })
-
-  it('keeps a persistent live status region for save feedback', () => {
-    renderApp({ route: '/settings' })
-    const status = document.querySelector('[aria-live="polite"]')
-
-    expect(status).not.toBeNull()
-    expect(status).toHaveAttribute('aria-atomic', 'true')
-    expect(status).toHaveTextContent('')
-  })
-
-  it('clears the save confirmation when an account field changes', async () => {
-    const user = userEvent.setup()
-    renderApp({ route: '/settings' })
-
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
-    expect(screen.getByText('Account changes saved.')).toBeInTheDocument()
-
-    await user.type(screen.getByLabelText('Name'), '!')
-    expect(screen.queryByText('Account changes saved.')).not.toBeInTheDocument()
-  })
-
-  it('falls back to defaults when browser storage cannot be read', () => {
-    const getItem = vi.spyOn(window.localStorage, 'getItem').mockImplementation(() => {
-      throw new Error('Storage blocked')
-    })
-
-    try {
-      renderApp({ route: '/settings' })
-    } finally {
-      getItem.mockRestore()
-    }
-
-    expect(screen.getByLabelText('Name')).toHaveValue('Aung')
-    expect(screen.getByLabelText('Email')).toHaveValue('aung@example.com')
-    expect(screen.getByLabelText('Password')).toHaveValue('docmind123')
-  })
-
-  it.each([
-    ['null', 'null'],
-    ['an array', '[]'],
-    ['non-string fields', JSON.stringify({ name: 42, email: null, password: {} })],
-  ])('uses defaults for %s stored settings', (_label, stored) => {
-    window.localStorage.setItem(SETTINGS_STORAGE_KEY, stored)
+  it('initializes profile fields from auth and keeps all password fields empty without reading browser storage', () => {
+    const getItem = vi.spyOn(Storage.prototype, 'getItem')
     renderApp({ route: '/settings' })
 
     expect(screen.getByLabelText('Name')).toHaveValue('Aung')
     expect(screen.getByLabelText('Email')).toHaveValue('aung@example.com')
-    expect(screen.getByLabelText('Password')).toHaveValue('docmind123')
+    expect(screen.getByLabelText('Current Password')).toHaveValue('')
+    expect(screen.getByLabelText('New Password')).toHaveValue('')
+    expect(screen.getByLabelText('Confirm New Password')).toHaveValue('')
+    expect(getItem).not.toHaveBeenCalled()
   })
 
-  it('saves again after a failed save once storage recovers', async () => {
+  it('normalizes a profile update and refreshes the authenticated user after success', async () => {
     const user = userEvent.setup()
+    const updatedUser = { id: 'user-1', name: 'Aung Min', email: 'aung.min@example.com', created_at: '2026-11-01T10:00:00Z' }
+    document.cookie = 'XSRF-TOKEN=csrf-token; path=/'
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(jsonResponse({ data: updatedUser }))
+      .mockResolvedValueOnce(jsonResponse({ data: updatedUser })))
     renderApp({ route: '/settings' })
-    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
-      throw new Error('Storage blocked')
-    })
 
-    try {
-      await user.click(screen.getByRole('button', { name: 'Save Changes' }))
-      expect(screen.getByText('Unable to save changes in this browser.')).toBeInTheDocument()
+    await user.clear(screen.getByLabelText('Name'))
+    await user.type(screen.getByLabelText('Name'), 'Aung Min')
+    await user.clear(screen.getByLabelText('Email'))
+    await user.type(screen.getByLabelText('Email'), ' AUNG.MIN@EXAMPLE.COM ')
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
 
-      await user.click(screen.getByRole('button', { name: 'Save Changes' }))
-    } finally {
-      setItem.mockRestore()
-    }
+    expect(await screen.findByRole('status')).toHaveTextContent('Account changes saved.')
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/api/v1/account/profile'), expect.objectContaining({
+      method: 'PATCH',
+      body: JSON.stringify({ name: 'Aung Min', email: 'aung.min@example.com' }),
+    }))
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/api/v1/auth/user'), expect.objectContaining({ method: 'GET' }))
+  })
 
-    expect(screen.getByText('Account changes saved.')).toBeInTheDocument()
-    expect(JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY))).toEqual({
-      name: 'Aung',
-      email: 'aung@example.com',
-      password: 'docmind123',
-    })
+  it('maps duplicate email errors and retains editable profile values without refreshing auth', async () => {
+    const user = userEvent.setup()
+    document.cookie = 'XSRF-TOKEN=csrf-token; path=/'
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(jsonResponse({
+        message: 'The email has already been taken.',
+        errors: { email: ['The email has already been taken.'] },
+      }, 422)))
+    renderApp({ route: '/settings' })
+
+    await user.clear(screen.getByLabelText('Email'))
+    await user.type(screen.getByLabelText('Email'), 'duplicate@example.com')
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(await screen.findByText('The email has already been taken.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Email')).toHaveValue('duplicate@example.com')
+    expect(screen.getByLabelText('Email')).toHaveAttribute('aria-invalid', 'true')
+    expect(fetch.mock.calls.some(([url]) => url.endsWith('/api/v1/auth/user'))).toBe(false)
+  })
+
+  it('sends all password fields and clears them after success', async () => {
+    const user = userEvent.setup()
+    document.cookie = 'XSRF-TOKEN=csrf-token; path=/'
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(jsonResponse({ message: 'Password updated.' })))
+    renderApp({ route: '/settings' })
+
+    await user.type(screen.getByLabelText('Current Password'), 'OldPassword123!')
+    await user.type(screen.getByLabelText('New Password'), 'NewPassword456!')
+    await user.type(screen.getByLabelText('Confirm New Password'), 'NewPassword456!')
+    await user.click(screen.getByRole('button', { name: 'Change password' }))
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Password updated.')
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/api/v1/account/password'), expect.objectContaining({
+      method: 'PUT',
+      body: JSON.stringify({
+        current_password: 'OldPassword123!',
+        password: 'NewPassword456!',
+        password_confirmation: 'NewPassword456!',
+      }),
+    }))
+    expect(screen.getByLabelText('Current Password')).toHaveValue('')
+    expect(screen.getByLabelText('New Password')).toHaveValue('')
+    expect(screen.getByLabelText('Confirm New Password')).toHaveValue('')
+  })
+
+  it('maps a wrong current password and preserves all password values', async () => {
+    const user = userEvent.setup()
+    document.cookie = 'XSRF-TOKEN=csrf-token; path=/'
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(jsonResponse({
+        message: 'The current password is incorrect.',
+        errors: { current_password: ['The current password is incorrect.'] },
+      }, 422)))
+    renderApp({ route: '/settings' })
+
+    await user.type(screen.getByLabelText('Current Password'), 'WrongPassword123!')
+    await user.type(screen.getByLabelText('New Password'), 'NewPassword456!')
+    await user.type(screen.getByLabelText('Confirm New Password'), 'NewPassword456!')
+    await user.click(screen.getByRole('button', { name: 'Change password' }))
+
+    expect(await screen.findByText('The current password is incorrect.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Current Password')).toHaveValue('WrongPassword123!')
+    expect(screen.getByLabelText('New Password')).toHaveValue('NewPassword456!')
+    expect(screen.getByLabelText('Confirm New Password')).toHaveValue('NewPassword456!')
+  })
+
+  it('never writes account or password values to localStorage', async () => {
+    const user = userEvent.setup()
+    document.cookie = 'XSRF-TOKEN=csrf-token; path=/'
+    const setItem = vi.spyOn(Storage.prototype, 'setItem')
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(jsonResponse({ message: 'Password updated.' })))
+    renderApp({ route: '/settings' })
+
+    await user.type(screen.getByLabelText('Current Password'), 'OldPassword123!')
+    await user.type(screen.getByLabelText('New Password'), 'NewPassword456!')
+    await user.type(screen.getByLabelText('Confirm New Password'), 'NewPassword456!')
+    await user.click(screen.getByRole('button', { name: 'Change password' }))
+    await screen.findByText('Password updated.')
+
+    expect(setItem).not.toHaveBeenCalled()
+  })
+
+  it('expires the session when an account update returns 401', async () => {
+    const user = userEvent.setup()
+    document.cookie = 'XSRF-TOKEN=csrf-token; path=/'
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(jsonResponse({ message: 'Unauthenticated.' }, 401)))
+    renderApp({ route: '/settings' })
+
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
   })
 })

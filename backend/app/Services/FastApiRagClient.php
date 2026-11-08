@@ -32,7 +32,10 @@ class FastApiRagClient
 
     public function deleteIndex(string $userId, string $documentId): void
     {
-        $this->request()->delete("/internal/v1/documents/{$documentId}", ['user_id' => $userId])->throw();
+        $this->request()
+            ->withQueryParameters(['user_id' => $userId])
+            ->delete("/internal/v1/documents/{$documentId}")
+            ->throw();
     }
 
     public function cancelIndex(string $runId): void

@@ -14,7 +14,7 @@ class DevelopmentUploadConfigurationTest extends TestCase
         $server = $commands->firstWhere('name', 'server');
 
         $this->assertSame(
-            'php -d upload_max_filesize=20M -d post_max_size=21M artisan serve',
+            'php -d upload_max_filesize=20M -d post_max_size=21M -d upload_tmp_dir=storage/app/private artisan serve',
             $server['command'],
         );
     }

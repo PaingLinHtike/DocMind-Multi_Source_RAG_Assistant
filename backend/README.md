@@ -56,7 +56,7 @@ The allowed frontend origins and stateful domains are configured through `FRONTE
 
 Uploads accept PDF, DOCX, and TXT files up to `DOCMIND_UPLOAD_MAX_KB`. Files are written to Laravel's private `local` disk under `storage/app/private/documents/...`; they are never exposed by a public storage link. Authorized content and download endpoints stream files through Laravel.
 
-Use `composer run serve` (or `composer run dev`) locally so PHP's request limits match the default 20 MB document limit. Production PHP and reverse-proxy limits must be at least as large as `DOCMIND_UPLOAD_MAX_KB`.
+Use `composer run serve` (or `composer run dev`) locally so PHP's request limits match the default 20 MB document limit and temporary uploads use the application's writable private storage. Production PHP and reverse-proxy limits must be at least as large as `DOCMIND_UPLOAD_MAX_KB`, and `upload_tmp_dir` must be writable.
 
 New uploads and user questions remain `pending`. The backend does not fabricate assistant answers while RAG processing is unavailable.
 

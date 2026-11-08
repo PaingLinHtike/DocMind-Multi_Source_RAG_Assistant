@@ -23,7 +23,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         DevCommands::register(
-            'php -d upload_max_filesize=20M -d post_max_size=21M artisan serve',
+            'php -d upload_max_filesize=20M -d post_max_size=21M -d upload_tmp_dir=storage/app/private artisan serve',
             'server',
         );
 

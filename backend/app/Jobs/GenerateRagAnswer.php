@@ -53,7 +53,7 @@ class GenerateRagAnswer implements ShouldQueue
     {
         Message::query()->whereKey($this->messageId)->update([
             'status' => Message::StatusFailed,
-            'failure_reason' => str($exception->getMessage())->limit(500)->toString(),
+            'failure_reason' => 'Answer generation failed after retries.',
         ]);
     }
 }

@@ -38,11 +38,16 @@ class FastApiRagClient
     public function generateAnswer(Message $message): array
     {
         $message->loadMissing('conversation');
+        $readyDocumentIds = $message->conversation->user->documents()
+            ->where('status', Document::StatusReady)
+            ->pluck('id')
+            ->all();
         $response = $this->request()->post('/internal/v1/answers', [
             'user_id' => (string) $message->conversation->user_id,
             'conversation_id' => (string) $message->conversation_id,
             'message_id' => (string) $message->id,
             'question' => $message->content,
+            'document_ids' => $readyDocumentIds,
         ])->throw();
 
         /** @var array{answer: string, citations: list<array{number: int, document_id: string, document_name: string, page_number: int|null, chunk_id: string, snippet: string}>} $result */

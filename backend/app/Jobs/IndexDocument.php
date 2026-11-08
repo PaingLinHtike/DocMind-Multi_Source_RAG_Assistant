@@ -36,7 +36,7 @@ class IndexDocument implements ShouldQueue
         Document::query()->whereKey($this->documentId)->update([
             'status' => Document::StatusFailed,
             'rag_stage' => 'failed',
-            'failure_reason' => str($exception->getMessage())->limit(500)->toString(),
+            'failure_reason' => 'Document indexing failed after retries.',
         ]);
     }
 }

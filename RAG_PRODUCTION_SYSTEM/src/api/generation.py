@@ -1,12 +1,13 @@
 from dataclasses import asdict
 
 import chromadb
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from ..config import get_settings
 from ..embedding.e5_embedder import E5Embedder
 from ..generation.llm_client import DeepSeekClient
+from ..generation.llm_client import LlmResponseError
 from ..generation.service import GenerationService
 from ..retrieval.retriever import SemanticRetriever
 from ..vectorstore.chroma_repository import ChromaRepository
@@ -34,5 +35,8 @@ def get_generation_service() -> GenerationService:
 
 @router.post("/answers")
 async def answer(request: AnswerRequest, service: GenerationService = Depends(get_generation_service)) -> dict:
-    result = await service.answer(request.question.strip(), request.user_id, request.document_ids)
+    try:
+        result = await service.answer(request.question.strip(), request.user_id, request.document_ids)
+    except LlmResponseError as error:
+        raise HTTPException(503, "Answer generation is temporarily unavailable") from error
     return {"answer": result.answer, "citations": [asdict(citation) for citation in result.citations]}

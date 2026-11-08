@@ -37,4 +37,11 @@ class IndexDocumentTest extends TestCase
         $this->assertSame('intfloat/e5-base-v2', $document->embedding_model);
         $this->assertNotNull($document->indexed_at);
     }
+
+    public function test_terminal_failure_does_not_persist_provider_secrets(): void
+    {
+        $document = Document::factory()->create();
+        (new IndexDocument($document->id))->failed(new \RuntimeException('Bearer private-secret'));
+        $this->assertSame('Document indexing failed after retries.', $document->refresh()->failure_reason);
+    }
 }

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\StoreDocumentRequest;
 use App\Http\Requests\Api\V1\UpdateDocumentRequest;
 use App\Http\Resources\Api\V1\DocumentResource;
+use App\Jobs\DeleteDocumentIndex;
+use App\Jobs\IndexDocument;
 use App\Models\Document;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -84,6 +86,8 @@ class DocumentController extends Controller
             throw $exception;
         }
 
+        IndexDocument::dispatch($document->id)->afterCommit();
+
         return (new DocumentResource($document))
             ->response()
             ->setStatusCode(Response::HTTP_CREATED);
@@ -130,7 +134,10 @@ class DocumentController extends Controller
             return response()->json(['message' => 'The document could not be deleted.'], 500);
         }
 
+        $userId = (string) $ownedDocument->user_id;
+        $documentId = (string) $ownedDocument->id;
         $ownedDocument->delete();
+        DeleteDocumentIndex::dispatch($userId, $documentId)->afterCommit();
 
         return response()->noContent();
     }

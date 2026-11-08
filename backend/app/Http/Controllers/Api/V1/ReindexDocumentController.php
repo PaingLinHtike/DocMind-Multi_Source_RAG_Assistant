@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\DocumentResource;
+use App\Jobs\IndexDocument;
 use App\Models\Document;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,7 +22,11 @@ class ReindexDocumentController extends Controller
             'chunk_count' => 0,
             'failure_reason' => null,
             'indexed_at' => null,
+            'rag_stage' => 'queued',
+            'embedding_model' => null,
+            'vector_collection' => null,
         ]);
+        IndexDocument::dispatch($ownedDocument->id)->afterCommit();
 
         return (new DocumentResource($ownedDocument->refresh()))
             ->response()

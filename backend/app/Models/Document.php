@@ -27,6 +27,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'size_bytes',
     'failure_reason',
     'indexed_at',
+    'rag_stage',
+    'embedding_model',
+    'vector_collection',
 ])]
 class Document extends Model
 {

@@ -8,5 +8,6 @@ return [
     'fastapi' => [
         'base_url' => env('FASTAPI_BASE_URL', 'http://127.0.0.1:8001'),
         'timeout' => (int) env('FASTAPI_TIMEOUT', 30),
+        'internal_token' => env('FASTAPI_INTERNAL_TOKEN'),
     ],
 ];

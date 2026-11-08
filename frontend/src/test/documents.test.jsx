@@ -17,6 +17,11 @@ const handbook = {
   storage: 'documents/user_001/doc_123.pdf',
   content_url: 'http://localhost:8000/api/v1/documents/doc-123/content',
   download_url: 'http://localhost:8000/api/v1/documents/doc-123/download',
+  rag_stage: 'ready',
+  indexed_at: '2026-11-05T10:25:00Z',
+  embedding_model: 'intfloat/e5-base-v2',
+  vector_collection: 'docmind',
+  failure_reason: null,
 }
 
 const policies = {
@@ -93,6 +98,9 @@ describe('Documents', () => {
     })
     expect(screen.getByText(`Uploaded ${localizedUpload}`)).toBeInTheDocument()
     expect(screen.getByText('2.4 MB')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'RAG indexing pipeline' })).toBeInTheDocument()
+    expect(screen.getByText('Preprocessing')).toBeInTheDocument()
+    expect(screen.getByText('intfloat/e5-base-v2')).toBeInTheDocument()
     first.unmount()
 
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ message: 'Not Found.' }, 404)))

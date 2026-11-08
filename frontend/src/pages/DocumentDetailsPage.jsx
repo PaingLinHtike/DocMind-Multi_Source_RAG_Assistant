@@ -6,6 +6,7 @@ import DocumentActions from '../components/documents/DocumentActions.jsx'
 import Button from '../components/ui/Button.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import StatusBadge from '../components/ui/StatusBadge.jsx'
+import RagPipeline from '../components/documents/RagPipeline.jsx'
 
 function renamedFile(name) { const i = name.lastIndexOf('.'); return i > 0 ? `${name.slice(0, i)} (Renamed)${name.slice(i)}` : `${name} (Renamed)` }
 const returnLink = 'mt-6 inline-flex min-h-11 items-center font-semibold text-accent underline'
@@ -36,6 +37,17 @@ export default function DocumentDetailsPage() {
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false; controller.abort() }
   }, [documentId, handleUnauthorized])
+
+  useEffect(() => {
+    if (!activeDocument || !['Pending', 'Processing'].includes(activeDocument.status)) return undefined
+    const controller = new AbortController()
+    const timer = window.setTimeout(() => {
+      getDocument(documentId, { signal: controller.signal })
+        .then(setActiveDocument)
+        .catch((requestError) => { if (!controller.signal.aborted && !handleUnauthorized(requestError)) setError(requestError.message) })
+    }, 2000)
+    return () => { window.clearTimeout(timer); controller.abort() }
+  }, [activeDocument, documentId, handleUnauthorized])
 
   useEffect(() => {
     function closeOnEscape(event) { if (event.key === 'Escape') setMenuOpen(false) }
@@ -96,6 +108,7 @@ export default function DocumentDetailsPage() {
       {feedback && <p aria-live="polite" className="mt-4 border-l-2 border-accent bg-surface px-4 py-3 text-sm text-text">{feedback}</p>}
       <h2 className="mt-10 font-display text-2xl font-medium">Overview</h2>
       <dl className="mt-4 grid border-t border-border-strong sm:grid-cols-2 lg:grid-cols-5">{[['Type', activeDocument.type], ['Chunks', activeDocument.chunks], ['Size', activeDocument.size ?? '—'], ['Source', activeDocument.source], ['Storage', activeDocument.storage]].map(([label, value]) => <div className="border-b border-border py-5 sm:px-4 sm:first:pl-0 lg:border-r lg:last:border-r-0" key={label}><dt className="text-sm text-text-muted">{label}</dt><dd className={`mt-2 font-medium text-text ${label === 'Storage' ? 'break-all font-mono text-sm' : 'text-lg'}`}>{value}</dd></div>)}</dl>
+      <RagPipeline document={activeDocument} />
     </section>
   )
 }

@@ -29,6 +29,11 @@ class DocumentResource extends JsonResource
             'storage' => $this->storage_key,
             'content_url' => route('api.v1.documents.content', $this->id),
             'download_url' => route('api.v1.documents.download', $this->id),
+            'rag_stage' => $this->rag_stage ?? 'queued',
+            'failure_reason' => $this->failure_reason,
+            'indexed_at' => $this->indexed_at?->toISOString(),
+            'embedding_model' => $this->embedding_model,
+            'vector_collection' => $this->vector_collection,
         ];
     }
 }

@@ -17,6 +17,11 @@ export function normalizeDocument(document) {
     status: document.status_label,
     chunks: document.chunks ?? '—',
     uploadedAt: formatUploadedAt(document.uploaded_at),
+    ragStage: document.rag_stage || document.status,
+    failureReason: document.failure_reason,
+    indexedAt: document.indexed_at ? formatUploadedAt(document.indexed_at) : null,
+    embeddingModel: document.embedding_model,
+    vectorCollection: document.vector_collection,
   }
 }
 

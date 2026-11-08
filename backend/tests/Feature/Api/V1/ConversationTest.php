@@ -10,11 +10,18 @@ use App\Models\Document;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class ConversationTest extends TestCase
 {
     use LazilyRefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Queue::fake();
+    }
 
     public function test_conversation_index_is_user_scoped_and_ordered_by_recent_activity(): void
     {

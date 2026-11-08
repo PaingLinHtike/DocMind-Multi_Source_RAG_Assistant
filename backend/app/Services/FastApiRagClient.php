@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Document;
+use App\Models\Message;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -31,6 +32,23 @@ class FastApiRagClient
     public function deleteIndex(string $userId, string $documentId): void
     {
         $this->request()->delete("/internal/v1/documents/{$documentId}", ['user_id' => $userId])->throw();
+    }
+
+    /** @return array{answer: string, citations: list<array{number: int, document_id: string, document_name: string, page_number: int|null, chunk_id: string, snippet: string}>} */
+    public function generateAnswer(Message $message): array
+    {
+        $message->loadMissing('conversation');
+        $response = $this->request()->post('/internal/v1/answers', [
+            'user_id' => (string) $message->conversation->user_id,
+            'conversation_id' => (string) $message->conversation_id,
+            'message_id' => (string) $message->id,
+            'question' => $message->content,
+        ])->throw();
+
+        /** @var array{answer: string, citations: list<array{number: int, document_id: string, document_name: string, page_number: int|null, chunk_id: string, snippet: string}>} $result */
+        $result = $response->json();
+
+        return $result;
     }
 
     private function request(): PendingRequest

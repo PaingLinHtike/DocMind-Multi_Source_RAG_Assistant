@@ -21,3 +21,11 @@ Reindex from the document Actions menu. A failed source remains available and it
 ## Smoke test
 
 Upload a supported document, run both workers, wait for **Ready**, then open its details to confirm chunk/model/collection metadata. Continue with Chat after configuring `DEEPSEEK_API_KEY`.
+
+## Retrieval and generation
+
+Questions are embedded with E5's `query: ` prefix and searched by cosine similarity. Every Chroma query is filtered by Laravel's trusted user ID. The default retrieval count is 5 with a 0.2 minimum similarity; tune these with `RETRIEVAL_TOP_K` and `MINIMUM_SIMILARITY`.
+
+Retrieved chunks are bounded by `CONTEXT_TOKEN_BUDGET`, delimited as untrusted sources, and sent to DeepSeek at `DEEPSEEK_BASE_URL`. The model is instructed to answer only from evidence and cite numbered sources. When no evidence qualifies, the service returns an insufficient-evidence answer without calling DeepSeek.
+
+For recovery, inspect the Laravel queue failure, correct credentials/connectivity, and retry the failed job. Rotate `RAG_INTERNAL_TOKEN` and `FASTAPI_INTERNAL_TOKEN` together. Logs intentionally omit source text, prompts, answers, vectors, and secrets.

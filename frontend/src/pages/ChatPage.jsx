@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import AssistantMessageContent from '../components/chat/AssistantMessageContent.jsx'
 import Button from '../components/ui/Button.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import useConversations from '../hooks/useConversations.js'
@@ -162,7 +163,7 @@ export default function ChatPage() {
                 </div>
               ) : (
                 <div className="min-w-0" key={message.id}>
-                  <p className="max-w-[760px] break-words bg-transparent text-base leading-[1.65] text-text">{message.content}</p>
+                  <AssistantMessageContent content={message.content} />
                   <p className="mt-2 font-mono text-xs text-text-muted">{messageTime(message.created_at)}</p>
                   <Citations citations={message.citations} messageId={message.id} />
                 </div>

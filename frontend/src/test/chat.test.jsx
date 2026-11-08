@@ -25,6 +25,16 @@ const firstThread = {
 
 const secondThread = { ...summaries[1], messages: [] }
 
+const markdownAnswer = 'The document lists these features [1]:\n\n- **Allergy Detection** (needs user management): warns users.\n- **Meal Logging**: saves meals.\n\nRead the `requirements.txt` file for setup details [1].'
+
+const markdownThread = {
+  ...firstThread,
+  messages: [
+    firstThread.messages[0],
+    { ...firstThread.messages[1], content: markdownAnswer, citations: [] },
+  ],
+}
+
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -219,6 +229,62 @@ describe('Chat', () => {
     expect(await screen.findByText('Generating answer…')).toBeInTheDocument()
     expect(await screen.findByText('Remote work is allowed three days per week.', {}, { timeout: 3000 })).toBeInTheDocument()
     expect(screen.queryByText('Generating answer…')).not.toBeInTheDocument()
+  })
+
+  it('renders bold markdown in assistant answers instead of literal asterisks', async () => {
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(conversationList())
+      .mockResolvedValueOnce(jsonResponse({ data: markdownThread })))
+    renderApp({ route: '/chat' })
+    await loadFirstThread()
+
+    expect(screen.getByText('Allergy Detection').tagName).toBe('STRONG')
+    expect(screen.getByText('Meal Logging').tagName).toBe('STRONG')
+    expect(screen.queryByText(/\*\*/)).not.toBeInTheDocument()
+  })
+
+  it('renders markdown bullet lines as a real list', async () => {
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(conversationList())
+      .mockResolvedValueOnce(jsonResponse({ data: markdownThread })))
+    renderApp({ route: '/chat' })
+    await loadFirstThread()
+
+    const list = screen.getByRole('list')
+    const items = within(list).getAllByRole('listitem')
+    expect(items).toHaveLength(2)
+    expect(within(items[0]).getByText('Allergy Detection')).toBeInTheDocument()
+    expect(within(items[1]).getByText('Meal Logging')).toBeInTheDocument()
+  })
+
+  it('renders inline code without backticks', async () => {
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(conversationList())
+      .mockResolvedValueOnce(jsonResponse({ data: markdownThread })))
+    renderApp({ route: '/chat' })
+    await loadFirstThread()
+
+    expect(screen.getByText('requirements.txt').tagName).toBe('CODE')
+    expect(screen.queryByText(/`requirements\.txt`/)).not.toBeInTheDocument()
+  })
+
+  it('keeps raw HTML in assistant answers inert', async () => {
+    const unsafeThread = {
+      ...firstThread,
+      messages: [
+        firstThread.messages[0],
+        { ...firstThread.messages[1], content: 'Raw <img src=x onerror=alert(1)> **safe** text', citations: [] },
+      ],
+    }
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(conversationList())
+      .mockResolvedValueOnce(jsonResponse({ data: unsafeThread })))
+    const { container } = renderApp({ route: '/chat' })
+    await loadFirstThread()
+
+    expect(container.querySelector('img')).not.toBeInTheDocument()
+    expect(container.textContent).toContain('<img src=x onerror=alert(1)>')
+    expect(screen.getByText('safe').tagName).toBe('STRONG')
   })
 
   it('expires the session when conversation loading returns 401', async () => {

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import BrandMark from '../ui/BrandMark.jsx'
+import { useAuth } from '../../auth/authSessionStore.js'
 import Icon from '../ui/Icon.jsx'
 import ProfileMenu from './ProfileMenu.jsx'
 
@@ -21,6 +22,7 @@ function NavigationLink({ item, onClick }) {
 }
 
 export default function TopNav() {
+  const { user } = useAuth()
   const [profileOpen, setProfileOpen] = useState(false)
   const [navigationOpen, setNavigationOpen] = useState(false)
   const shellRef = useRef(null)
@@ -59,11 +61,10 @@ export default function TopNav() {
             </nav>
           )}
         </div>
-
         <div className="relative">
           <button aria-expanded={profileOpen} aria-haspopup="menu" aria-label="Open profile menu" className="flex min-h-11 items-center gap-2 rounded-[2px] text-text lg:px-2" onClick={() => { setProfileOpen((open) => !open); setNavigationOpen(false) }} type="button">
-            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent text-sm font-semibold text-white">A</span>
-            <span className="hidden min-w-0 text-left text-sm font-medium lg:block">Aung</span>
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent text-sm font-semibold text-white">{user?.name?.trim().charAt(0).toLocaleUpperCase() || '?'}</span>
+            <span className="hidden min-w-0 text-left text-sm font-medium lg:block">{user?.name}</span>
             <span className={`grid size-6 place-items-center transition-transform ${profileOpen ? 'rotate-180' : ''}`}><Icon name="chevronDown" size={16} /></span>
           </button>
           {profileOpen && <ProfileMenu onClose={() => setProfileOpen(false)} />}

@@ -11,9 +11,9 @@ import SignInPage from './pages/SignInPage.jsx'
 import SignUpPage from './pages/SignUpPage.jsx'
 import UploadPage from './pages/UploadPage.jsx'
 
-export default function App() {
+export default function App({ initialUser }) {
   return (
-    <AuthProvider>
+    <AuthProvider initialUser={initialUser}>
       <Routes>
         <Route index element={<Navigate replace to="/signin" />} />
         <Route element={<PublicOnlyRoute />}>

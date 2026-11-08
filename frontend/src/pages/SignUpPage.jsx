@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getPasswordValidation } from '../auth/auth.js'
+import { useAuth } from '../auth/authSessionStore.js'
 import AuthField from '../components/auth/AuthField.jsx'
 import AuthLayout from '../components/auth/AuthLayout.jsx'
 import PasswordRequirements from '../components/auth/PasswordRequirements.jsx'
@@ -12,17 +13,20 @@ const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export default function SignUpPage() {
   const navigate = useNavigate()
+  const { register } = useAuth()
   const [form, setForm] = useState(initialForm)
   const [errors, setErrors] = useState({})
   const [passwordVisible, setPasswordVisible] = useState(false)
   const [confirmationVisible, setConfirmationVisible] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [formError, setFormError] = useState('')
 
   function updateField(field, value) {
     setForm((current) => ({ ...current, [field]: value }))
     setErrors((current) => ({ ...current, [field]: '' }))
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
     const nextErrors = {}
     if (!form.name.trim()) nextErrors.name = 'Enter your full name.'
@@ -34,7 +38,26 @@ export default function SignUpPage() {
     if (!form.termsAccepted) nextErrors.termsAccepted = 'Accept the Terms and Privacy Policy.'
 
     setErrors(nextErrors)
-    if (Object.keys(nextErrors).length === 0) navigate('/signin', { state: { signupComplete: true } })
+    if (Object.keys(nextErrors).length > 0) return
+
+    setSubmitting(true)
+    setFormError('')
+    try {
+      await register({
+        name: form.name.trim(),
+        email: form.email.trim().toLocaleLowerCase(),
+        password: form.password,
+        password_confirmation: form.confirmation,
+        terms_accepted: form.termsAccepted,
+      })
+      navigate('/dashboard', { replace: true })
+    } catch (requestError) {
+      const serverErrors = Object.fromEntries(Object.entries(requestError.errors || {}).map(([field, messages]) => [field === 'password_confirmation' ? 'confirmation' : field, messages[0]]))
+      setErrors(serverErrors)
+      if (Object.keys(serverErrors).length === 0) setFormError(requestError.message)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   function visibilityToggle(field) {
@@ -71,8 +94,9 @@ export default function SignUpPage() {
           <span>I agree to the <span className="font-medium text-accent">Terms</span> and <span className="font-medium text-accent">Privacy Policy</span></span>
         </label>
         {errors.termsAccepted && <p className="text-sm text-danger" id="signup-terms-error" role="alert">{errors.termsAccepted}</p>}
+        {formError && <p className="rounded-[2px] border border-danger bg-danger-soft px-4 py-3 text-sm text-danger" role="alert">{formError}</p>}
 
-        <Button className="w-full" size="large" type="submit">Create account</Button>
+        <Button className="w-full" disabled={submitting} size="large" type="submit">{submitting ? 'Creating account…' : 'Create account'}</Button>
       </form>
 
       <p className="mt-6 text-center text-base text-text-secondary">Already have an account? <Link className="ml-2 font-semibold text-accent no-underline hover:text-accent-hover" to="/signin">Sign in</Link></p>

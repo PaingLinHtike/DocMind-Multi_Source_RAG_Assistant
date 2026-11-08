@@ -108,7 +108,7 @@ export default function DocumentDetailsPage() {
       {error && <p aria-live="polite" className="mt-4 border-l-2 border-danger bg-danger-soft px-4 py-3 text-sm text-danger" role="alert">{error}</p>}
       {feedback && <p aria-live="polite" className="mt-4 border-l-2 border-accent bg-surface px-4 py-3 text-sm text-text">{feedback}</p>}
       <h2 className="mt-10 font-display text-2xl font-medium">Overview</h2>
-      <dl className="mt-4 grid border-t border-border-strong sm:grid-cols-2 lg:grid-cols-5">{[['Type', activeDocument.type], ['Chunks', activeDocument.chunks], ['Size', activeDocument.size ?? '—'], ['Source', activeDocument.source], ['Storage', activeDocument.storage]].map(([label, value]) => <div className="border-b border-border py-5 sm:px-4 sm:first:pl-0 lg:border-r lg:last:border-r-0" key={label}><dt className="text-sm text-text-muted">{label}</dt><dd className={`mt-2 font-medium text-text ${label === 'Storage' ? 'break-all font-mono text-sm' : 'text-lg'}`}>{value}</dd></div>)}</dl>
+      <dl className="mt-4 grid border-t border-border-strong sm:grid-cols-2 lg:grid-cols-4">{[['Type', activeDocument.type], ['Chunks', activeDocument.chunks], ['Size', activeDocument.size ?? '—'], ['Source', activeDocument.source]].map(([label, value]) => <div className="border-b border-border py-5 sm:px-4 sm:first:pl-0 lg:border-r lg:last:border-r-0" key={label}><dt className="text-sm text-text-muted">{label}</dt><dd className="mt-2 text-lg font-medium text-text">{value}</dd></div>)}</dl>
       <RagPipeline document={activeDocument} />
     </section>
   )

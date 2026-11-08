@@ -98,6 +98,8 @@ describe('Documents', () => {
     })
     expect(screen.getByText(`Uploaded ${localizedUpload}`)).toBeInTheDocument()
     expect(screen.getByText('2.4 MB')).toBeInTheDocument()
+    expect(screen.queryByText('Storage')).not.toBeInTheDocument()
+    expect(screen.queryByText(handbook.storage)).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'RAG indexing pipeline' })).toBeInTheDocument()
     expect(screen.getByText('Preprocessing')).toBeInTheDocument()
     expect(screen.getByText('intfloat/e5-base-v2')).toBeInTheDocument()

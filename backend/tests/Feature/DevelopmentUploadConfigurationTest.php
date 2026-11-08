@@ -18,4 +18,9 @@ class DevelopmentUploadConfigurationTest extends TestCase
             $server['command'],
         );
     }
+
+    public function test_postgres_sessions_use_utc_to_match_the_application_clock(): void
+    {
+        $this->assertSame('UTC', config('database.connections.pgsql.timezone'));
+    }
 }

@@ -154,7 +154,8 @@ describe('Chat', () => {
       .mockResolvedValueOnce(conversationList())
       .mockResolvedValueOnce(jsonResponse({ data: { ...firstThread, messages: [] } }))
       .mockResolvedValueOnce(new Response(null, { status: 204 }))
-      .mockResolvedValueOnce(jsonResponse({ data: pendingMessage }, 202)))
+      .mockResolvedValueOnce(jsonResponse({ data: pendingMessage }, 202))
+      .mockResolvedValue(jsonResponse({ data: { ...firstThread, messages: [pendingMessage] } })))
     renderApp({ route: '/chat' })
     await loadFirstThread()
     const input = screen.getByPlaceholderText('Ask a question about your documents...')
@@ -168,7 +169,8 @@ describe('Chat', () => {
     expect(input).toHaveValue('')
   })
 
-  it('renders every citation on a completed assistant message', async () => {
+  it('keeps sources collapsed until the reader opens them and then renders every citation', async () => {
+    const user = userEvent.setup()
     vi.stubGlobal('fetch', vi.fn()
       .mockResolvedValueOnce(conversationList())
       .mockResolvedValueOnce(jsonResponse({ data: firstThread })))
@@ -176,13 +178,47 @@ describe('Chat', () => {
     await loadFirstThread()
 
     const sources = screen.getByRole('button', { name: 'Sources (2)' })
+    expect(sources).toHaveAttribute('aria-expanded', 'false')
+    expect(document.getElementById(sources.getAttribute('aria-controls'))).not.toBeInTheDocument()
+
+    await user.click(sources)
+
     const panel = document.getElementById(sources.getAttribute('aria-controls'))
+    expect(sources).toHaveAttribute('aria-expanded', 'true')
     expect(within(panel).getByText('Employee Handbook.pdf')).toBeInTheDocument()
     expect(within(panel).getByText('Page 17')).toBeInTheDocument()
     expect(within(panel).getByText('Employees receive 20 days.')).toBeInTheDocument()
     expect(within(panel).getByText('Leave Policy.pdf')).toBeInTheDocument()
     expect(within(panel).getByText('Page 4')).toBeInTheDocument()
     expect(within(panel).getByText('Annual leave entitlement.')).toBeInTheDocument()
+  })
+
+  it('shows an assistant response placeholder right after asking and swaps in the answer automatically', async () => {
+    const user = userEvent.setup()
+    document.cookie = 'XSRF-TOKEN=csrf-token; path=/'
+    const pendingMessage = { id: 'message-pending', role: 'user', content: 'What is the remote work policy?', status: 'pending', failure_reason: null, created_at: '2026-11-08T10:03:00Z', citations: [] }
+    const completedAnswer = {
+      id: 'message-answer', role: 'assistant', content: 'Remote work is allowed three days per week.', status: 'completed', failure_reason: null,
+      created_at: '2026-11-08T10:03:02Z', citations: [],
+    }
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(conversationList())
+      .mockResolvedValueOnce(jsonResponse({ data: { ...firstThread, messages: [] } }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(jsonResponse({ data: pendingMessage }, 202))
+      .mockResolvedValueOnce(jsonResponse({ data: { ...firstThread, messages: [pendingMessage] } }))
+      .mockResolvedValueOnce(jsonResponse({ data: { ...firstThread, messages: [{ ...pendingMessage, status: 'completed' }, completedAnswer] } }))
+      .mockResolvedValue(jsonResponse({ data: { ...firstThread, messages: [{ ...pendingMessage, status: 'completed' }, completedAnswer] } })))
+    renderApp({ route: '/chat' })
+    await loadFirstThread()
+    const input = screen.getByPlaceholderText('Ask a question about your documents...')
+
+    await user.type(input, 'What is the remote work policy?')
+    await user.click(screen.getByRole('button', { name: 'Send question' }))
+
+    expect(await screen.findByText('Generating answer…')).toBeInTheDocument()
+    expect(await screen.findByText('Remote work is allowed three days per week.', {}, { timeout: 3000 })).toBeInTheDocument()
+    expect(screen.queryByText('Generating answer…')).not.toBeInTheDocument()
   })
 
   it('expires the session when conversation loading returns 401', async () => {

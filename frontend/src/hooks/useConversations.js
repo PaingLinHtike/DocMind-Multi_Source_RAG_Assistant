@@ -81,7 +81,7 @@ export default function useConversations() {
       } catch (requestError) {
         if (!controller.signal.aborted && !handleUnauthorized(requestError)) setError(requestError.message)
       }
-    }, 1500)
+    }, 500)
     return () => { window.clearTimeout(timer); controller.abort() }
   }, [activeConversation, activeId, handleUnauthorized])
 

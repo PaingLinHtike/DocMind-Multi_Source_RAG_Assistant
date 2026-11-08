@@ -57,3 +57,15 @@ export function getDocumentContent(id) {
 export function downloadDocument(id) {
   return apiRequest(`/api/v1/documents/${id}/download`, { responseType: 'blob' })
 }
+
+export async function uploadDocument(file) {
+  const body = new FormData()
+  body.append('document', file)
+  const response = await apiRequest('/api/v1/documents', { method: 'POST', body })
+  return normalizeDocument(response.data)
+}
+
+export async function listRecentUploads({ signal } = {}) {
+  const response = await apiRequest('/api/v1/uploads/recent', { signal })
+  return response.data.map(normalizeDocument)
+}

@@ -35,6 +35,11 @@ export const defaultDocuments = [
     source: 'Upload', storage: 'documents/user-1/doc-123.pdf',
   },
   {
+    id: 'doc-docx', name: 'Company Policies.docx', type: 'DOCX', status: 'ready', status_label: 'Ready',
+    chunks: 87, uploaded_at: '2026-11-04T15:10:00Z', size_bytes: 1048576, size: '1 MB',
+    source: 'Upload', storage: 'documents/user-1/doc-docx.docx',
+  },
+  {
     id: 'doc-web', name: 'Company Website', type: 'WEB', status: 'processing', status_label: 'Processing',
     chunks: null, uploaded_at: '2026-11-04T11:02:00Z', size_bytes: 0, size: '0 B',
     source: 'Web', storage: 'https://example.com',
@@ -55,6 +60,7 @@ function jsonResponse(body, status = 200) {
 
 function defaultFetch(url) {
   if (url.endsWith('/api/v1/dashboard')) return Promise.resolve(jsonResponse({ data: defaultDashboard }))
+  if (url.endsWith('/api/v1/uploads/recent')) return Promise.resolve(jsonResponse({ data: defaultDocuments }))
   if (url.endsWith('/api/v1/documents')) {
     return Promise.resolve(jsonResponse({ data: defaultDocuments, meta: { current_page: 1, total: defaultDocuments.length } }))
   }

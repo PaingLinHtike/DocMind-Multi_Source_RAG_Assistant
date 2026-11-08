@@ -163,7 +163,7 @@ describe('Chat', () => {
     await user.click(screen.getByRole('button', { name: 'Send question' }))
 
     expect(await screen.findAllByText('What is the remote work policy?')).toHaveLength(1)
-    expect(screen.getByText('Pending')).toBeInTheDocument()
+    expect(screen.getByText('Generating answer…')).toBeInTheDocument()
     expect(screen.queryByText(/I found this in your documents/)).not.toBeInTheDocument()
     expect(input).toHaveValue('')
   })

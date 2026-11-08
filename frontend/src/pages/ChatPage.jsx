@@ -155,7 +155,8 @@ export default function ChatPage() {
               {activeConversation.messages.map((message) => message.role === 'user' ? (
                 <div className="ml-auto max-w-[610px]" key={message.id}>
                   <p className="min-w-0 break-words rounded-[2px] border-l-2 border-accent bg-surface-muted px-4 py-3 text-base leading-relaxed text-text">{message.content}</p>
-                  {message.status === 'pending' && <p className="mt-1 text-right font-mono text-xs text-text-muted">Pending</p>}
+                  {['pending', 'processing'].includes(message.status) && <p aria-live="polite" className="mt-1 text-right font-mono text-xs text-text-muted">Generating answer…</p>}
+                  {message.status === 'failed' && <p className="mt-1 text-right text-xs text-danger" role="alert">{message.failure_reason || 'Answer generation failed. Please try again.'}</p>}
                 </div>
               ) : (
                 <div className="min-w-0" key={message.id}>

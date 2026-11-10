@@ -155,6 +155,20 @@ def test_client_setup_failure_falls_back_to_noop(monkeypatch):
     assert warnings == ["LangSmith tracing operation failed"]
 
 
+def test_client_disables_automatic_runtime_metadata(monkeypatch):
+    captured = {}
+
+    class RecordingClient:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.setattr(langsmith, "Client", RecordingClient)
+
+    build_observer(enabled_settings())
+
+    assert captured["omit_traced_runtime_info"] is True
+
+
 def test_end_is_idempotent():
     records = []
     observer = build_observer(

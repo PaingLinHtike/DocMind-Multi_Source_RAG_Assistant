@@ -223,7 +223,11 @@ def build_observer(
             from langsmith import Client
             from langsmith.run_trees import RunTree
 
-            client = Client(api_key=settings.langsmith_api_key, api_url=settings.langsmith_endpoint)
+            client = Client(
+                api_key=settings.langsmith_api_key,
+                api_url=settings.langsmith_endpoint,
+                omit_traced_runtime_info=True,
+            )
         except Exception:
             _warn(logger, "LangSmith tracing operation failed")
             return NoOpObserver()

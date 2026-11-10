@@ -8,6 +8,18 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 
+def _env_bool(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    return default
+
+
 @dataclass(frozen=True)
 class Settings:
     internal_token: str = ""
@@ -23,6 +35,11 @@ class Settings:
     deepseek_base_url: str = "https://api.deepseek.com"
     deepseek_model: str = "deepseek-chat"
     request_timeout: float = 30.0
+    langsmith_tracing: bool = False
+    langsmith_api_key: str = ""
+    langsmith_project: str = "docmind-rag"
+    langsmith_endpoint: str = "https://api.smith.langchain.com"
+    langsmith_hash_salt: str = ""
 
 
 @lru_cache
@@ -41,4 +58,9 @@ def get_settings() -> Settings:
         deepseek_base_url=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com"),
         deepseek_model=os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
         request_timeout=float(os.getenv("RAG_REQUEST_TIMEOUT", "30")),
+        langsmith_tracing=_env_bool("LANGSMITH_TRACING"),
+        langsmith_api_key=os.getenv("LANGSMITH_API_KEY", ""),
+        langsmith_project=os.getenv("LANGSMITH_PROJECT", "docmind-rag"),
+        langsmith_endpoint=os.getenv("LANGSMITH_ENDPOINT", "https://api.smith.langchain.com"),
+        langsmith_hash_salt=os.getenv("LANGSMITH_HASH_SALT", ""),
     )

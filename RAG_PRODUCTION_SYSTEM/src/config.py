@@ -40,6 +40,7 @@ class Settings:
     langsmith_project: str = "docmind-rag"
     langsmith_endpoint: str = "https://api.smith.langchain.com"
     langsmith_hash_salt: str = ""
+    langsmith_capture_content: bool = False
 
 
 @lru_cache
@@ -63,4 +64,5 @@ def get_settings() -> Settings:
         langsmith_project=os.getenv("LANGSMITH_PROJECT", "docmind-rag"),
         langsmith_endpoint=os.getenv("LANGSMITH_ENDPOINT", "https://api.smith.langchain.com"),
         langsmith_hash_salt=os.getenv("LANGSMITH_HASH_SALT", ""),
+        langsmith_capture_content=_env_bool("LANGSMITH_CAPTURE_CONTENT"),
     )

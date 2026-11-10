@@ -27,6 +27,8 @@ _OUTPUT_KEYS = {
     "context_chunk_count",
     "used_citation_count",
 }
+_CONTENT_INPUT_KEYS = {"question"}
+_CONTENT_OUTPUT_KEYS = {"answer"}
 _STATUS_VALUES = {"started", "completed", "insufficient_evidence", "failed"}
 _ERROR_CATEGORIES = {"provider_error", "pipeline_error"}
 _SAFE_MODEL = re.compile(r"^[A-Za-z0-9._:/-]{1,128}$")
@@ -64,6 +66,7 @@ class Observer(Protocol):
         run_type: str,
         metadata: Mapping[str, TraceValue],
         context: TraceContext | None = None,
+        inputs: Mapping[str, TraceValue] | None = None,
     ) -> TraceRun: ...
 
 
@@ -118,14 +121,16 @@ class NoOpObserver:
         run_type: str,
         metadata: Mapping[str, TraceValue],
         context: TraceContext | None = None,
+        inputs: Mapping[str, TraceValue] | None = None,
     ) -> TraceRun:
         return NoOpTraceRun()
 
 
 class _LangSmithRun:
-    def __init__(self, run, warning_logger: Callable[[str], None]):
+    def __init__(self, run, warning_logger: Callable[[str], None], capture_content: bool = False):
         self._run = run
         self._warning_logger = warning_logger
+        self._capture_content = capture_content
         self._ended = False
 
     def start_child(
@@ -159,7 +164,10 @@ class _LangSmithRun:
         self._ended = True
         try:
             error = error_category if error_category in _ERROR_CATEGORIES else None
-            self._run.end(outputs=_safe_values(outputs, _OUTPUT_KEYS), error=error)
+            safe_outputs = _safe_values(outputs, _OUTPUT_KEYS)
+            if self._capture_content:
+                safe_outputs.update(_safe_values(outputs, _CONTENT_OUTPUT_KEYS))
+            self._run.end(outputs=safe_outputs, error=error)
             self._run.patch()
         except Exception:
             _warn(self._warning_logger, "LangSmith tracing operation failed")
@@ -171,10 +179,12 @@ class _LangSmithObserver:
         run_factory: Callable[..., object],
         hash_salt: str,
         warning_logger: Callable[[str], None],
+        capture_content: bool = False,
     ):
         self._run_factory = run_factory
         self._hash_salt = hash_salt
         self._warning_logger = warning_logger
+        self._capture_content = capture_content
 
     def start_run(
         self,
@@ -183,6 +193,7 @@ class _LangSmithObserver:
         run_type: str,
         metadata: Mapping[str, TraceValue],
         context: TraceContext | None = None,
+        inputs: Mapping[str, TraceValue] | None = None,
     ) -> TraceRun:
         safe_metadata = _safe_values(metadata, _METADATA_KEYS)
         if context is not None:
@@ -195,11 +206,11 @@ class _LangSmithObserver:
             run = self._run_factory(
                 name=name,
                 run_type=run_type,
-                inputs={},
+                inputs=_safe_values(inputs, _CONTENT_INPUT_KEYS) if self._capture_content else {},
                 extra={"metadata": safe_metadata},
             )
             run.post()
-            return _LangSmithRun(run, self._warning_logger)
+            return _LangSmithRun(run, self._warning_logger, self._capture_content)
         except Exception:
             _warn(self._warning_logger, "LangSmith tracing operation failed")
             return NoOpTraceRun()
@@ -241,4 +252,9 @@ def build_observer(
 
         run_factory = create_run
 
-    return _LangSmithObserver(run_factory, settings.langsmith_hash_salt, logger)
+    return _LangSmithObserver(
+        run_factory,
+        settings.langsmith_hash_salt,
+        logger,
+        settings.langsmith_capture_content,
+    )

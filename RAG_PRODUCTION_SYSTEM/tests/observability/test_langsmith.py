@@ -76,9 +76,10 @@ def test_enabled_observer_hmac_hashes_ids_and_sends_only_allowlisted_scalar_meta
         "rag.answer",
         run_type="chain",
         context=context,
+        inputs={"question": "private question"},
         metadata={"document_scope_count": 2, "nested": {"private": "value"}},
     )
-    run.end(outputs={"status": "completed", "citation_count": 1})
+    run.end(outputs={"status": "completed", "citation_count": 1, "answer": "private answer"})
 
     metadata = records[0].payload["extra"]["metadata"]
     assert metadata["document_scope_count"] == 2
@@ -89,6 +90,54 @@ def test_enabled_observer_hmac_hashes_ids_and_sends_only_allowlisted_scalar_meta
     assert len(metadata["message_hash"]) == 64
     assert records[0].payload["inputs"] == {}
     assert records[0].payload["end"]["outputs"] == {"status": "completed", "citation_count": 1}
+
+
+def test_content_capture_allows_only_root_question_and_answer():
+    records = []
+    observer = build_observer(
+        enabled_settings(langsmith_capture_content=True),
+        run_factory=lambda **payload: RecordingRun(records, **payload),
+    )
+
+    run = observer.start_run(
+        "rag.answer",
+        run_type="chain",
+        metadata={"status": "started"},
+        inputs={"question": "What is the policy?", "prompt": "private prompt"},
+    )
+    run.end(outputs={
+        "status": "completed",
+        "citation_count": 1,
+        "answer": "The policy allows it.",
+        "provider_body": "private provider body",
+    })
+
+    assert records[0].payload["inputs"] == {"question": "What is the policy?"}
+    assert records[0].payload["end"]["outputs"] == {
+        "status": "completed",
+        "citation_count": 1,
+        "answer": "The policy allows it.",
+    }
+
+
+def test_content_capture_never_allows_content_on_child_runs():
+    records = []
+    observer = build_observer(
+        enabled_settings(langsmith_capture_content=True),
+        run_factory=lambda **payload: RecordingRun(records, **payload),
+    )
+    parent = observer.start_run(
+        "rag.answer",
+        run_type="chain",
+        metadata={},
+        inputs={"question": "Root question"},
+    )
+
+    child = parent.start_child("rag.deepseek", run_type="chain", metadata={"model": "deepseek-chat"})
+    child.end(outputs={"status": "completed", "answer": "private child answer"})
+
+    assert records[1].payload["inputs"] == {}
+    assert records[1].payload["end"]["outputs"] == {"status": "completed"}
 
 
 def test_trace_payload_excludes_content_secrets_headers_and_raw_ids():

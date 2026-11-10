@@ -29,3 +29,26 @@ Questions are embedded with E5's `query: ` prefix and searched by cosine similar
 Retrieved chunks are bounded by `CONTEXT_TOKEN_BUDGET`, delimited as untrusted sources, and sent to DeepSeek at `DEEPSEEK_BASE_URL`. The model is instructed to answer only from evidence and cite numbered sources. When no evidence qualifies, the service returns an insufficient-evidence answer without calling DeepSeek.
 
 For recovery, inspect the Laravel queue failure, correct credentials/connectivity, and retry the failed job. Rotate `RAG_INTERNAL_TOKEN` and `FASTAPI_INTERNAL_TOKEN` together. Logs intentionally omit source text, prompts, answers, vectors, and secrets.
+
+## LangSmith observability
+
+LangSmith tracing is optional and disabled by default. DocMind uses the native LangSmith SDK around the existing retrieval and DeepSeek pipeline; it does not require a LangChain generation wrapper. Traces contain stage names, timings, bounded status categories, counts, model name, and HMAC-hashed correlation identifiers. Questions, retrieved chunks, prompts, answers, raw application IDs, vectors, credentials, authorization headers, provider response bodies, and exception details are excluded.
+
+Before enabling tracing, revoke any key that has been pasted into chat, logs, tickets, or source control and create a replacement. Then configure local secrets without committing them:
+
+```env
+LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=your-new-langsmith-key
+LANGSMITH_PROJECT=docmind-rag
+LANGSMITH_ENDPOINT=https://api.smith.langchain.com
+LANGSMITH_HASH_SALT=generate-a-separate-long-random-secret
+```
+
+`LANGSMITH_HASH_SALT` must be dedicated to observability; do not reuse the RAG internal token or another credential. If tracing configuration is incomplete, the service disables tracing. LangSmith setup or transport failures are fail-open: answer generation continues and local logs receive only a sanitized warning.
+
+### Smoke check
+
+1. Enable tracing with replacement credentials in `RAG_PRODUCTION_SYSTEM/.env`.
+2. Start FastAPI and submit a synthetic question against a synthetic test document containing no private data.
+3. In the `docmind-rag` LangSmith project, confirm one `rag.answer` run with `rag.retrieve`, `rag.prompt`, and `rag.deepseek` children.
+4. Confirm run inputs are empty and metadata/outputs contain only counts, statuses, model name, and hashed identifiers—never the synthetic question, document text, prompt, or answer.

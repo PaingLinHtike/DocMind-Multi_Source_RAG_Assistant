@@ -9,6 +9,7 @@ from ..embedding.e5_embedder import E5Embedder
 from ..generation.llm_client import DeepSeekClient
 from ..generation.llm_client import LlmResponseError
 from ..generation.service import GenerationService
+from ..observability.langsmith import TraceContext, build_observer
 from ..retrieval.retriever import SemanticRetriever
 from ..vectorstore.chroma_repository import ChromaRepository
 from .security import require_internal_token
@@ -30,13 +31,19 @@ def get_generation_service() -> GenerationService:
     embedder = E5Embedder(settings.embedding_model)
     retriever = SemanticRetriever(repository, embedder, settings.retrieval_top_k, settings.minimum_similarity)
     client = DeepSeekClient(settings.deepseek_api_key, settings.deepseek_base_url, settings.deepseek_model, settings.request_timeout)
-    return GenerationService(retriever, client, settings.context_token_budget)
+    observer = build_observer(settings)
+    return GenerationService(retriever, client, settings.context_token_budget, observer)
 
 
 @router.post("/answers")
 async def answer(request: AnswerRequest, service: GenerationService = Depends(get_generation_service)) -> dict:
     try:
-        result = await service.answer(request.question.strip(), request.user_id, request.document_ids)
+        result = await service.answer(
+            request.question.strip(),
+            request.user_id,
+            request.document_ids,
+            TraceContext(request.user_id, request.conversation_id, request.message_id),
+        )
     except LlmResponseError as error:
         raise HTTPException(503, "Answer generation is temporarily unavailable") from error
     return {"answer": result.answer, "citations": [asdict(citation) for citation in result.citations]}

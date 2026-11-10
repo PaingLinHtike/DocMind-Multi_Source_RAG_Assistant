@@ -140,6 +140,25 @@ def test_content_capture_never_allows_content_on_child_runs():
     assert records[1].payload["end"]["outputs"] == {"status": "completed"}
 
 
+def test_content_capture_is_restricted_to_the_named_rag_answer_root():
+    records = []
+    observer = build_observer(
+        enabled_settings(langsmith_capture_content=True),
+        run_factory=lambda **payload: RecordingRun(records, **payload),
+    )
+
+    run = observer.start_run(
+        "maintenance.probe",
+        run_type="chain",
+        metadata={},
+        inputs={"question": "private question"},
+    )
+    run.end(outputs={"status": "completed", "answer": "private answer"})
+
+    assert records[0].payload["inputs"] == {}
+    assert records[0].payload["end"]["outputs"] == {"status": "completed"}
+
+
 def test_trace_payload_excludes_content_secrets_headers_and_raw_ids():
     records = []
     observer = build_observer(

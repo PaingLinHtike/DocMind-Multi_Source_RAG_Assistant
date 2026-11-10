@@ -195,6 +195,7 @@ class _LangSmithObserver:
         context: TraceContext | None = None,
         inputs: Mapping[str, TraceValue] | None = None,
     ) -> TraceRun:
+        capture_content = self._capture_content and name == "rag.answer"
         safe_metadata = _safe_values(metadata, _METADATA_KEYS)
         if context is not None:
             safe_metadata.update({
@@ -206,11 +207,11 @@ class _LangSmithObserver:
             run = self._run_factory(
                 name=name,
                 run_type=run_type,
-                inputs=_safe_values(inputs, _CONTENT_INPUT_KEYS) if self._capture_content else {},
+                inputs=_safe_values(inputs, _CONTENT_INPUT_KEYS) if capture_content else {},
                 extra={"metadata": safe_metadata},
             )
             run.post()
-            return _LangSmithRun(run, self._warning_logger, self._capture_content)
+            return _LangSmithRun(run, self._warning_logger, capture_content)
         except Exception:
             _warn(self._warning_logger, "LangSmith tracing operation failed")
             return NoOpTraceRun()

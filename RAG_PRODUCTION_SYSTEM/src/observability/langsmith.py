@@ -91,7 +91,7 @@ def _hash_identifier(value: str, salt: str) -> str:
     return hmac.new(salt.encode("utf-8"), value.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
-class _NoOpRun:
+class NoOpTraceRun:
     def start_child(
         self,
         name: str,
@@ -110,7 +110,7 @@ class _NoOpRun:
         return None
 
 
-class _NoOpObserver:
+class NoOpObserver:
     def start_run(
         self,
         name: str,
@@ -119,7 +119,7 @@ class _NoOpObserver:
         metadata: Mapping[str, TraceValue],
         context: TraceContext | None = None,
     ) -> TraceRun:
-        return _NoOpRun()
+        return NoOpTraceRun()
 
 
 class _LangSmithRun:
@@ -146,7 +146,7 @@ class _LangSmithRun:
             return _LangSmithRun(child, self._warning_logger)
         except Exception:
             _warn(self._warning_logger, "LangSmith tracing operation failed")
-            return _NoOpRun()
+            return NoOpTraceRun()
 
     def end(
         self,
@@ -202,7 +202,7 @@ class _LangSmithObserver:
             return _LangSmithRun(run, self._warning_logger)
         except Exception:
             _warn(self._warning_logger, "LangSmith tracing operation failed")
-            return _NoOpRun()
+            return NoOpTraceRun()
 
 
 def build_observer(
@@ -213,10 +213,10 @@ def build_observer(
 ) -> Observer:
     logger = warning_logger or logging.getLogger(__name__).warning
     if not settings.langsmith_tracing:
-        return _NoOpObserver()
+        return NoOpObserver()
     if not settings.langsmith_api_key or not settings.langsmith_hash_salt:
         _warn(logger, "LangSmith tracing is disabled because required configuration is missing")
-        return _NoOpObserver()
+        return NoOpObserver()
 
     if run_factory is None:
         try:
@@ -226,7 +226,7 @@ def build_observer(
             client = Client(api_key=settings.langsmith_api_key, api_url=settings.langsmith_endpoint)
         except Exception:
             _warn(logger, "LangSmith tracing operation failed")
-            return _NoOpObserver()
+            return NoOpObserver()
 
         def create_run(**payload):
             return RunTree(

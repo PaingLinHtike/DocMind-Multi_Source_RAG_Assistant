@@ -42,10 +42,11 @@ class ProviderFailureClient:
 
 
 class RecordingRun:
-    def __init__(self, name, records, metadata, parent=None):
+    def __init__(self, name, records, metadata, parent=None, inputs=None):
         self.name = name
         self.records = records
         self.metadata = dict(metadata)
+        self.inputs = dict(inputs or {})
         self.parent = parent
         self.outputs = None
         self.error_category = None
@@ -65,8 +66,8 @@ class RecordingObserver:
     def __init__(self):
         self.records = []
 
-    def start_run(self, name, *, run_type, metadata, context=None):
-        return RecordingRun(name, self.records, metadata)
+    def start_run(self, name, *, run_type, metadata, context=None, inputs=None):
+        return RecordingRun(name, self.records, metadata, inputs=inputs)
 
 
 class BrokenObserver:
@@ -105,11 +106,53 @@ def test_success_records_answer_retrieve_prompt_and_deepseek_hierarchy_without_c
     assert observer.records[2].outputs == {"status": "completed", "context_chunk_count": 1}
     assert observer.records[3].outputs == {"status": "completed", "used_citation_count": 1}
     serialized = json.dumps([
-        {"metadata": run.metadata, "outputs": run.outputs, "error": run.error_category}
+        {"inputs": run.inputs, "metadata": run.metadata, "outputs": run.outputs, "error": run.error_category}
         for run in observer.records
     ])
     for sentinel in ("private question", "private document chunk", "private answer", "user-raw", "doc-raw"):
         assert sentinel not in serialized
+
+
+def test_content_capture_records_question_and_successful_answer_on_root_only():
+    observer = RecordingObserver()
+    result = run_answer(GenerationService(
+        EvidenceRetriever(),
+        SuccessfulClient(),
+        observer=observer,
+        capture_trace_content=True,
+    ))
+
+    assert result.answer == "private answer [1]"
+    assert observer.records[0].inputs == {"question": "private question"}
+    assert observer.records[0].outputs == {
+        "status": "completed",
+        "citation_count": 1,
+        "answer": "private answer [1]",
+    }
+    assert all(run.inputs == {} for run in observer.records[1:])
+    child_payload = json.dumps([
+        {"inputs": run.inputs, "metadata": run.metadata, "outputs": run.outputs}
+        for run in observer.records[1:]
+    ])
+    for sentinel in ("private question", "private answer", "private document chunk"):
+        assert sentinel not in child_payload
+
+
+def test_content_capture_records_deterministic_insufficient_evidence_answer():
+    observer = RecordingObserver()
+    result = run_answer(GenerationService(
+        EmptyRetriever(),
+        FailingClient(),
+        observer=observer,
+        capture_trace_content=True,
+    ))
+
+    assert observer.records[0].inputs == {"question": "private question"}
+    assert observer.records[0].outputs == {
+        "status": "insufficient_evidence",
+        "citation_count": 0,
+        "answer": result.answer,
+    }
 
 
 def test_insufficient_evidence_ends_parent_and_prompt_once_without_deepseek_span():

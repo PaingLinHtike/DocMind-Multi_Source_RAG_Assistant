@@ -14,13 +14,21 @@ class AnswerResult:
 
 
 class GenerationService:
-    def __init__(self, retriever, llm_client, context_token_budget: int = 6000, observer: Observer | None = None):
+    def __init__(
+        self,
+        retriever,
+        llm_client,
+        context_token_budget: int = 6000,
+        observer: Observer | None = None,
+        capture_trace_content: bool = False,
+    ):
         self.retriever = retriever
         self.llm_client = llm_client
         self.context_token_budget = context_token_budget
         self.observer = observer or NoOpObserver()
+        self.capture_trace_content = capture_trace_content
 
-    def _start_run(self, trace_context: TraceContext | None, document_scope_count: int) -> TraceRun:
+    def _start_run(self, trace_context: TraceContext | None, document_scope_count: int, question: str) -> TraceRun:
         try:
             return self.observer.start_run(
                 "rag.answer",
@@ -30,6 +38,7 @@ class GenerationService:
                     "context_token_budget": self.context_token_budget,
                 },
                 context=trace_context,
+                inputs={"question": question} if self.capture_trace_content else {},
             )
         except Exception:
             return NoOpTraceRun()
@@ -56,7 +65,7 @@ class GenerationService:
         trace_context: TraceContext | None = None,
     ) -> AnswerResult:
         document_scope_count = len(document_ids or [])
-        parent = self._start_run(trace_context, document_scope_count)
+        parent = self._start_run(trace_context, document_scope_count, question)
         retrieval = self._start_child(parent, "rag.retrieve", {"document_scope_count": document_scope_count})
         try:
             chunks = self.retriever.search(question, user_id, document_ids)
@@ -73,12 +82,13 @@ class GenerationService:
         try:
             prompt = build_prompt(question, chunks, self.context_token_budget)
         except InsufficientEvidenceError:
+            answer = "The available documents do not contain enough information to answer this question."
             self._end(prompt_run, outputs={"status": "insufficient_evidence", "context_chunk_count": len(chunks)})
-            self._end(parent, outputs={"status": "insufficient_evidence", "citation_count": 0})
-            return AnswerResult(
-                "The available documents do not contain enough information to answer this question.",
-                [],
-            )
+            parent_outputs = {"status": "insufficient_evidence", "citation_count": 0}
+            if self.capture_trace_content:
+                parent_outputs["answer"] = answer
+            self._end(parent, outputs=parent_outputs)
+            return AnswerResult(answer, [])
         except Exception:
             self._end(prompt_run, error_category="pipeline_error")
             self._end(parent, error_category="pipeline_error")
@@ -99,5 +109,8 @@ class GenerationService:
         used = set(generated.used_citation_numbers)
         citations = [citation for citation in prompt.citations if citation.number in used]
         self._end(deepseek, outputs={"status": "completed", "used_citation_count": len(used)})
-        self._end(parent, outputs={"status": "completed", "citation_count": len(citations)})
+        parent_outputs = {"status": "completed", "citation_count": len(citations)}
+        if self.capture_trace_content:
+            parent_outputs["answer"] = generated.text
+        self._end(parent, outputs=parent_outputs)
         return AnswerResult(generated.text, citations)

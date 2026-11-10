@@ -64,8 +64,12 @@ def test_generation_service_factory_injects_configured_observer(monkeypatch):
     monkeypatch.setattr(generation, "DeepSeekClient", lambda *args: object())
     monkeypatch.setattr(generation, "build_observer", lambda settings: sentinel_observer)
 
-    def capture_service(retriever, client, budget, observer=None):
+    monkeypatch.setenv("LANGSMITH_CAPTURE_CONTENT", "true")
+    get_settings.cache_clear()
+
+    def capture_service(retriever, client, budget, observer=None, capture_trace_content=False):
         captured["observer"] = observer
+        captured["capture_trace_content"] = capture_trace_content
         return object()
 
     monkeypatch.setattr(generation, "GenerationService", capture_service)
@@ -73,3 +77,5 @@ def test_generation_service_factory_injects_configured_observer(monkeypatch):
     get_generation_service()
 
     assert captured["observer"] is sentinel_observer
+    assert captured["capture_trace_content"] is True
+    get_settings.cache_clear()

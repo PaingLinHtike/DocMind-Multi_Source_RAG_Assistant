@@ -32,7 +32,13 @@ def get_generation_service() -> GenerationService:
     retriever = SemanticRetriever(repository, embedder, settings.retrieval_top_k, settings.minimum_similarity)
     client = DeepSeekClient(settings.deepseek_api_key, settings.deepseek_base_url, settings.deepseek_model, settings.request_timeout)
     observer = build_observer(settings)
-    return GenerationService(retriever, client, settings.context_token_budget, observer)
+    return GenerationService(
+        retriever,
+        client,
+        settings.context_token_budget,
+        observer,
+        settings.langsmith_capture_content,
+    )
 
 
 @router.post("/answers")

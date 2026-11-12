@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { renderApp } from './renderApp.jsx'
 describe('Paper & Ink brand assets', () => {
@@ -49,8 +49,9 @@ describe('Paper & Ink brand assets', () => {
     expect(container.querySelectorAll('svg').length).toBeGreaterThan(3)
   })
 
-  it('uses unified inline icons throughout Chat', () => {
+  it('uses unified inline icons throughout Chat', async () => {
     const { container } = renderApp({ route: '/chat' })
+    await screen.findByRole('heading', { name: 'Annual leave policy' })
     expect(container.querySelectorAll('img')).toHaveLength(0)
     expect(container.querySelectorAll('svg').length).toBeGreaterThan(10)
   })

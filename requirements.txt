@@ -16,6 +16,7 @@ langchain-core
 langchain-community
 langchain-text-splitters
 langchain-chroma
+langsmith
 
 # ==================================
 # EMBEDDING MODEL & TOKENIZER
@@ -44,3 +45,5 @@ pytest
 # DOCUMENT LOADING
 # ==================================
 pypdf
+python-docx
+python-multipart

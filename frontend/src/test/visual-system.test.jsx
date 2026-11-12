@@ -8,7 +8,6 @@ import Field from '../components/ui/Field.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import PageHeading from '../components/ui/PageHeading.jsx'
 import StatusBadge from '../components/ui/StatusBadge.jsx'
-import ChatPage from '../pages/ChatPage.jsx'
 import { renderApp } from './renderApp.jsx'
 
 const stylesheet = readFileSync(resolve('src/index.css'), 'utf8')
@@ -185,8 +184,9 @@ describe('shared visual system', () => {
     expect(badge).toHaveClass('h-6', 'font-mono', 'text-xs', 'font-medium', 'rounded-[2px]')
   })
 
-  it('uses one ruled Overview data strip instead of four metric cards', () => {
+  it('uses one ruled Overview data strip instead of four metric cards', async () => {
     renderApp()
+    await screen.findByRole('heading', { name: 'Good morning, Aung' })
 
     const strip = screen.getByRole('list', { name: 'Library statistics' })
     expect(strip).toHaveClass('border-y', 'border-border')
@@ -204,8 +204,9 @@ describe('shared visual system', () => {
     expect(main).not.toHaveClass('lg:pl-60', 'lg:pt-0')
   })
 
-  it('uses the chat icon sizes and heading scale', () => {
-    render(<ChatPage />)
+  it('uses the chat icon sizes and heading scale', async () => {
+    renderApp({ route: '/chat' })
+    await screen.findByRole('heading', { name: 'Annual leave policy' })
 
     expect(screen.getByRole('heading', { name: 'Annual leave policy' })).toHaveClass('text-2xl')
     expect(screen.getByRole('button', { name: 'New Chat' }).querySelector('svg')).toHaveAttribute('width', '18')
@@ -213,20 +214,27 @@ describe('shared visual system', () => {
     expect(screen.getByText('Sources (1)').querySelector('svg')).toHaveAttribute('width', '16')
   })
 
-  it('uses an accessible full-row disclosure control for answer sources', () => {
-    render(<ChatPage />)
+  it('uses an accessible full-row disclosure control that starts collapsed for answer sources', async () => {
+    renderApp({ route: '/chat' })
+    await screen.findByRole('heading', { name: 'Annual leave policy' })
     const control = screen.getByRole('button', { name: 'Sources (1)' })
     const panelId = control.getAttribute('aria-controls')
 
     expect(control).toHaveClass('min-h-11')
-    expect(control).toHaveAttribute('aria-expanded', 'true')
+    expect(control).toHaveAttribute('aria-expanded', 'false')
     expect(panelId).toBeTruthy()
-    expect(document.getElementById(panelId)).toBeInTheDocument()
+    expect(document.getElementById(panelId)).not.toBeInTheDocument()
     expect(control.querySelector('svg')).toHaveClass('transition-transform')
+
+    fireEvent.click(control)
+
+    expect(control).toHaveAttribute('aria-expanded', 'true')
+    expect(document.getElementById(panelId)).toBeInTheDocument()
   })
 
-  it('keeps the chat composer free of attachment controls', () => {
-    const { container } = render(<ChatPage />)
+  it('keeps the chat composer free of attachment controls', async () => {
+    const { container } = renderApp({ route: '/chat' })
+    await screen.findByRole('heading', { name: 'Annual leave policy' })
     const input = screen.getByPlaceholderText('Ask a question about your documents...')
 
     expect(screen.queryByRole('button', { name: /attach/i })).not.toBeInTheDocument()
@@ -235,15 +243,17 @@ describe('shared visual system', () => {
     expect(container.querySelectorAll('img')).toHaveLength(0)
   })
 
-  it('gives the chat composer a visible 2px oxide focus ring', () => {
-    render(<ChatPage />)
+  it('gives the chat composer a visible 2px oxide focus ring', async () => {
+    renderApp({ route: '/chat' })
+    await screen.findByRole('heading', { name: 'Annual leave policy' })
     const form = screen.getByPlaceholderText('Ask a question about your documents...').closest('form')
 
     expect(form).toHaveClass('focus-within:outline', 'focus-within:outline-2', 'focus-within:outline-offset-2', 'focus-within:outline-focus')
   })
 
-  it('contains desktop Chat within the viewport and assigns overflow to the message thread', () => {
-    const { container } = render(<ChatPage />)
+  it('contains desktop Chat within the viewport and assigns overflow to the message thread', async () => {
+    const { container } = renderApp({ route: '/chat' })
+    await screen.findByRole('heading', { name: 'Annual leave policy' })
     const page = container.querySelector('.chat-page')
     const panel = container.querySelector('.chat-panel')
     const thread = container.querySelector('.chat-thread')
@@ -255,24 +265,27 @@ describe('shared visual system', () => {
     expect(thread).not.toHaveClass('overflow-y-auto')
   })
 
-  it('uses paper message surfaces without legacy chat bubbles', () => {
-    render(<ChatPage />)
+  it('uses paper message surfaces without legacy chat bubbles', async () => {
+    renderApp({ route: '/chat' })
+    await screen.findByRole('heading', { name: 'Annual leave policy' })
     expect(screen.getByText('How many annual leave days do employees get?')).toHaveClass('bg-surface-muted', 'border-accent')
     expect(screen.getByText('Employees receive 20 days of paid annual leave every year. [1]')).toHaveClass('bg-transparent')
-    expect(screen.getByText('Employee Handbook.pdf').closest('button')).toHaveClass('bg-surface', 'shadow-none')
+    fireEvent.click(screen.getByRole('button', { name: 'Sources (1)' }))
+    expect(screen.getByText('Employee Handbook.pdf').closest('[class*="border-y"]')).toHaveClass('bg-surface', 'rounded-[2px]')
   })
 
-  it('uses compact unified document rows and status badges', () => {
+  it('uses compact unified document rows and status badges', async () => {
     renderApp({ route: '/documents' })
 
-    const row = screen.getByRole('link', { name: /Employee Handbook\.pdf/ })
+    const row = await screen.findByRole('link', { name: /Employee Handbook\.pdf/ })
     expect(row).toHaveClass('min-h-[52px]')
     expect(row.querySelector('svg')).toHaveAttribute('width', '20')
     expect(within(row).getByText('Ready')).toHaveClass('h-6', 'font-mono', 'rounded-[2px]')
   })
 
-  it('styles the intentional documents table scroller', () => {
+  it('styles the intentional documents table scroller', async () => {
     renderApp({ route: '/documents' })
+    await screen.findByRole('link', { name: /Employee Handbook\.pdf/ })
 
     expect(document.querySelector('.table-scroll')).toHaveClass('overflow-x-auto')
   })
@@ -287,22 +300,22 @@ describe('shared visual system', () => {
     expect(stylesheet).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*transition-duration:\s*0\.01ms !important;/)
   })
 
-  it('styles Upload as a paper inbox and ruled list', () => {
+  it('styles Upload as a paper inbox and ruled list', async () => {
     renderApp({ route: '/upload' })
     const dropArea = screen.getByTestId('upload-drop-area')
     expect(dropArea).toHaveClass('border-dashed', 'border-border-strong', 'rounded-[2px]')
     expect(screen.getByRole('heading', { name: 'Recent uploads' })).toHaveClass('font-display')
-    expect(screen.getByTestId('recent-upload-Employee Handbook.pdf')).toHaveClass('border-b')
+    expect(await screen.findByTestId('recent-upload-Employee Handbook.pdf')).toHaveClass('border-b')
   })
 
   it('pins long-value safety in settings', () => {
     renderApp({ route: '/settings' })
 
-    const password = screen.getByLabelText('Password')
+    const password = screen.getByLabelText('New Password')
     expect(password).toHaveClass('min-w-0')
     expect(password.parentElement).toHaveClass('min-w-0')
 
-    const toggle = screen.getByRole('button', { name: 'Show password' })
+    const toggle = screen.getByRole('button', { name: 'Show passwords' })
     expect(toggle.querySelector('svg')).toHaveAttribute('width', '18')
     expect(toggle).toHaveClass('size-11')
   })

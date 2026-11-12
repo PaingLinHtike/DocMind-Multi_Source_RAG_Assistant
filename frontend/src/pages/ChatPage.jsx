@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import AssistantMessageContent from '../components/chat/AssistantMessageContent.jsx'
 import Button from '../components/ui/Button.jsx'
 import Icon from '../components/ui/Icon.jsx'
 import useConversations from '../hooks/useConversations.js'
@@ -6,7 +7,7 @@ import useConversations from '../hooks/useConversations.js'
 const menuItem = 'flex min-h-11 w-full items-center gap-3 rounded-[2px] px-3 text-left text-sm font-medium transition-colors'
 
 function Citations({ citations, messageId }) {
-  const [expanded, setExpanded] = useState(true)
+  const [expanded, setExpanded] = useState(false)
   const panelId = `sources-${messageId}`
   if (!citations?.length) return null
 
@@ -108,6 +109,9 @@ export default function ChatPage() {
 
   if (loading) return <p className="px-6 py-16 text-center text-sm text-text-muted" role="status">Loading conversations…</p>
 
+  const lastMessage = activeConversation?.messages.at(-1)
+  const awaitingAnswer = lastMessage?.role === 'user' && ['pending', 'processing'].includes(lastMessage.status)
+
   return (
     <section className="chat-page mx-auto grid min-h-[732px] max-w-[1380px] grid-cols-1 px-5 pb-8 sm:px-6 lg:h-[calc(100dvh-4rem)] lg:min-h-0 lg:grid-cols-[320px_1fr] lg:gap-8 lg:overflow-hidden lg:px-8">
       <aside className="border-border pt-10 lg:border-r lg:pr-7">
@@ -155,15 +159,20 @@ export default function ChatPage() {
               {activeConversation.messages.map((message) => message.role === 'user' ? (
                 <div className="ml-auto max-w-[610px]" key={message.id}>
                   <p className="min-w-0 break-words rounded-[2px] border-l-2 border-accent bg-surface-muted px-4 py-3 text-base leading-relaxed text-text">{message.content}</p>
-                  {message.status === 'pending' && <p className="mt-1 text-right font-mono text-xs text-text-muted">Pending</p>}
+                  {message.status === 'failed' && <p className="mt-1 text-right text-xs text-danger" role="alert">{message.failure_reason || 'Answer generation failed. Please try again.'}</p>}
                 </div>
               ) : (
                 <div className="min-w-0" key={message.id}>
-                  <p className="max-w-[760px] break-words bg-transparent text-base leading-[1.65] text-text">{message.content}</p>
+                  <AssistantMessageContent content={message.content} />
                   <p className="mt-2 font-mono text-xs text-text-muted">{messageTime(message.created_at)}</p>
                   <Citations citations={message.citations} messageId={message.id} />
                 </div>
               ))}
+              {awaitingAnswer && (
+                <div className="min-w-0" key="pending-answer">
+                  <p aria-live="polite" className="max-w-[760px] animate-pulse text-base leading-[1.65] text-text-muted" role="status">Generating answer…</p>
+                </div>
+              )}
             </div>
           </>
         ) : <div className="flex min-h-[450px] flex-1 flex-col items-center justify-center text-center"><h1 className="font-display text-2xl font-medium">No conversation selected</h1><p className="mt-2 text-sm text-text-muted">Create a chat to start asking questions.</p></div>}

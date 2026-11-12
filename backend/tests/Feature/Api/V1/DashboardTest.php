@@ -35,7 +35,7 @@ class DashboardTest extends TestCase
             ->assertJsonMissing(['title' => 'Hidden conversation']);
     }
 
-    public function test_dashboard_counts_documents_conversations_messages_and_storage(): void
+    public function test_dashboard_counts_documents_conversations_user_questions_and_storage(): void
     {
         $user = User::factory()->create();
         Document::factory()->for($user)->create(['size_bytes' => 1000]);
@@ -52,7 +52,7 @@ class DashboardTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.metrics.documents.value', 2)
             ->assertJsonPath('data.metrics.conversations.value', 2)
-            ->assertJsonPath('data.metrics.messages.value', 3)
+            ->assertJsonPath('data.metrics.messages.value', 2)
             ->assertJsonPath('data.metrics.storage_bytes.value', 3000);
     }
 

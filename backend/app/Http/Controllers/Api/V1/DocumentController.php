@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\StoreDocumentRequest;
 use App\Http\Requests\Api\V1\UpdateDocumentRequest;
 use App\Http\Resources\Api\V1\DocumentResource;
+use App\Jobs\DeleteDocumentIndex;
 use App\Models\Document;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -74,9 +75,10 @@ class DocumentController extends Controller
                 'storage_disk' => 'local',
                 'storage_key' => $storagePath,
                 'checksum' => hash_file('sha256', $file->getRealPath()),
-                'status' => Document::StatusPending,
+                'status' => Document::StatusUploaded,
                 'chunk_count' => 0,
                 'size_bytes' => (int) $file->getSize(),
+                'rag_stage' => 'uploaded',
             ]);
         } catch (Throwable $exception) {
             Storage::disk('local')->delete($storagePath);
@@ -130,7 +132,10 @@ class DocumentController extends Controller
             return response()->json(['message' => 'The document could not be deleted.'], 500);
         }
 
+        $userId = (string) $ownedDocument->user_id;
+        $documentId = (string) $ownedDocument->id;
         $ownedDocument->delete();
+        DeleteDocumentIndex::dispatch($userId, $documentId)->afterCommit();
 
         return response()->noContent();
     }

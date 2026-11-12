@@ -17,6 +17,11 @@ export function normalizeDocument(document) {
     status: document.status_label,
     chunks: document.chunks ?? '—',
     uploadedAt: formatUploadedAt(document.uploaded_at),
+    ragStage: document.rag_stage || document.status,
+    failureReason: document.failure_reason,
+    indexedAt: document.indexed_at ? formatUploadedAt(document.indexed_at) : null,
+    embeddingModel: document.embedding_model,
+    vectorCollection: document.vector_collection,
   }
 }
 
@@ -45,8 +50,13 @@ export function deleteDocument(id) {
   return apiRequest(`/api/v1/documents/${id}`, { method: 'DELETE' })
 }
 
-export async function reindexDocument(id) {
-  const response = await apiRequest(`/api/v1/documents/${id}/reindex`, { method: 'POST' })
+export async function indexDocument(id) {
+  const response = await apiRequest(`/api/v1/documents/${id}/index`, { method: 'POST' })
+  return normalizeDocument(response.data)
+}
+
+export async function stopDocumentIndex(id) {
+  const response = await apiRequest(`/api/v1/documents/${id}/index`, { method: 'DELETE' })
   return normalizeDocument(response.data)
 }
 

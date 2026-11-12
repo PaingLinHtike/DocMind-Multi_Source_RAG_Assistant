@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import Icon from '../ui/Icon.jsx'
 import StatusBadge from '../ui/StatusBadge.jsx'
 
-const statusTones = { Ready: 'success', Pending: 'warning', Processing: 'warning', Failed: 'danger' }
+const statusTones = { Ready: 'success', Pending: 'warning', Processing: 'warning', Failed: 'danger', Uploaded: 'neutral' }
 
 export default function DocumentRow({ document }) {
   return (

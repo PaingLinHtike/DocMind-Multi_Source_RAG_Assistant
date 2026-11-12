@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\Contracts\RagGateway;
-use App\Services\PendingRagGateway;
+use App\Services\QueuedRagGateway;
 use Illuminate\Support\ServiceProvider;
 
 class DocMindServiceProvider extends ServiceProvider
@@ -13,7 +13,7 @@ class DocMindServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(RagGateway::class, PendingRagGateway::class);
+        $this->app->bind(RagGateway::class, QueuedRagGateway::class);
     }
 
     /**

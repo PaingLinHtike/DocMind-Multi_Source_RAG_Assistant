@@ -70,6 +70,21 @@ export default function useConversations() {
     }
   }, [handleUnauthorized, selectConversation])
 
+  useEffect(() => {
+    const hasPendingMessage = activeConversation?.messages?.some((message) => ['pending', 'processing'].includes(message.status))
+    if (!activeId || !hasPendingMessage) return undefined
+    const controller = new AbortController()
+    const timer = window.setTimeout(async () => {
+      try {
+        const conversation = await getConversation(activeId, { signal: controller.signal })
+        if (!controller.signal.aborted) setActiveConversation((current) => current?.id === activeId ? conversation : current)
+      } catch (requestError) {
+        if (!controller.signal.aborted && !handleUnauthorized(requestError)) setError(requestError.message)
+      }
+    }, 500)
+    return () => { window.clearTimeout(timer); controller.abort() }
+  }, [activeConversation, activeId, handleUnauthorized])
+
   async function createConversation(title) {
     setMutating(true)
     setError('')

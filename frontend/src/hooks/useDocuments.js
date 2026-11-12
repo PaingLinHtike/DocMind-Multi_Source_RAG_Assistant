@@ -1,5 +1,5 @@
 import { useDeferredValue, useEffect, useState } from 'react'
-import { deleteDocument, listDocuments, reindexDocument, renameDocument } from '../api/documents.js'
+import { deleteDocument, listDocuments, renameDocument } from '../api/documents.js'
 import { useAuth } from '../auth/authSessionStore.js'
 
 export default function useDocuments() {
@@ -52,12 +52,6 @@ export default function useDocuments() {
     return updated
   }
 
-  async function reindex(id) {
-    const updated = await reindexDocument(id)
-    setDocuments((current) => current.map((document) => document.id === id ? updated : document))
-    return updated
-  }
-
   async function remove(id) {
     await deleteDocument(id)
     setDocuments((current) => current.filter((document) => document.id !== id))
@@ -73,7 +67,6 @@ export default function useDocuments() {
     filteredDocuments,
     refetch,
     rename,
-    reindex,
     remove,
   }
 }

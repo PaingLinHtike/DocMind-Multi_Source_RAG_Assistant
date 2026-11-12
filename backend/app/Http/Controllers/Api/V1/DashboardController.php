@@ -22,7 +22,7 @@ class DashboardController extends Controller
             'conversation',
             fn (Builder $query): Builder => $query->where('user_id', $user->getAuthIdentifier()),
         );
-        $messageCount = (clone $messageQuery)->count();
+        $messageCount = (clone $messageQuery)->where('role', Message::RoleUser)->count();
 
         $today = CarbonImmutable::today();
         $startDate = $today->subDays(6);

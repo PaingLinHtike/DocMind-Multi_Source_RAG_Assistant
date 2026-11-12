@@ -214,17 +214,22 @@ describe('shared visual system', () => {
     expect(screen.getByText('Sources (1)').querySelector('svg')).toHaveAttribute('width', '16')
   })
 
-  it('uses an accessible full-row disclosure control for answer sources', async () => {
+  it('uses an accessible full-row disclosure control that starts collapsed for answer sources', async () => {
     renderApp({ route: '/chat' })
     await screen.findByRole('heading', { name: 'Annual leave policy' })
     const control = screen.getByRole('button', { name: 'Sources (1)' })
     const panelId = control.getAttribute('aria-controls')
 
     expect(control).toHaveClass('min-h-11')
-    expect(control).toHaveAttribute('aria-expanded', 'true')
+    expect(control).toHaveAttribute('aria-expanded', 'false')
     expect(panelId).toBeTruthy()
-    expect(document.getElementById(panelId)).toBeInTheDocument()
+    expect(document.getElementById(panelId)).not.toBeInTheDocument()
     expect(control.querySelector('svg')).toHaveClass('transition-transform')
+
+    fireEvent.click(control)
+
+    expect(control).toHaveAttribute('aria-expanded', 'true')
+    expect(document.getElementById(panelId)).toBeInTheDocument()
   })
 
   it('keeps the chat composer free of attachment controls', async () => {
@@ -265,6 +270,7 @@ describe('shared visual system', () => {
     await screen.findByRole('heading', { name: 'Annual leave policy' })
     expect(screen.getByText('How many annual leave days do employees get?')).toHaveClass('bg-surface-muted', 'border-accent')
     expect(screen.getByText('Employees receive 20 days of paid annual leave every year. [1]')).toHaveClass('bg-transparent')
+    fireEvent.click(screen.getByRole('button', { name: 'Sources (1)' }))
     expect(screen.getByText('Employee Handbook.pdf').closest('[class*="border-y"]')).toHaveClass('bg-surface', 'rounded-[2px]')
   })
 

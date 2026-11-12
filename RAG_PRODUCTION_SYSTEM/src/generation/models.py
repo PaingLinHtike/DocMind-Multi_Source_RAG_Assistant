@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from ..observability.models import TokenUsage
+
 
 @dataclass(frozen=True)
 class CitationCandidate:
@@ -22,3 +24,4 @@ class PromptPackage:
 class GeneratedAnswer:
     text: str
     used_citation_numbers: tuple[int, ...]
+    usage: TokenUsage | None = None

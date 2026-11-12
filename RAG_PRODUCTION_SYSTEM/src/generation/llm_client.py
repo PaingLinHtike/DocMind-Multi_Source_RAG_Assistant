@@ -1,11 +1,28 @@
 import re
 import httpx
 
+from ..observability.models import TokenUsage
 from .models import GeneratedAnswer, PromptPackage
 
 
 class LlmResponseError(RuntimeError):
     pass
+
+
+def _parse_usage(payload: object) -> TokenUsage | None:
+    if not isinstance(payload, dict):
+        return None
+    usage = payload.get("usage")
+    if not isinstance(usage, dict):
+        return None
+    values = (
+        usage.get("prompt_tokens"),
+        usage.get("completion_tokens"),
+        usage.get("total_tokens"),
+    )
+    if any(type(value) is not int or value < 0 for value in values):
+        return None
+    return TokenUsage(*values)
 
 
 class DeepSeekClient:
@@ -37,12 +54,13 @@ class DeepSeekClient:
                 },
             )
             response.raise_for_status()
-            text = response.json()["choices"][0]["message"]["content"].strip()
+            payload = response.json()
+            text = payload["choices"][0]["message"]["content"].strip()
             if not text:
                 raise LlmResponseError("DeepSeek returned an empty response")
             allowed = {citation.number for citation in prompt.citations}
             used = tuple(dict.fromkeys(number for number in map(int, re.findall(r"\[(\d+)]", text)) if number in allowed))
-            return GeneratedAnswer(text, used)
+            return GeneratedAnswer(text, used, _parse_usage(payload))
         except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as error:
             raise LlmResponseError("DeepSeek request failed") from error
         finally:

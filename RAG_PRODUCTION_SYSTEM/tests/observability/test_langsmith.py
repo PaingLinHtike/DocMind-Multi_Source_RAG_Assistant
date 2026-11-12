@@ -1,8 +1,10 @@
 import json
 
 import langsmith
+import pytest
 
 from RAG_PRODUCTION_SYSTEM.src.config import Settings
+from RAG_PRODUCTION_SYSTEM.src.observability import TokenUsage
 from RAG_PRODUCTION_SYSTEM.src.observability.langsmith import TraceContext, build_observer
 
 
@@ -12,6 +14,7 @@ class RecordingRun:
         self.payload = payload
         self.post_count = 0
         self.patch_count = 0
+        self.set_payloads = []
         self.records.append(self)
 
     def post(self):
@@ -22,6 +25,9 @@ class RecordingRun:
 
     def end(self, **payload):
         self.payload["end"] = payload
+
+    def set(self, **payload):
+        self.set_payloads.append(payload)
 
     def patch(self):
         self.patch_count += 1
@@ -138,6 +144,55 @@ def test_content_capture_never_allows_content_on_child_runs():
 
     assert records[1].payload["inputs"] == {}
     assert records[1].payload["end"]["outputs"] == {"status": "completed"}
+
+
+@pytest.mark.parametrize("capture_content", [False, True])
+def test_llm_run_sets_exact_usage_metadata_before_patch(capture_content):
+    records = []
+    observer = build_observer(
+        enabled_settings(langsmith_capture_content=capture_content),
+        run_factory=lambda **payload: RecordingRun(records, **payload),
+    )
+    parent = observer.start_run(
+        "rag.answer",
+        run_type="chain",
+        metadata={},
+        inputs={"question": "private question"},
+    )
+
+    child = parent.start_child("rag.deepseek", run_type="llm", metadata={"model": "deepseek-chat"})
+    child.end(
+        outputs={"status": "completed", "used_citation_count": 1, "answer": "private child answer"},
+        usage=TokenUsage(101, 23, 124),
+    )
+
+    assert records[1].set_payloads == [{
+        "usage_metadata": {"input_tokens": 101, "output_tokens": 23, "total_tokens": 124},
+    }]
+    assert records[1].payload["inputs"] == {}
+    assert records[1].payload["end"]["outputs"] == {"status": "completed", "used_citation_count": 1}
+
+
+def test_usage_metadata_failure_still_ends_and_patches_run():
+    warnings = []
+    records = []
+
+    class BrokenUsageRun(RecordingRun):
+        def set(self, **payload):
+            raise RuntimeError("private usage failure")
+
+    observer = build_observer(
+        enabled_settings(),
+        run_factory=lambda **payload: BrokenUsageRun(records, **payload),
+        warning_logger=warnings.append,
+    )
+    run = observer.start_run("rag.deepseek", run_type="llm", metadata={"model": "deepseek-chat"})
+
+    run.end(outputs={"status": "completed"}, usage=TokenUsage(101, 23, 124))
+
+    assert records[0].payload["end"]["outputs"] == {"status": "completed"}
+    assert records[0].patch_count == 1
+    assert warnings == ["LangSmith tracing operation failed"]
 
 
 def test_content_capture_is_restricted_to_the_named_rag_answer_root():

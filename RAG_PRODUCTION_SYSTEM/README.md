@@ -47,6 +47,8 @@ LANGSMITH_CAPTURE_CONTENT=false
 
 `LANGSMITH_HASH_SALT` must be dedicated to observability; do not reuse the RAG internal token or another credential. If tracing configuration is incomplete, the service disables tracing. LangSmith setup or transport failures are fail-open: answer generation continues and local logs receive only a sanitized warning.
 
+Successful DeepSeek calls report the provider's actual input, output, and total token counts on the `rag.deepseek` LLM run. Token reporting is independent of content capture and contains counts only. If DeepSeek omits or returns malformed usage data, answer generation continues without token telemetry; insufficient-evidence responses do not call DeepSeek and therefore add no tokens.
+
 Question and answer capture is a separate, explicit opt-in. Set `LANGSMITH_CAPTURE_CONTENT=true` only when sending user questions and generated answers to LangSmith is acceptable. When enabled, the root `rag.answer` run includes the question as its input and the final answer as its output. Child runs remain metadata-only, and document chunks and prompts are never sent. Keep the committed default disabled and enable it only in an ignored local or deployment-specific environment file after reviewing the data policy for that environment.
 
 ### Smoke check
@@ -56,3 +58,4 @@ Question and answer capture is a separate, explicit opt-in. Set `LANGSMITH_CAPTU
 3. In the `docmind-rag` LangSmith project, confirm one `rag.answer` run with `rag.retrieve`, `rag.prompt`, and `rag.deepseek` children.
 4. With content capture disabled, confirm run inputs are empty and metadata/outputs contain only counts, statuses, model name, and hashed identifiers.
 5. With content capture explicitly enabled, confirm only the root `rag.answer` input contains the synthetic question and only its output contains the synthetic answer; child runs must still contain no document text or prompt.
+6. Confirm `rag.deepseek` is an LLM run with input, output, and total token usage, and that the project's **Total Tokens** value increases. An insufficient-evidence run should add no tokens because it makes no LLM call.

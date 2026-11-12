@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from collections.abc import Sequence
 
 from ..observability.langsmith import NoOpObserver, NoOpTraceRun, Observer, TraceContext, TraceRun
+from ..observability.models import TokenUsage
 from .models import CitationCandidate
 from .llm_client import LlmResponseError
 from .prompt_builder import InsufficientEvidenceError, build_prompt
@@ -44,16 +45,22 @@ class GenerationService:
             return NoOpTraceRun()
 
     @staticmethod
-    def _start_child(parent: TraceRun, name: str, metadata: dict) -> TraceRun:
+    def _start_child(parent: TraceRun, name: str, metadata: dict, run_type: str = "chain") -> TraceRun:
         try:
-            return parent.start_child(name, run_type="chain", metadata=metadata)
+            return parent.start_child(name, run_type=run_type, metadata=metadata)
         except Exception:
             return NoOpTraceRun()
 
     @staticmethod
-    def _end(run: TraceRun, *, outputs: dict | None = None, error_category: str | None = None) -> None:
+    def _end(
+        run: TraceRun,
+        *,
+        outputs: dict | None = None,
+        error_category: str | None = None,
+        usage: TokenUsage | None = None,
+    ) -> None:
         try:
-            run.end(outputs=outputs, error_category=error_category)
+            run.end(outputs=outputs, error_category=error_category, usage=usage)
         except Exception:
             pass
 
@@ -95,7 +102,7 @@ class GenerationService:
             raise
         self._end(prompt_run, outputs={"status": "completed", "context_chunk_count": len(chunks)})
 
-        deepseek = self._start_child(parent, "rag.deepseek", {"model": self.llm_client.model})
+        deepseek = self._start_child(parent, "rag.deepseek", {"model": self.llm_client.model}, run_type="llm")
         try:
             generated = await self.llm_client.generate(prompt)
         except LlmResponseError:
@@ -108,7 +115,11 @@ class GenerationService:
             raise
         used = set(generated.used_citation_numbers)
         citations = [citation for citation in prompt.citations if citation.number in used]
-        self._end(deepseek, outputs={"status": "completed", "used_citation_count": len(used)})
+        self._end(
+            deepseek,
+            outputs={"status": "completed", "used_citation_count": len(used)},
+            usage=generated.usage,
+        )
         parent_outputs = {"status": "completed", "citation_count": len(citations)}
         if self.capture_trace_content:
             parent_outputs["answer"] = generated.text

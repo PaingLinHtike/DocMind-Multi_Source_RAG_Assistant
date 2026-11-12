@@ -6,6 +6,7 @@ import pytest
 from RAG_PRODUCTION_SYSTEM.src.generation.llm_client import LlmResponseError
 from RAG_PRODUCTION_SYSTEM.src.generation.models import GeneratedAnswer
 from RAG_PRODUCTION_SYSTEM.src.generation.service import GenerationService
+from RAG_PRODUCTION_SYSTEM.src.observability import TokenUsage
 from RAG_PRODUCTION_SYSTEM.src.observability.langsmith import TraceContext
 from RAG_PRODUCTION_SYSTEM.src.retrieval.models import RetrievedChunk
 
@@ -31,6 +32,13 @@ class SuccessfulClient:
     model = "deepseek-chat"
 
     async def generate(self, prompt):
+        return GeneratedAnswer("private answer [1]", (1,), TokenUsage(101, 23, 124))
+
+
+class NoUsageClient:
+    model = "deepseek-chat"
+
+    async def generate(self, prompt):
         return GeneratedAnswer("private answer [1]", (1,))
 
 
@@ -42,24 +50,27 @@ class ProviderFailureClient:
 
 
 class RecordingRun:
-    def __init__(self, name, records, metadata, parent=None, inputs=None):
+    def __init__(self, name, records, metadata, run_type, parent=None, inputs=None):
         self.name = name
         self.records = records
         self.metadata = dict(metadata)
+        self.run_type = run_type
         self.inputs = dict(inputs or {})
         self.parent = parent
         self.outputs = None
         self.error_category = None
+        self.usage = None
         self.end_count = 0
         records.append(self)
 
     def start_child(self, name, *, run_type, metadata):
-        return RecordingRun(name, self.records, metadata, self.name)
+        return RecordingRun(name, self.records, metadata, run_type, self.name)
 
-    def end(self, *, outputs=None, error_category=None):
+    def end(self, *, outputs=None, error_category=None, usage=None):
         self.end_count += 1
         self.outputs = dict(outputs or {})
         self.error_category = error_category
+        self.usage = usage
 
 
 class RecordingObserver:
@@ -67,7 +78,7 @@ class RecordingObserver:
         self.records = []
 
     def start_run(self, name, *, run_type, metadata, context=None, inputs=None):
-        return RecordingRun(name, self.records, metadata, inputs=inputs)
+        return RecordingRun(name, self.records, metadata, run_type, inputs=inputs)
 
 
 class BrokenObserver:
@@ -101,12 +112,24 @@ def test_success_records_answer_retrieve_prompt_and_deepseek_hierarchy_without_c
         ("rag.prompt", "rag.answer"),
         ("rag.deepseek", "rag.answer"),
     ]
+    assert [run.run_type for run in observer.records] == ["chain", "chain", "chain", "llm"]
     assert observer.records[0].outputs == {"status": "completed", "citation_count": 1}
     assert observer.records[1].outputs == {"retrieved_chunk_count": 1}
     assert observer.records[2].outputs == {"status": "completed", "context_chunk_count": 1}
     assert observer.records[3].outputs == {"status": "completed", "used_citation_count": 1}
+    assert [run.usage for run in observer.records] == [None, None, None, TokenUsage(101, 23, 124)]
     serialized = json.dumps([
-        {"inputs": run.inputs, "metadata": run.metadata, "outputs": run.outputs, "error": run.error_category}
+        {
+            "inputs": run.inputs,
+            "metadata": run.metadata,
+            "outputs": run.outputs,
+            "error": run.error_category,
+            "usage": None if run.usage is None else {
+                "input_tokens": run.usage.input_tokens,
+                "output_tokens": run.usage.output_tokens,
+                "total_tokens": run.usage.total_tokens,
+            },
+        }
         for run in observer.records
     ])
     for sentinel in ("private question", "private document chunk", "private answer", "user-raw", "doc-raw"):
@@ -163,7 +186,19 @@ def test_insufficient_evidence_ends_parent_and_prompt_once_without_deepseek_span
     assert [run.name for run in observer.records] == ["rag.answer", "rag.retrieve", "rag.prompt"]
     assert observer.records[0].outputs == {"status": "insufficient_evidence", "citation_count": 0}
     assert observer.records[2].outputs == {"status": "insufficient_evidence", "context_chunk_count": 0}
+    assert all(run.usage is None for run in observer.records)
     assert all(run.end_count == 1 for run in observer.records)
+
+
+def test_success_without_provider_usage_ends_llm_run_without_usage():
+    observer = RecordingObserver()
+
+    result = run_answer(GenerationService(EvidenceRetriever(), NoUsageClient(), observer=observer))
+
+    assert result.answer == "private answer [1]"
+    assert observer.records[-1].name == "rag.deepseek"
+    assert observer.records[-1].run_type == "llm"
+    assert observer.records[-1].usage is None
 
 
 def test_provider_failure_ends_deepseek_and_parent_with_provider_error_then_reraises():

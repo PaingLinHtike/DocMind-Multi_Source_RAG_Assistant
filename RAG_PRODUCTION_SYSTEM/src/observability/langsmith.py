@@ -9,6 +9,7 @@ import re
 from typing import Protocol, TypeAlias
 
 from ..config import Settings
+from .models import TokenUsage
 
 TraceValue: TypeAlias = str | int | float | bool | None
 
@@ -55,6 +56,7 @@ class TraceRun(Protocol):
         *,
         outputs: Mapping[str, TraceValue] | None = None,
         error_category: str | None = None,
+        usage: TokenUsage | None = None,
     ) -> None: ...
 
 
@@ -94,6 +96,17 @@ def _hash_identifier(value: str, salt: str) -> str:
     return hmac.new(salt.encode("utf-8"), value.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
+def _usage_metadata(usage: TokenUsage) -> dict[str, int]:
+    values = (usage.input_tokens, usage.output_tokens, usage.total_tokens)
+    if any(type(value) is not int or value < 0 for value in values):
+        raise ValueError("Token counts must be non-negative integers")
+    return {
+        "input_tokens": usage.input_tokens,
+        "output_tokens": usage.output_tokens,
+        "total_tokens": usage.total_tokens,
+    }
+
+
 class NoOpTraceRun:
     def start_child(
         self,
@@ -109,6 +122,7 @@ class NoOpTraceRun:
         *,
         outputs: Mapping[str, TraceValue] | None = None,
         error_category: str | None = None,
+        usage: TokenUsage | None = None,
     ) -> None:
         return None
 
@@ -158,10 +172,16 @@ class _LangSmithRun:
         *,
         outputs: Mapping[str, TraceValue] | None = None,
         error_category: str | None = None,
+        usage: TokenUsage | None = None,
     ) -> None:
         if self._ended:
             return
         self._ended = True
+        if usage is not None:
+            try:
+                self._run.set(usage_metadata=_usage_metadata(usage))
+            except Exception:
+                _warn(self._warning_logger, "LangSmith tracing operation failed")
         try:
             error = error_category if error_category in _ERROR_CATEGORIES else None
             safe_outputs = _safe_values(outputs, _OUTPUT_KEYS)
